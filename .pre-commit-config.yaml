@@ -1,0 +1,83 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SCPN Reactor Kernels — pre-commit hooks (repository-local, pinned via .venv)
+
+default_install_hook_types: [pre-commit, commit-msg, pre-push]
+
+repos:
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: check-merge-conflict
+      - id: check-yaml
+      - id: check-toml
+      - id: check-added-large-files
+        args: ['--maxkb=320']
+      - id: detect-private-key
+      - id: end-of-file-fixer
+        exclude: '^LICENSES/'
+      - id: trailing-whitespace
+        exclude: '^LICENSES/'
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/fsfe/reuse-tool
+    rev: v6.2.0
+    hooks:
+      - id: reuse
+  - repo: https://github.com/crate-ci/typos
+    rev: v1.46.1
+    hooks:
+      - id: typos
+  - repo: local
+    hooks:
+      - id: commit-trailers
+        name: seat/authorship commit-message guard
+        entry: .venv/bin/python tools/check_commit_trailers.py
+        language: system
+        stages: [commit-msg]
+      - id: workflow-modularity
+        name: workflow modularity guard
+        entry: .venv/bin/python tools/audit_workflows.py
+        language: system
+        pass_filenames: false
+        files: ^\.github/(workflows/.*\.yml|workflow-inventory\.json)$
+      - id: preflight-pre-push
+        name: full preflight gate before push
+        entry: .venv/bin/python tools/preflight.py
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
+      - id: ruff-check
+        name: ruff check
+        entry: .venv/bin/ruff check --force-exclude
+        language: system
+        types: [python]
+      - id: ruff-format
+        name: ruff format check
+        entry: .venv/bin/ruff format --check --force-exclude
+        language: system
+        types: [python]
+      - id: mypy-strict
+        name: mypy strict
+        entry: .venv/bin/mypy --strict src tools tests benchmarks
+        language: system
+        pass_filenames: false
+        types: [python]
+      - id: kernels-domain-validate
+        name: kernel manifest validation
+        entry: .venv/bin/python tools/validate_kernels_domain.py kernels-domain.json
+        language: system
+        pass_filenames: false
+        files: ^(kernels-domain\.json|tools/validate_kernels_domain\.py)$
+      - id: kernel-inventory-drift
+        name: kernel inventory drift check
+        entry: .venv/bin/python tools/generate_kernel_inventory.py --check
+        language: system
+        pass_filenames: false
+        files: ^(kernels-domain\.json|kernel-inventory\.json|tools/generate_kernel_inventory\.py)$

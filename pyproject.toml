@@ -1,0 +1,97 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SCPN Reactor Kernels — package and validation tooling configuration
+
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "scpn-reactor-kernels"
+description = "Shared physics and geometry kernels of the SCPN Reactor Systems Research Group"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "AGPL-3.0-or-later"
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = { attr = "scpn_reactor_kernels.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+scpn_reactor_kernels = ["py.typed"]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 88
+
+[tool.ruff.lint]
+# The provenance header intentionally uses an en dash in the copyright range.
+allowed-confusables = ["–"]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # import sorting
+    "N",   # naming
+    "D",   # pydocstyle
+    "UP",  # pyupgrade
+    "B",   # bugbear
+    "A",   # builtins shadowing
+    "C4",  # comprehensions
+    "SIM", # simplification
+    "ARG", # unused arguments
+    "PTH", # pathlib usage
+    "RUF", # ruff-specific
+    "S",   # bandit-class security rules
+]
+
+[tool.ruff.lint.per-file-ignores]
+# assert is the pytest contract surface
+"tests/*" = ["S101"]
+# preflight executes fixed argument vectors of repository gates without a
+# shell and without untrusted input (scope of S603/S607)
+"tools/preflight.py" = ["S603", "S607"]
+# the benchmark records the commit with a fixed git argument vector resolved
+# through shutil.which, without a shell and without untrusted input
+"benchmarks/geometry_tessellation.py" = ["S603"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.isort]
+known-first-party = [
+    "scpn_reactor_kernels",
+    "check_commit_trailers",
+    "manifest_io",
+    "validate_kernels_domain",
+    "generate_kernel_inventory",
+    "preflight",
+    "geometry_fixtures",
+]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+warn_unreachable = true
+pretty = true
+mypy_path = ["tools", "src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.coverage.run]
+branch = true
+source = ["tools", "src"]
+
+[tool.coverage.report]
+fail_under = 100
+show_missing = true
+exclude_also = ['if __name__ == "__main__":']

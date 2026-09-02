@@ -1,0 +1,56 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SCPN Reactor Kernels — bug report form
+
+name: Bug report
+description: A reproducible defect in a kernel, its native counterpart, the validation tooling or metadata
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Kernels are computational prototypes of cited closed forms with
+        declared validity ranges. A result outside a declared range is not
+        a defect; a wrong result inside it, a silent NaN, or a parity
+        mismatch between the Python floor and the native kernel is.
+        Vulnerabilities go to the private route in SECURITY.md, never here.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: Observed behaviour, including the exact call, inputs and output.
+      placeholder: scpn_reactor_kernels.geometry.unit_circle(24) …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: The published form or identity the result should satisfy, with its source.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Exact steps from a clean checkout.
+    validations:
+      required: true
+  - type: input
+    id: commit
+    attributes:
+      label: Commit
+      description: Output of `git rev-parse HEAD`.
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Environment
+      description: OS, Python version (`python3 --version`), and whether the native module was installed.
+    validations:
+      required: true

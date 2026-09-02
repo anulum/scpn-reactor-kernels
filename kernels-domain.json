@@ -1,0 +1,108 @@
+{
+  "claims": [],
+  "consumers": [],
+  "evidence_maturity": "computational_prototype",
+  "excluded_domains": [
+    {
+      "domain": "device_truth_configurations_geometry_and_lifecycle",
+      "owner": "SCPN-<FAMILY>-CORE device repositories"
+    },
+    {
+      "domain": "solver_mathematics_and_validation_evidence",
+      "owner": "SCPN-FUSION-CORE"
+    },
+    {
+      "domain": "typed_signal_semantics_and_comparability",
+      "owner": "SCPN-PHASE-ORCHESTRATOR"
+    },
+    {
+      "domain": "control_admission_and_action_formation",
+      "owner": "SCPN-CONTROL"
+    },
+    {
+      "domain": "machine_protection_final_veto",
+      "owner": "independent_machine_protection"
+    },
+    {
+      "domain": "portfolio_presentation_identity_entitlement_execution_gating",
+      "owner": "SCPN-STUDIO"
+    }
+  ],
+  "kernels": [
+    {
+      "benchmark": "docs/benchmarks.md#geometry-tessellation",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#geometry-kernels",
+      "identifier": "geometry_unit_circle",
+      "module": "src/scpn_reactor_kernels/geometry/trig.py",
+      "native_parity": true,
+      "sources": [
+        "Taylor polynomials of sine and cosine in Horner form; exact octant and quadrant symmetry (elementary; no external source)"
+      ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#geometry-tessellation",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#geometry-kernels",
+      "identifier": "geometry_mesh_contract",
+      "module": "src/scpn_reactor_kernels/geometry/mesh.py",
+      "native_parity": true,
+      "sources": [
+        "Divergence-theorem volume of a closed triangle mesh and the cross-product area identity (elementary; no external source)"
+      ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#geometry-tessellation",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#geometry-kernels",
+      "identifier": "geometry_primitives",
+      "module": "src/scpn_reactor_kernels/geometry/primitives.py",
+      "native_parity": true,
+      "sources": [
+        "Inscribed regular polygon prisms of the solid cylinder and the annular tube (elementary; no external source)"
+      ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#geometry-tessellation",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#geometry-kernels",
+      "identifier": "geometry_exports",
+      "module": "src/scpn_reactor_kernels/geometry/export.py",
+      "native_parity": false,
+      "sources": [
+        "The Khronos Group, glTF 2.0 Specification (binary glTF container, accessors, buffer views)",
+        "Binary STL file layout (80-byte header, uint32 triangle count, float32 normal and vertices, uint16 attribute)"
+      ]
+    }
+  ],
+  "library": {
+    "distribution": "scpn-reactor-kernels",
+    "native_distribution": "scpn-reactor-kernels-native",
+    "native_module": "scpn_reactor_kernels_native",
+    "package": "scpn_reactor_kernels"
+  },
+  "license": "AGPL-3.0-or-later",
+  "machine_protection": {
+    "final_veto": "independent",
+    "statement": "Independent machine-protection systems retain the final veto before any plant actuator path; nothing in this library participates in, or substitutes for, that path, and no kernel reaches any actuator or facility."
+  },
+  "non_claims": [
+    "not machine-ready",
+    "not safety-certified",
+    "not reactor-ready",
+    "no solver, controller, dataset, experimental correlation or published artefact; every kernel is a computational prototype of a cited closed form or a standard method",
+    "no value describes or validates any real machine; a kernel's presence says nothing about any device's performance"
+  ],
+  "owned_domains": [
+    "shared_physics_kernels",
+    "shared_geometry_kernels",
+    "shared_numerical_integrators"
+  ],
+  "project": "SCPN-REACTOR-KERNELS",
+  "research_group": {
+    "coordination_identity": "SCPN-REACTOR-SYSTEMS",
+    "display_name": "SCPN Reactor Systems Research Group"
+  },
+  "schema": "scpn.reactor-kernels-domain.v1",
+  "schema_version": "1.0.0"
+}

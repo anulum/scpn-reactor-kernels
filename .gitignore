@@ -1,0 +1,40 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SCPN Reactor Kernels — Git ignore rules
+
+# Defence-in-depth: agent-state and backup trees must never enter this repo
+/BACKUP/
+/ARCHIVE/
+/.coordination/
+/04_ARCANE_SAPIENCE/
+
+# Private operational content
+docs/internal/
+docs/internal/**
+
+# Python tooling
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# Build residues
+build/
+dist/
+*.egg-info/
+rust/target/
+
+# Editors and OS
+.vscode/
+.idea/
+*.swp
+.DS_Store

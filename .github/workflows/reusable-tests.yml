@@ -1,0 +1,61 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SCPN Reactor Kernels — unit and scientific quality (reusable)
+
+name: Tests
+
+on:
+  workflow_call:
+
+permissions: {}
+
+jobs:
+  run:
+    name: Tests with complete coverage
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12.14"
+      - name: Install pinned toolchain
+        run: python -m pip install -r requirements-dev.txt
+      - name: Tests with complete coverage
+        run: pytest -q --cov=src --cov=tools --cov-branch --cov-fail-under=100
+  rust:
+    name: Native kernels, parity and benchmark smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12.14"
+      - name: Pin the Rust toolchain
+        run: |
+          rustup toolchain install 1.98.0 --profile minimal --component rustfmt,clippy
+          rustup default 1.98.0
+      - name: Format, lint and test the crate
+        working-directory: rust
+        run: |
+          cargo fmt --check
+          cargo clippy --all-targets --features python -- -D warnings
+          cargo test
+      - name: Build the native module and prove bit-exact parity
+        run: |
+          python -m pip install -r requirements-dev.txt maturin==1.14.0
+          python -m pip install --no-deps --no-build-isolation ./rust
+          pytest -q tests/test_geometry_native_parity.py
+      - name: Benchmark smoke (both backends must be measured)
+        run: |
+          python benchmarks/geometry_tessellation.py --segments 64 --warmup 1 --repeats 3 --label ci-smoke --output "$RUNNER_TEMP"
+          python -c "import json,os; d=json.load(open(os.environ['RUNNER_TEMP']+'/geometry_tessellation.ci-smoke.json')); assert all(r['status']=='measured' for r in d['results']), d['results']"

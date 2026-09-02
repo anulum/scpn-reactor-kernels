@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SCPN Reactor Kernels — REUSE 3.x licensing metadata
+
+version = 1
+
+# JSON cannot carry comments and the PEP 561 marker must stay empty, so
+# machine-readable artefacts are annotated here instead of in-file.
+[[annotations]]
+path = [
+    "src/scpn_reactor_kernels/py.typed",
+    "kernels-domain.json",
+    "kernel-inventory.json",
+    ".zenodo.json",
+    ".github/workflow-inventory.json",
+    ".github/FUNDING.yml",
+    "rust/Cargo.lock",
+    "benchmarks/results/geometry_tessellation.local.json",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = [
+    "Concepts 1996-2026 Miroslav Šotek. All rights reserved.",
+    "Code 2020-2026 Miroslav Šotek. All rights reserved.",
+]
+SPDX-License-Identifier = "AGPL-3.0-or-later"

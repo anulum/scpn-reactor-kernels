@@ -1,0 +1,26 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SCPN Reactor Kernels — typographical checker configuration
+#
+# Every entry is a word the reactor family uses deliberately. Keep this
+# file identical across the reactor repositories so the shared surface
+# stays uniform, and never run the checker with --write.
+
+[default.extend-words]
+# Hyphenated prefix in hazard vocabulary: "mis-steer", "mis-set".
+mis = "mis"
+# Accepted alternative spelling used in the threat model prose.
+unparseable = "unparseable"
+# Surname in the Pease-Braginskii current (Pease 1957).
+pease = "pease"
+Pease = "Pease"
+
+[files]
+extend-exclude = [
+    "*.png",
+    "LICENSES/",
+]

@@ -1,0 +1,80 @@
+{
+  "schema": "scpn.workflow-inventory.v1",
+  "schema_version": "1.0.0",
+  "coordinator": "ci.yml",
+  "aggregate_gate": {
+    "workflow": "ci.yml",
+    "job": "gate",
+    "contract": "depends on every reusable category exactly once, runs on always(), fails on any non-success result"
+  },
+  "size_limits": {
+    "max_lines": 1000,
+    "max_bytes": 102400
+  },
+  "omitted_categories": [3, 5, 6, 7, 10, 11],
+  "workflows": [
+    {
+      "file": "ci.yml",
+      "kind": "coordinator",
+      "category": 1,
+      "jobs": ["static-policy", "tests", "gate"],
+      "owner": "coordinator and stable required gate"
+    },
+    {
+      "file": "reusable-static-policy.yml",
+      "kind": "reusable",
+      "category": 2,
+      "jobs": ["run"],
+      "owner": "static analysis, repository policy and workflow governance"
+    },
+    {
+      "file": "reusable-tests.yml",
+      "kind": "reusable",
+      "category": 4,
+      "jobs": ["run", "rust"],
+      "owner": "unit, component, scientific quality, native parity and benchmark smoke"
+    },
+    {
+      "file": "pre-commit.yml",
+      "kind": "standalone",
+      "category": 2,
+      "jobs": ["pre-commit"],
+      "owner": "hook parity with the local pre-commit surface"
+    },
+    {
+      "file": "codeql.yml",
+      "kind": "standalone",
+      "category": 8,
+      "jobs": ["analyse"],
+      "owner": "code scanning"
+    },
+    {
+      "file": "security-audit.yml",
+      "kind": "standalone",
+      "category": 8,
+      "jobs": ["audit"],
+      "owner": "secrets, dependency, licence and workflow policy"
+    },
+    {
+      "file": "scorecard.yml",
+      "kind": "standalone",
+      "category": 8,
+      "jobs": ["analysis"],
+      "owner": "read-only supply-chain analysis"
+    },
+    {
+      "file": "sbom.yml",
+      "kind": "standalone",
+      "category": 8,
+      "jobs": ["inventory"],
+      "owner": "reproducible dependency inventory"
+    },
+    {
+      "file": "docs.yml",
+      "kind": "standalone",
+      "category": 9,
+      "jobs": ["validate"],
+      "owner": "documentation and link validation"
+    }
+  ]
+}

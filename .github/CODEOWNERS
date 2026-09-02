@@ -1,0 +1,21 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SCPN Reactor Kernels — code ownership
+
+# Default: every change requires owner review
+* @anulum
+
+# Contract surfaces: kernel manifest, boundary and threat model
+kernels-domain.json @anulum
+docs/THREAT_MODEL.md @anulum
+docs/adr/ @anulum
+
+# Kernels, native kernels, validation tooling and workflow definitions
+src/ @anulum
+rust/ @anulum
+tools/ @anulum
+.github/ @anulum

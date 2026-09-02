@@ -1,0 +1,53 @@
+{
+  "generated_at": "2026-09-02T01:57:58.899803+00:00",
+  "label": "local",
+  "parameters": {
+    "repeats": 20,
+    "segments": 4096,
+    "warmup": 3
+  },
+  "platform": {
+    "commit": "HEAD",
+    "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "isolated_cores": false,
+    "load_average_1min_at_start": "5.66",
+    "machine": "x86_64",
+    "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "results": [
+    {
+      "backend": "python_floor",
+      "name": "tessellation_and_measures",
+      "stats": {
+        "faces_per_pass": 65536.0,
+        "max_us_per_face": 5.697568923950195,
+        "mean_us_per_face": 3.8688859550476074,
+        "min_us_per_face": 3.339235580444336,
+        "p50_us_per_face": 3.719916946411133,
+        "p95_us_per_face": 4.613045425415039,
+        "p99_us_per_face": 5.697568923950195,
+        "throughput_faces_per_s": 268823.20611076296
+      },
+      "status": "measured"
+    },
+    {
+      "backend": "rust_native",
+      "name": "tessellation_and_measures",
+      "requires": "optional native build (rust/, maturin)",
+      "speedup_p50_vs_python_floor": 32.51555692191963,
+      "stats": {
+        "faces_per_pass": 65536.0,
+        "max_us_per_face": 0.14832765197753905,
+        "mean_us_per_face": 0.11668159713745116,
+        "min_us_per_face": 0.10223597717285156,
+        "p50_us_per_face": 0.11440422058105469,
+        "p95_us_per_face": 0.147168212890625,
+        "p99_us_per_face": 0.14832765197753905,
+        "throughput_faces_per_s": 8740936.260227446
+      },
+      "status": "measured"
+    }
+  ],
+  "schema": "scpn-reactor-kernels.geometry-tessellation-benchmark.v1"
+}

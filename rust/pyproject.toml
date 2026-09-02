@@ -1,0 +1,22 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SCPN Reactor Kernels — optional native extension build (maturin)
+
+[build-system]
+requires = ["maturin>=1.14,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "scpn-reactor-kernels-native"
+version = "0.1.0"
+description = "Optional native kernels of SCPN Reactor Kernels (bit-exact with the pure-Python floor)"
+requires-python = ">=3.12"
+license = "AGPL-3.0-or-later"
+
+[tool.maturin]
+features = ["python"]
+module-name = "scpn_reactor_kernels_native"

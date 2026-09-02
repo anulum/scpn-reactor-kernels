@@ -1,0 +1,66 @@
+{
+  "claims": [],
+  "consumers": [],
+  "evidence_maturity": "computational_prototype",
+  "implemented_kernel_count": 4,
+  "kernels": [
+    {
+      "benchmark": "docs/benchmarks.md#geometry-tessellation",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#geometry-kernels",
+      "identifier": "geometry_unit_circle",
+      "module": "src/scpn_reactor_kernels/geometry/trig.py",
+      "native_parity": true,
+      "sources": [
+        "Taylor polynomials of sine and cosine in Horner form; exact octant and quadrant symmetry (elementary; no external source)"
+      ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#geometry-tessellation",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#geometry-kernels",
+      "identifier": "geometry_mesh_contract",
+      "module": "src/scpn_reactor_kernels/geometry/mesh.py",
+      "native_parity": true,
+      "sources": [
+        "Divergence-theorem volume of a closed triangle mesh and the cross-product area identity (elementary; no external source)"
+      ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#geometry-tessellation",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#geometry-kernels",
+      "identifier": "geometry_primitives",
+      "module": "src/scpn_reactor_kernels/geometry/primitives.py",
+      "native_parity": true,
+      "sources": [
+        "Inscribed regular polygon prisms of the solid cylinder and the annular tube (elementary; no external source)"
+      ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#geometry-tessellation",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#geometry-kernels",
+      "identifier": "geometry_exports",
+      "module": "src/scpn_reactor_kernels/geometry/export.py",
+      "native_parity": false,
+      "sources": [
+        "The Khronos Group, glTF 2.0 Specification (binary glTF container, accessors, buffer views)",
+        "Binary STL file layout (80-byte header, uint32 triangle count, float32 normal and vertices, uint16 attribute)"
+      ]
+    }
+  ],
+  "library": {
+    "distribution": "scpn-reactor-kernels",
+    "native_distribution": "scpn-reactor-kernels-native",
+    "native_module": "scpn_reactor_kernels_native",
+    "package": "scpn_reactor_kernels"
+  },
+  "project": "SCPN-REACTOR-KERNELS",
+  "schema": "scpn.kernel-inventory.v1",
+  "schema_version": "1.0.0",
+  "source": {
+    "manifest_path": "kernels-domain.json",
+    "manifest_sha256": "160bd48ae9839cc25e1835e133ddb0f23ac6499eabb9a207303405d1a29cb2fb"
+  }
+}

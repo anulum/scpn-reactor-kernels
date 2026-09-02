@@ -1,0 +1,46 @@
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Commercial license available
+# © Concepts 1996–2026 Miroslav Šotek. All rights reserved.
+# © Code 2020–2026 Miroslav Šotek. All rights reserved.
+# ORCID: 0009-0009-3560-0851
+# Contact: www.anulum.li | protoscience@anulum.li
+# SCPN Reactor Kernels — feature request form
+
+name: Feature request
+description: A proposal within the shared-kernel boundary
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Proposals must respect the project boundary: published closed
+        forms, standard numerical methods and geometry substrate that more
+        than one device family needs. Device truth belongs to the device
+        repositories, solver mathematics to the fusion solver laboratory,
+        control admission to the control plane, presentation to the studio
+        layer. See README "Explicit exclusions".
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: Which families need the kernel, and for what?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed kernel
+      description: >-
+        The published form with its source and validity range, the
+        verification anchors, and the native-parity approach.
+    validations:
+      required: true
+  - type: textarea
+    id: boundary
+    attributes:
+      label: Boundary statement
+      description: >-
+        Why this belongs in the shared library rather than in one device
+        repository or the solver laboratory.
+    validations:
+      required: true

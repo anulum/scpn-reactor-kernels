@@ -1,0 +1,21 @@
+{
+  "title": "SCPN Reactor Kernels",
+  "description": "Shared physics and geometry kernel library of the SCPN Reactor Systems Research Group: published closed forms, numerical integrators and the deterministic tessellation and export substrate used by the reactor device-family repositories, each with a pure-Python floor, a bit-exact native kernel, parity evidence and a benchmark. Computational prototypes only; no value describes any real machine.",
+  "upload_type": "software",
+  "access_right": "open",
+  "license": "AGPL-3.0-or-later",
+  "creators": [
+    {
+      "name": "Šotek, Miroslav",
+      "affiliation": "ANULUM, Marbach SG, Switzerland",
+      "orcid": "0009-0009-3560-0851"
+    }
+  ],
+  "keywords": [
+    "fusion energy",
+    "plasma physics",
+    "numerical kernels",
+    "deterministic tessellation",
+    "reproducible computation"
+  ]
+}
