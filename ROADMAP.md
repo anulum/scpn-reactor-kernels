@@ -28,6 +28,14 @@ this repository until it appears in the kernel inventory with evidence.
   `computational_prototype` (ADR 0002, `VALIDATION.md#geometry-kernels`).
   Origin: moved from `SCPN-Z-PINCH-CORE` (its copies are retired once it
   pins this library).
+- **Numerics kernels** (landed 2026-09-02) — vendored deterministic natural
+  logarithm (exact binary decomposition and the odd series of
+  `atanh`), exponential (Cody–Waite reduction and Taylor series) and real
+  power, with refused rather than clamped domains, native kernels
+  bit-exact with the Python floor, measured accuracy bounds against the
+  platform `math` module, and a standard-conformant benchmark;
+  `computational_prototype` (ADR 0003, `VALIDATION.md#numerics-kernels`).
+  The physics kernel groups below consume this group instead of `libm`.
 
 ## Planned (no implementation exists; ordering is not a commitment)
 

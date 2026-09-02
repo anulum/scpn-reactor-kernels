@@ -44,6 +44,32 @@ P50 speed-up of the native kernels over the validated Python floor:
 32.5×. The fast row requires the optional native module and is never
 the default.
 
+## Transcendental kernels
+
+Artefact: `benchmarks/results/transcendental.local.json` (schema
+`scpn-reactor-kernels.transcendental-benchmark.v1`, generated
+2026-09-02T10:16:47.667753+00:00 at commit `370f6336` with the working tree
+of the landing commit). Host: 11th Gen Intel(R) Core(TM) i5-11600K @
+3.90GHz, Linux-7.0.0-30-generic-x86_64-with-glibc2.39, Python 3.12.3; load
+average at start 5.99; cores not isolated (shared workstation, so treat the
+numbers as indicative). Operation: one pass of `ln`, `exp` and `pow` over
+deterministic grids of 100 000 points per kernel (300 000 evaluations;
+grids built outside the timed region); 3 warm-up passes, 20 timed passes;
+time per evaluation. The Python floor row calls the public scalar
+functions; the native row calls the stream bindings once per kernel and
+pass, so it includes the binding's list-to-vector and vector-to-list
+conversions of every element (the series cost proper is not isolated by
+this benchmark and is well below the row's figure).
+
+| Backend | P50 ns/eval | P95 ns/eval | P99 ns/eval | mean ns/eval | throughput eval/s | status |
+|---|---|---|---|---|---|---|
+| `python_floor` (public API, always available) | 649.3 | 675.9 | 685.6 | 648.9 | 1540210 | measured |
+| `rust_native` (optional build: `rust/`, maturin, stream bindings) | 180.2 | 260.2 | 260.5 | 193.5 | 5550552 | measured |
+
+P50 speed-up of the native stream bindings over the Python floor: 3.6×,
+bounded by the per-element conversions of the binding, not by the series.
+The fast row requires the optional native module and is never the default.
+
 ## Fixed-runner (CI) number
 
 Not yet published: the hosted `rust` job runs a benchmark smoke that
@@ -58,4 +84,5 @@ is the local, non-isolated one above.
 make rust
 VIRTUAL_ENV=.venv PATH=.venv/bin:$PATH maturin develop --release -m rust/Cargo.toml
 .venv/bin/python benchmarks/geometry_tessellation.py --segments 4096 --warmup 3 --repeats 20 --label local
+.venv/bin/python benchmarks/transcendental.py --points 100000 --warmup 3 --repeats 20 --label local
 ```

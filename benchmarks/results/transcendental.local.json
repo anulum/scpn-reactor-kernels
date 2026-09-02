@@ -1,0 +1,57 @@
+{
+  "generated_at": "2026-09-02T10:16:47.667753+00:00",
+  "label": "local",
+  "non_claims": [
+    "cost of the vendored series, not a physics or engineering claim",
+    "shared workstation, cores not isolated; treat as indicative"
+  ],
+  "parameters": {
+    "points_per_kernel": 100000,
+    "repeats": 20,
+    "warmup": 3
+  },
+  "platform": {
+    "commit": "370f633646663a6a9525c345b51d905a7cabb748",
+    "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
+    "isolated_cores": false,
+    "load_average_1min_at_start": "5.99",
+    "machine": "x86_64",
+    "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
+    "python": "3.12.3"
+  },
+  "results": [
+    {
+      "backend": "python_floor",
+      "name": "ln_exp_pow_pass",
+      "stats": {
+        "evaluations_per_pass": 300000.0,
+        "max_ns_per_evaluation": 685.61891,
+        "mean_ns_per_evaluation": 648.9187645,
+        "min_ns_per_evaluation": 620.5981466666667,
+        "p50_ns_per_evaluation": 649.2619533333333,
+        "p95_ns_per_evaluation": 675.87786,
+        "p99_ns_per_evaluation": 685.61891,
+        "throughput_evaluations_per_s": 1540210.3802108925
+      },
+      "status": "measured"
+    },
+    {
+      "backend": "rust_native",
+      "name": "ln_exp_pow_pass",
+      "requires": "optional native build (rust/, maturin)",
+      "speedup_p50_vs_python_floor": 3.6037619270019956,
+      "stats": {
+        "evaluations_per_pass": 300000.0,
+        "max_ns_per_evaluation": 260.54953333333333,
+        "mean_ns_per_evaluation": 193.47694783333333,
+        "min_ns_per_evaluation": 171.00906333333333,
+        "p50_ns_per_evaluation": 180.16227666666666,
+        "p95_ns_per_evaluation": 260.19089333333335,
+        "p99_ns_per_evaluation": 260.54953333333333,
+        "throughput_evaluations_per_s": 5550551.5277772825
+      },
+      "status": "measured"
+    }
+  ],
+  "schema": "scpn-reactor-kernels.transcendental-benchmark.v1"
+}

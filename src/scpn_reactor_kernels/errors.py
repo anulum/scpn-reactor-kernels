@@ -22,3 +22,7 @@ class KernelInputError(ValueError):
 
 class GeometryError(KernelInputError):
     """Raised when a geometry parameter or a mesh violates a model invariant."""
+
+
+class NumericsError(KernelInputError):
+    """Raised when a numerical-substrate kernel input leaves its admissible range."""

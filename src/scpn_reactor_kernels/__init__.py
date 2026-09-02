@@ -11,7 +11,8 @@
 Public surface of the implemented kernel groups at
 ``computational_prototype`` maturity: the geometry kernels (deterministic
 unit circle, closed-mesh contract, cylinder and tube tessellation, STL and
-glTF exports) and the shared fail-closed validation helpers. Every kernel
+glTF exports), the numerics kernels (deterministic natural logarithm,
+exponential and real power) and the shared fail-closed validation helpers. Every kernel
 is a computational prototype of a cited closed form or a standard method;
 no value describes any real machine.
 """
@@ -20,7 +21,7 @@ from __future__ import annotations
 
 from typing import Final
 
-from scpn_reactor_kernels.errors import GeometryError, KernelInputError
+from scpn_reactor_kernels.errors import GeometryError, KernelInputError, NumericsError
 from scpn_reactor_kernels.geometry import (
     GLTF_GENERATOR,
     MESH_BYTES_LAYOUT,
@@ -42,6 +43,16 @@ from scpn_reactor_kernels.geometry import (
     write_glb,
     write_stl,
 )
+from scpn_reactor_kernels.numerics import (
+    EXP_MAX,
+    EXP_MIN,
+    LN2,
+    MIN_NORMAL,
+    exponential,
+    natural_log,
+    power,
+    require_positive_normal,
+)
 from scpn_reactor_kernels.validation import (
     require_finite,
     require_non_negative,
@@ -51,25 +62,34 @@ from scpn_reactor_kernels.validation import (
 __version__: Final = "0.1.0.dev0"
 
 __all__ = [
+    "EXP_MAX",
+    "EXP_MIN",
     "GLTF_GENERATOR",
+    "LN2",
     "MESH_BYTES_LAYOUT",
+    "MIN_NORMAL",
     "MIN_SEGMENTS",
     "SEGMENT_MULTIPLE",
     "STL_HEADER",
     "Face",
     "GeometryError",
     "KernelInputError",
+    "NumericsError",
     "TriangleMesh",
     "Vertex",
     "__version__",
     "annular_tube",
     "cosine_polynomial",
     "cylinder_solid",
+    "exponential",
     "face_normal_and_area",
     "glb_bytes",
+    "natural_log",
+    "power",
     "require_finite",
     "require_non_negative",
     "require_positive",
+    "require_positive_normal",
     "require_segments",
     "sine_polynomial",
     "stl_bytes",

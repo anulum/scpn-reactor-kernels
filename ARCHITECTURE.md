@@ -11,12 +11,14 @@ SCPN Reactor Kernels — Architecture summary
 # Architecture summary
 
 `SCPN-REACTOR-KERNELS` is the shared physics and geometry kernel library
-of the SCPN Reactor Systems Research Group. It holds one implemented kernel
-group at `computational_prototype` — the geometry kernels (ADR 0002:
+of the SCPN Reactor Systems Research Group. It holds two implemented kernel
+groups at `computational_prototype` — the geometry kernels (ADR 0002:
 deterministic unit circle, closed-mesh contract, cylinder and tube
-tessellation, STL and glTF exports, native counterparts in `rust/`) — in
-`src/scpn_reactor_kernels/`, alongside the kernel manifest, the validation
-tooling that enforces it, and the benchmark that measures it.
+tessellation, STL and glTF exports) and the numerics kernels (ADR 0003:
+deterministic natural logarithm, exponential and real power), both with
+native counterparts in `rust/` — in `src/scpn_reactor_kernels/`, alongside
+the kernel manifest, the validation tooling that enforces it, and the
+benchmarks that measure them.
 
 The authoritative architecture record is
 [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md). The ownership decision and

@@ -21,12 +21,15 @@ place those kernels are implemented, verified and benchmarked, so that no
 device repository carries a second copy.
 
 **Evidence maturity: `computational_prototype`** (per kernel; ADR 0001).
-One kernel group is implemented: the geometry kernels — a vendored
+Two kernel groups are implemented: the geometry kernels — a vendored
 deterministic unit circle, a closed-mesh contract with canonical bytes and
 digests, solid-cylinder and annular-tube tessellation, and binary STL and
-glTF 2.0 exports — with native kernels proven bit-exact against the
-Python floor (ADR 0002, evidence: `VALIDATION.md#geometry-kernels`). The
-claim inventory is empty and verified by the domain validator.
+glTF 2.0 exports (ADR 0002, evidence: `VALIDATION.md#geometry-kernels`) —
+and the numerics kernels — a vendored deterministic natural logarithm,
+exponential and real power with refused, never clamped, domains (ADR 0003,
+evidence: `VALIDATION.md#numerics-kernels`) — each with native kernels
+proven bit-exact against the Python floor. The claim inventory is empty
+and verified by the domain validator.
 
 ## Scope
 

@@ -13,11 +13,14 @@
 //! IEEE-754 double results agree bit for bit. The kernels use only `+`,
 //! `-`, `*`, `/` and `sqrt` (all correctly rounded) plus vendored
 //! deterministic implementations of anything else (the polynomial unit
-//! circle of [`geometry::trig`]). Nothing here solves an equation and no
+//! circle of [`geometry::trig`]; the logarithm, exponential and power of
+//! [`numerics::transcendental`]). Nothing here solves an equation and no
 //! value describes a real machine; design records are the ADRs of the
-//! repository (ADR 0002 for the geometry kernels).
+//! repository (ADR 0002 for the geometry kernels, ADR 0003 for the
+//! numerics kernels).
 
 pub mod geometry;
+pub mod numerics;
 
 #[cfg(feature = "python")]
 mod python {
@@ -114,6 +117,69 @@ mod python {
         Ok(crate::geometry::mesh::surface_area(&v, &f))
     }
 
+    /// Natural logarithm of one positive normal double.
+    #[pyfunction]
+    fn natural_log(x: f64) -> PyResult<f64> {
+        crate::numerics::transcendental::natural_log(x)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+    }
+
+    /// Exponential of one argument whose result is a normal double.
+    #[pyfunction]
+    fn exponential(y: f64) -> PyResult<f64> {
+        crate::numerics::transcendental::exponential(y)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+    }
+
+    /// Real power `base ** exponent` of one positive normal base.
+    #[pyfunction]
+    fn power(base: f64, exponent: f64) -> PyResult<f64> {
+        crate::numerics::transcendental::power(base, exponent)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+    }
+
+    /// Natural logarithm of every value of a stream (the first refusal aborts).
+    #[pyfunction]
+    fn natural_log_stream(values: Vec<f64>) -> PyResult<Vec<f64>> {
+        values
+            .iter()
+            .map(|&x| {
+                crate::numerics::transcendental::natural_log(x)
+                    .map_err(|e| PyValueError::new_err(e.to_string()))
+            })
+            .collect()
+    }
+
+    /// Exponential of every value of a stream (the first refusal aborts).
+    #[pyfunction]
+    fn exponential_stream(values: Vec<f64>) -> PyResult<Vec<f64>> {
+        values
+            .iter()
+            .map(|&y| {
+                crate::numerics::transcendental::exponential(y)
+                    .map_err(|e| PyValueError::new_err(e.to_string()))
+            })
+            .collect()
+    }
+
+    /// Element-wise power of two equally long streams (the first refusal aborts).
+    #[pyfunction]
+    fn power_stream(bases: Vec<f64>, exponents: Vec<f64>) -> PyResult<Vec<f64>> {
+        if bases.len() != exponents.len() {
+            return Err(PyValueError::new_err(
+                "bases and exponents must have the same length",
+            ));
+        }
+        bases
+            .iter()
+            .zip(exponents.iter())
+            .map(|(&b, &e)| {
+                crate::numerics::transcendental::power(b, e)
+                    .map_err(|err| PyValueError::new_err(err.to_string()))
+            })
+            .collect()
+    }
+
     /// Python module `scpn_reactor_kernels_native`.
     #[pymodule]
     fn scpn_reactor_kernels_native(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -122,6 +188,12 @@ mod python {
         m.add_function(wrap_pyfunction!(tessellate_annular_tube, m)?)?;
         m.add_function(wrap_pyfunction!(mesh_volume, m)?)?;
         m.add_function(wrap_pyfunction!(mesh_area, m)?)?;
+        m.add_function(wrap_pyfunction!(natural_log, m)?)?;
+        m.add_function(wrap_pyfunction!(exponential, m)?)?;
+        m.add_function(wrap_pyfunction!(power, m)?)?;
+        m.add_function(wrap_pyfunction!(natural_log_stream, m)?)?;
+        m.add_function(wrap_pyfunction!(exponential_stream, m)?)?;
+        m.add_function(wrap_pyfunction!(power_stream, m)?)?;
         Ok(())
     }
 }

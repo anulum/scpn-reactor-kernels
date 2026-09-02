@@ -53,11 +53,14 @@ REQUIRED_PATHS = (
     "VALIDATION.md",
     "benchmarks/geometry_tessellation.py",
     "benchmarks/results/geometry_tessellation.local.json",
+    "benchmarks/transcendental.py",
+    "benchmarks/results/transcendental.local.json",
     "conftest.py",
     "docs/ARCHITECTURE.md",
     "docs/THREAT_MODEL.md",
     "docs/adr/0001-repository-boundary.md",
     "docs/adr/0002-geometry-kernels.md",
+    "docs/adr/0003-numerics-transcendental-kernels.md",
     "docs/benchmarks.md",
     "kernel-inventory.json",
     "kernels-domain.json",
@@ -71,6 +74,8 @@ REQUIRED_PATHS = (
     "rust/src/geometry/trig.rs",
     "rust/src/geometry/primitives.rs",
     "rust/src/geometry/mesh.rs",
+    "rust/src/numerics/mod.rs",
+    "rust/src/numerics/transcendental.rs",
     "src/scpn_reactor_kernels/__init__.py",
     "src/scpn_reactor_kernels/errors.py",
     "src/scpn_reactor_kernels/validation.py",
@@ -79,6 +84,8 @@ REQUIRED_PATHS = (
     "src/scpn_reactor_kernels/geometry/mesh.py",
     "src/scpn_reactor_kernels/geometry/primitives.py",
     "src/scpn_reactor_kernels/geometry/export.py",
+    "src/scpn_reactor_kernels/numerics/__init__.py",
+    "src/scpn_reactor_kernels/numerics/transcendental.py",
     "tools/preflight.py",
     "tools/validate_kernels_domain.py",
     "tools/generate_kernel_inventory.py",
@@ -143,6 +150,7 @@ def test_manifest_declares_the_library_truth() -> None:
         "geometry_mesh_contract",
         "geometry_primitives",
         "geometry_exports",
+        "numerics_transcendental",
     ]
     assert manifest["owned_domains"] == [
         "shared_physics_kernels",
@@ -158,7 +166,7 @@ def test_inventory_embeds_current_manifest_digest() -> None:
     digest = sha256_of_file(REPO / "kernels-domain.json")
     inventory = load_json_object(REPO / "kernel-inventory.json")
     assert inventory["source"]["manifest_sha256"] == digest
-    assert inventory["implemented_kernel_count"] == 4
+    assert inventory["implemented_kernel_count"] == 5
 
 
 def test_no_agent_state_trees_exist() -> None:

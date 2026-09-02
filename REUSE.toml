@@ -20,6 +20,7 @@ path = [
     ".github/FUNDING.yml",
     "rust/Cargo.lock",
     "benchmarks/results/geometry_tessellation.local.json",
+    "benchmarks/results/transcendental.local.json",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = [

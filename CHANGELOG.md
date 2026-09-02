@@ -26,3 +26,10 @@ SCPN Reactor Kernels — CHANGELOG
   STL and glTF 2.0 binary exports of any body list, native kernels in
   `rust/` proven bit-exact by parity tests, and a standard-conformant
   benchmark with a committed local artefact.
+- Numerics kernels (`src/scpn_reactor_kernels/numerics/`), the second
+  implemented kernel group at `computational_prototype` (ADR 0003): a
+  vendored deterministic natural logarithm, exponential and real power
+  with refused (never clamped) domains, measured accuracy bounds against
+  the platform `math` module, native kernels in `rust/` with scalar and
+  stream bindings proven bit-exact by parity tests, and a
+  standard-conformant benchmark with a committed local artefact.

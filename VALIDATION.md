@@ -124,3 +124,51 @@ Bounded claims — what is NOT claimed:
 - No value describes, approximates or validates any real machine; the
   benchmark measures tessellation cost, not physics.
 - Maturity stays `computational_prototype`.
+
+## Numerics kernels
+
+Evidence record of the `numerics` kernel group (`computational_prototype`;
+design record: `docs/adr/0003-numerics-transcendental-kernels.md`; kernel
+`numerics_transcendental` in `kernels-domain.json`).
+
+What is exercised, all under the 100 % statement-and-branch coverage gate
+(`src/scpn_reactor_kernels/numerics/`):
+
+- **Constants**: every literal is proven to be the correctly rounded
+  double it claims (`ln 2`, `1/ln 2`, `sqrt(1/2)`, the smallest normal),
+  the Cody–Waite parts sum exactly to `ln 2`, and integer multiples of the
+  high part up to `|k| = 1100` are proven exact with rational arithmetic.
+- **Binary decomposition**: `x = m 2^k` exactly (rational check) with
+  `m` in `[sqrt(1/2), sqrt(2))` from the smallest normal to the largest
+  finite double.
+- **Exact points**: `ln 1 = 0`, `ln 2^k = k ln 2` for every normal
+  exponent, `exp 0 = 1`, `x^0 = 1`, `2^10 = 1024`.
+- **Accuracy against the platform `math` module** (the evidence bound,
+  not a correct-rounding claim): the logarithm within `1e-15` relative on
+  a 50 000-point seeded sweep of the whole normal range and a second sweep
+  of `[0.5, 2]`; the exponential within `1e-15` relative on sweeps of
+  `[-708, 709]` and `[-1, 1]` and at both domain edges (the lower edge
+  staying a normal number); the power within `1e-13` relative for bases in
+  `[e^-20, e^20]` and exponents in `[-5, 5]`; both series pieces on their
+  reduced intervals; the inverse identities `exp(ln x) = x` and
+  `ln(exp y) = y` within `2e-13`.
+- **Monotonicity** on dense grids of both kernels (no series glitch).
+- **Refusals**: non-finite, zero, negative and subnormal logarithm
+  arguments; non-finite and out-of-domain exponential arguments; invalid
+  bases, non-finite exponents and results that would overflow or be
+  subnormal for the power; the error type sits under `KernelInputError`.
+- **Native parity**: `rust/src/numerics/transcendental.rs` mirrors all
+  three kernels; `tests/test_numerics_native_parity.py` compares float64
+  bit patterns of 10 000-point seeded sweeps per kernel through both the
+  scalar and the stream bindings, and the refusal paths of the bindings.
+- **Benchmark**: `benchmarks/transcendental.py` per the ecosystem
+  benchmark standard; results in `docs/benchmarks.md` and the committed
+  local artefact `benchmarks/results/transcendental.local.json`.
+
+Bounded claims — what is NOT claimed:
+
+- The kernels are not correctly rounded; their accuracy is the measured
+  bound above, and the power's error grows with `|y ln x|`.
+- No value describes any physical quantity; the benchmark measures series
+  cost, not physics.
+- Maturity stays `computational_prototype`.

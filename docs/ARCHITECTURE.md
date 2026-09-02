@@ -13,10 +13,13 @@ SCPN Reactor Kernels — Architecture
 ## Purpose and evidence state
 
 `SCPN-REACTOR-KERNELS` is the shared kernel library of the SCPN Reactor
-Systems Research Group. It owns one implemented kernel group at
+Systems Research Group. It owns two implemented kernel groups at
 `computational_prototype` in `src/scpn_reactor_kernels/`: the geometry
 kernels (design record ADR 0002, evidence record
-`VALIDATION.md#geometry-kernels`; owned domain `shared_geometry_kernels`).
+`VALIDATION.md#geometry-kernels`; owned domain `shared_geometry_kernels`)
+and the numerics kernels (design record ADR 0003, evidence record
+`VALIDATION.md#numerics-kernels`; the numerical substrate of the owned
+domain `shared_physics_kernels`).
 Every other section below describes boundaries and contracts. The claim
 inventory is empty; the kernel inventory is generated and drift-checked.
 
@@ -76,6 +79,7 @@ protection or any actuator; it computes numbers from declared inputs.
 | `kernels-domain.json` | portable source of library identity, kernel inventory and consumers |
 | `kernel-inventory.json` | generated inventory of the implemented kernels (drift-checked) |
 | `src/scpn_reactor_kernels/geometry/` | deterministic unit circle, mesh contract, primitives, STL/GLB exports |
+| `src/scpn_reactor_kernels/numerics/` | deterministic natural logarithm, exponential and real power |
 | `src/scpn_reactor_kernels/validation.py` | shared fail-closed input validation |
 | `rust/` | native kernels (`scpn-reactor-kernels-rs`), bit-exact with the Python floor |
 | `benchmarks/` | standard-conformant benchmarks and committed local artefacts |

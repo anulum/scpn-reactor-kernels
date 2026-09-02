@@ -73,6 +73,18 @@
         "The Khronos Group, glTF 2.0 Specification (binary glTF container, accessors, buffer views)",
         "Binary STL file layout (80-byte header, uint32 triangle count, float32 normal and vertices, uint16 attribute)"
       ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#transcendental-kernels",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#numerics-kernels",
+      "identifier": "numerics_transcendental",
+      "module": "src/scpn_reactor_kernels/numerics/transcendental.py",
+      "native_parity": true,
+      "sources": [
+        "Natural logarithm by exact binary decomposition and the odd series of atanh((m-1)/(m+1)); exponential by the Cody-Waite reduction and the Taylor series; power as exp(y ln x) (elementary; no external source)",
+        "W. J. Cody, W. Waite, Software Manual for the Elementary Functions, Prentice-Hall (1980): the split of ln 2 into a high part with trailing zero bits and a low part"
+      ]
     }
   ],
   "library": {
