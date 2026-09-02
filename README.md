@@ -131,7 +131,10 @@ The inventory is derived from the kernel manifest
 the exact set of implemented kernels and their evidence pointers. A kernel
 whose numerical output changes for any input is a breaking change of that
 kernel and bumps the major version. The `consumers` list of the manifest is
-updated when a consumer lands its pin.
+updated when a consumer lands its pin; because that update changes the
+inventory, a consumer's digest always names the inventory at the commit it
+pins, never the inventory that lists it. First consumer: SCPN-Z-PINCH-CORE
+(geometry kernels; ADR 0004).
 
 ## Scope
 

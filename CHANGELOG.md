@@ -12,6 +12,16 @@ SCPN Reactor Kernels — CHANGELOG
 
 ## [Unreleased]
 
+### Changed
+
+- First consumer recorded (ADR 0004): SCPN-Z-PINCH-CORE pins the
+  distribution at `0.1.0.dev0` and the kernel-inventory digest of the
+  commit it depends on, consuming the four geometry kernels; the
+  `consumers` table of `kernels-domain.json` and the generated inventory
+  carry the entry. The README states that a consumer's digest names the
+  inventory at the pinned commit, since recording the consumer changes
+  the inventory.
+
 ### Added
 
 - Repository established as the shared kernel library of the SCPN Reactor

@@ -61,6 +61,7 @@ REQUIRED_PATHS = (
     "docs/adr/0001-repository-boundary.md",
     "docs/adr/0002-geometry-kernels.md",
     "docs/adr/0003-numerics-transcendental-kernels.md",
+    "docs/adr/0004-first-consumer-pin.md",
     "docs/benchmarks.md",
     "kernel-inventory.json",
     "kernels-domain.json",
@@ -158,7 +159,15 @@ def test_manifest_declares_the_library_truth() -> None:
         "shared_numerical_integrators",
     ]
     assert manifest["claims"] == []
-    assert manifest["consumers"] == []
+    assert manifest["consumers"] == [
+        {
+            "project": "SCPN-Z-PINCH-CORE",
+            "version": "0.1.0.dev0",
+            "inventory_sha256": (
+                "b065c46b9f54d478d94be5cfeb61e1300b4ddae47e57f3992a985adfb2cb5dbf"
+            ),
+        }
+    ]
 
 
 def test_inventory_embeds_current_manifest_digest() -> None:

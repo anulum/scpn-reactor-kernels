@@ -1,6 +1,12 @@
 {
   "claims": [],
-  "consumers": [],
+  "consumers": [
+    {
+      "inventory_sha256": "b065c46b9f54d478d94be5cfeb61e1300b4ddae47e57f3992a985adfb2cb5dbf",
+      "project": "SCPN-Z-PINCH-CORE",
+      "version": "0.1.0.dev0"
+    }
+  ],
   "evidence_maturity": "computational_prototype",
   "implemented_kernel_count": 5,
   "kernels": [
@@ -73,6 +79,6 @@
   "schema_version": "1.0.0",
   "source": {
     "manifest_path": "kernels-domain.json",
-    "manifest_sha256": "19a551a1368a1dc573bf6491ef52d7aec8c643912475f0a7ab3bdafc83ec81fc"
+    "manifest_sha256": "9cbe09da331bab351035e2bc934aff549b860b49d954bb0406dd9bd1609ce433"
   }
 }
