@@ -57,6 +57,8 @@ REQUIRED_PATHS = (
     "benchmarks/results/transcendental.local.json",
     "benchmarks/bessel.py",
     "benchmarks/results/bessel.local.json",
+    "benchmarks/cad.py",
+    "benchmarks/results/cad.local.json",
     "conftest.py",
     "docs/ARCHITECTURE.md",
     "docs/THREAT_MODEL.md",
@@ -65,6 +67,7 @@ REQUIRED_PATHS = (
     "docs/adr/0003-numerics-transcendental-kernels.md",
     "docs/adr/0004-first-consumer-pin.md",
     "docs/adr/0005-numerics-bessel-kernels.md",
+    "docs/adr/0006-cad-kernels.md",
     "docs/benchmarks.md",
     "kernel-inventory.json",
     "kernels-domain.json",
@@ -92,6 +95,13 @@ REQUIRED_PATHS = (
     "src/scpn_reactor_kernels/numerics/__init__.py",
     "src/scpn_reactor_kernels/numerics/transcendental.py",
     "src/scpn_reactor_kernels/numerics/bessel.py",
+    "src/scpn_reactor_kernels/cad/__init__.py",
+    "src/scpn_reactor_kernels/cad/_backend.py",
+    "src/scpn_reactor_kernels/cad/solids.py",
+    "src/scpn_reactor_kernels/cad/assembly.py",
+    "src/scpn_reactor_kernels/cad/step.py",
+    "src/scpn_reactor_kernels/cad/facet.py",
+    "src/scpn_reactor_kernels/cad/volume_mesh.py",
     "tools/preflight.py",
     "tools/validate_kernels_domain.py",
     "tools/generate_kernel_inventory.py",
@@ -158,11 +168,16 @@ def test_manifest_declares_the_library_truth() -> None:
         "geometry_exports",
         "numerics_transcendental",
         "numerics_bessel",
+        "cad_brep_solids",
+        "cad_step_export",
+        "cad_faceting",
+        "cad_volume_mesh",
     ]
     assert manifest["owned_domains"] == [
         "shared_physics_kernels",
         "shared_geometry_kernels",
         "shared_numerical_integrators",
+        "shared_cad_and_meshing_adapters",
     ]
     assert manifest["claims"] == []
     assert manifest["consumers"] == [
@@ -209,7 +224,7 @@ def test_inventory_embeds_current_manifest_digest() -> None:
     digest = sha256_of_file(REPO / "kernels-domain.json")
     inventory = load_json_object(REPO / "kernel-inventory.json")
     assert inventory["source"]["manifest_sha256"] == digest
-    assert inventory["implemented_kernel_count"] == 6
+    assert inventory["implemented_kernel_count"] == 10
 
 
 def test_no_agent_state_trees_exist() -> None:

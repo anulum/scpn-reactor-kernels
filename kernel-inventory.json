@@ -28,7 +28,7 @@
     }
   ],
   "evidence_maturity": "computational_prototype",
-  "implemented_kernel_count": 6,
+  "implemented_kernel_count": 10,
   "kernels": [
     {
       "benchmark": "docs/benchmarks.md#geometry-tessellation",
@@ -98,6 +98,53 @@
         "NIST Digital Library of Mathematical Functions, 10.2.2: ascending series of J_nu (evaluated in Horner form on x^2/4 with exact integer-quotient coefficients, 30 terms, |x| <= 8)",
         "NIST DLMF 10.21 and OEIS A115368, A115369: the first positive zeros of J0 and J1 as correctly rounded doubles"
       ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#cad-kernels",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#cad-kernels",
+      "identifier": "cad_brep_solids",
+      "module": "src/scpn_reactor_kernels/cad/solids.py",
+      "native_parity": false,
+      "sources": [
+        "CadQuery 2.8 documentation (Workplane, Shape.Volume/Area/BoundingBox) and Open CASCADE Technology 7.9 reference (BRepGProp, Bnd_Box): the pinned third-party B-rep kernel that builds the solids; measures checked against the analytic closed forms of the cylinder and the annular tube (elementary; no external source)"
+      ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#cad-kernels",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#cad-kernels",
+      "identifier": "cad_step_export",
+      "module": "src/scpn_reactor_kernels/cad/step.py",
+      "native_parity": false,
+      "sources": [
+        "Open CASCADE Technology 7.9: STEPControl_Writer and APIHeaderSection_MakeHeader (Part 21 HEADER: FILE_DESCRIPTION, FILE_NAME with time stamp, FILE_SCHEMA); CadQuery 2.8 Assembly export",
+        "ISO 10303-21 clear-text encoding: structure taken from the writer output and the OCC documentation (the standard text is not freely available)"
+      ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#cad-kernels",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#cad-kernels",
+      "identifier": "cad_faceting",
+      "module": "src/scpn_reactor_kernels/cad/facet.py",
+      "native_parity": false,
+      "sources": [
+        "Open CASCADE Technology 7.9: BRepMesh_IncrementalMesh (linear and angular deflection) through CadQuery Shape.tessellate; vertex welding by exact coordinate equality into the geometry_mesh_contract kernel",
+        "Inscribed-chord volume deficit bound 2 d / r and the inscribed regular polygon area ratio (n / 2 pi) sin(2 pi / n) (elementary; no external source)"
+      ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#cad-kernels",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#cad-kernels",
+      "identifier": "cad_volume_mesh",
+      "module": "src/scpn_reactor_kernels/cad/volume_mesh.py",
+      "native_parity": false,
+      "sources": [
+        "Gmsh 4.15.2 reference manual: OpenCASCADE import (model.occ.importShapes), Mesh.MeshSizeMin/Max, Mesh.Algorithm3D, MSH 4.1 ASCII format",
+        "Tetrahedron volume |det(v1 - v0, v2 - v0, v3 - v0)| / 6 (elementary; no external source)"
+      ]
     }
   ],
   "library": {
@@ -111,6 +158,6 @@
   "schema_version": "1.0.0",
   "source": {
     "manifest_path": "kernels-domain.json",
-    "manifest_sha256": "78a2ed7ca0359f062514e433b76cd2cd32632415b396b298fa77a61de0ac4161"
+    "manifest_sha256": "4bb8316b3a08ea7e893d219abe51f0b39be771de97820e2b67486b9a32ee29c8"
   }
 }

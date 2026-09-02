@@ -14,6 +14,7 @@ PYTHON := $(VENV)/python
 venv:
 	python3 -m venv .venv
 	$(VENV)/pip install --require-virtualenv -r requirements-dev.txt
+	$(VENV)/pip install --require-virtualenv -e ".[cad]"
 
 lint:
 	$(VENV)/ruff check .

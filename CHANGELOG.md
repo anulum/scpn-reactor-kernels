@@ -14,6 +14,22 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Added
 
+- CAD kernels (`src/scpn_reactor_kernels/cad/`, kernels `cad_brep_solids`,
+  `cad_step_export`, `cad_faceting`, `cad_volume_mesh`, ADR 0006) behind
+  the optional extra `cad` (`cadquery==2.8.0`, `gmsh==4.15.2`): B-rep
+  solids of the cylinder and the annular tube with analytic reference
+  measures and a `1e-9` tolerance, an ordered `BrepAssembly` with a
+  canonical manifest and digest, deterministic STEP export (fixed header
+  time stamp and file name, renumbered assembly usage identifiers, JSON
+  provenance in the description), faceting into the `TriangleMesh`
+  contract with the `2 d / r` deficit bound and the exact inscribed-polygon
+  ratio, and a gmsh MSH 4.1 volume mesh summarised per entity against the
+  B-rep volumes; lazy back-end loading with a named refusal; the library
+  CI installs the extra; a standard-conformant benchmark with a committed
+  local artefact. New owned domain `shared_cad_and_meshing_adapters`.
+  Evidence class stated: third-party kernels, no bit-exact parity,
+  determinism per environment only.
+
 - Bessel kernels (`src/scpn_reactor_kernels/numerics/bessel.py`, kernel
   `numerics_bessel`, ADR 0005): `J0` and `J1` by the DLMF 10.2.2 ascending
   series in Horner form with exact integer-quotient coefficients, thirty

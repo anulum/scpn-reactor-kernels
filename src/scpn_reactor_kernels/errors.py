@@ -26,3 +26,11 @@ class GeometryError(KernelInputError):
 
 class NumericsError(KernelInputError):
     """Raised when a numerical-substrate kernel input leaves its admissible range."""
+
+
+class CadError(KernelInputError):
+    """Raised when a CAD kernel input or a CAD export violates its contract."""
+
+
+class CadUnavailableError(CadError):
+    """Raised when the optional ``cad`` extra (CadQuery/OCP, gmsh) is not installed."""

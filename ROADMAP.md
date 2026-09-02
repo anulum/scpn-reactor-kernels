@@ -44,6 +44,18 @@ this repository until it appears in the kernel inventory with evidence.
   Consumers: the reversed-field-pinch Bessel-function model and the
   spheromak Taylor eigenvalue.
 
+- **CAD kernels** (landed 2026-09-03) — tier G2 behind the optional extra
+  `cad`: B-rep solids of the cylinder and the annular tube on the pinned
+  OpenCASCADE kernel checked against the analytic forms, an ordered
+  assembly with a canonical manifest, deterministic STEP export
+  (normalised header and identifiers, provenance in the description),
+  faceting back into the closed-mesh contract with a declared deficit
+  bound, and a gmsh tetrahedral volume mesh checked against the B-rep
+  volumes; no bit-exact parity by design (third-party kernels), a
+  standard-conformant benchmark; `computational_prototype` (ADR 0006,
+  `VALIDATION.md#cad-kernels`). Consumers: the tier-G2 lane of the device
+  repositories (pilot SCPN-Z-PINCH-CORE).
+
 ## Planned (no implementation exists; ordering is not a commitment)
 
 1. **Collision kernels** — Coulomb logarithms, Spitzer resistivity,

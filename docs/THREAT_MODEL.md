@@ -24,6 +24,7 @@ revisited whenever a new kernel group or a new consumer contract is added.
 | `kernels-domain.json` | the inventory consumers pin by digest; must never overstate maturity or sources |
 | `kernel-inventory.json` | public truthfulness of the implemented kernel set |
 | Parity fixtures and benchmark artefacts | evidence that the native path equals the floor |
+| Pinned third-party CAD kernels (CadQuery/OpenCASCADE, gmsh; optional extra `cad`) | every STEP file and volume mesh a consumer records comes from them; a silent version drift would change exported bytes and digests |
 | Workflow definitions | future execution with hosted credentials |
 | Licensing/provenance metadata | legal integrity of the repository |
 
@@ -54,6 +55,8 @@ revisited whenever a new kernel group or a new consumer contract is added.
 | Consumer pinning a stale digest | consumers record the inventory SHA-256; a mismatch is detectable on both sides |
 | Workflow tampering towards write authority | no write-authority workflow exists; permissions are empty at top level; action references must be 40-hex commit objects (shared Tier-0 audit enforces) |
 | Dependency substitution | exact version pins; updates land only through the full gate sequence |
+| A CAD back-end version drifting under a consumer's recorded digests | the extra pins exact versions; `backend_versions()` travels in every export's provenance; determinism is claimed per environment only and a version bump is a governed data change (ADR 0006) |
+| Treating a faceted or volume mesh as exact | the faceting reports the declared deficit bound and the volume mesh its per-entity volumes against the B-rep; tolerances are declared, never hidden |
 | Secret introduction | no secrets exist or are needed; security-audit workflow and review gates scan the diff |
 
 ## Fail-closed behaviour

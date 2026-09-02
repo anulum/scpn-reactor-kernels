@@ -94,6 +94,27 @@ P50 speed-up of the native stream bindings over the Python floor: 13.9×
 per step). The fast row requires the optional native module and is never
 the default.
 
+## CAD kernels
+
+Artefact: `benchmarks/results/cad.local.json` (schema `scpn-reactor-kernels.cad-benchmark.v1`,
+generated 2026-09-02T22:43:37.133187+00:00, at parent commit `18840b2a4337` with
+the working tree of the landing commit). Host: 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz,
+Linux-7.0.0-30-generic-x86_64-with-glibc2.39, Python 3.12.3; back-ends cadquery 2.8.0,
+OCP 7.9.3.1, gmsh 4.15.2; load average at start
+11.40 (other work was running on the host); cores not isolated. Parameters:
+2 warm-up runs, 10 timed runs per operation; linear deflection
+0.0001 m, angular deflection 0.1 rad, characteristic
+length 0.02 m. One synthetic two-body assembly (solid cylinder and
+annular tube). There is no Python-floor row: these kernels adapt pinned
+third-party code and carry no bit-exact floor (ADR 0006).
+
+| Operation | Backend | P50 ms | P95 ms | mean ms | operations/s | status |
+|---|---|---|---|---|---|---|
+| `brep_build_and_manifest` | `cadquery_ocp` | 14.41 | 17.90 | 13.39 | 69.4 | measured |
+| `step_export_normalised` | `cadquery_ocp` | 2.91 | 4.29 | 3.18 | 343.1 | measured |
+| `facet_two_bodies` | `cadquery_ocp` | 30.75 | 110.39 | 39.54 | 32.5 | measured |
+| `gmsh_volume_mesh` | `gmsh` | 267.02 | 304.63 | 270.96 | 3.7 | measured |
+
 ## Fixed-runner (CI) number
 
 Not yet published: the hosted `rust` job runs a benchmark smoke that
@@ -109,4 +130,6 @@ make rust
 VIRTUAL_ENV=.venv PATH=.venv/bin:$PATH maturin develop --release -m rust/Cargo.toml
 .venv/bin/python benchmarks/geometry_tessellation.py --segments 4096 --warmup 3 --repeats 20 --label local
 .venv/bin/python benchmarks/transcendental.py --points 100000 --warmup 3 --repeats 20 --label local
+.venv/bin/python benchmarks/bessel.py --points 100000 --warmup 3 --repeats 20 --label local
+.venv/bin/python benchmarks/cad.py --warmup 2 --repeats 10 --label local  # needs the cad extra
 ```

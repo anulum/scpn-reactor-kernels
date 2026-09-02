@@ -190,3 +190,73 @@ Bounded claims — what is NOT claimed:
 - No value describes any physical quantity; the benchmark measures series
   cost, not physics.
 - Maturity stays `computational_prototype`.
+
+## CAD kernels
+
+Evidence record of the `cad` kernel group (`computational_prototype`;
+design record `docs/adr/0006-cad-kernels.md`; kernels `cad_brep_solids`,
+`cad_step_export`, `cad_faceting` and `cad_volume_mesh` in
+`kernels-domain.json`). The group adapts two pinned third-party kernels
+(CadQuery 2.8.0 on OpenCASCADE 7.9 and gmsh 4.15.2) behind the optional
+extra `cad`; the evidence class is stated below and differs from the
+bit-exact groups.
+
+What is exercised, all under the 100 % statement-and-branch coverage gate
+(`src/scpn_reactor_kernels/cad/`; the library's CI installs the extra, so
+none of it is skipped there):
+
+- **Back-end loading**: a missing back-end is refused by name with the
+  install hint (`CadUnavailableError`, a `KernelInputError`), the
+  version report falls back to `unavailable` per back-end, and nothing
+  outside the group imports the back-ends.
+- **B-rep solids** (`solids.py`): the cylinder and the annular tube built
+  by the kernel agree with the analytic volume and area of the primitive
+  within `1e-9` relative (measured `0` and `1.5e-16` in the local run);
+  bounding boxes agree with the extents; every argument is validated
+  before the kernel is asked for a shape; the assembly keeps the body
+  order, refuses empty lists and duplicate names, and its manifest is
+  canonical with a stable digest.
+- **STEP export** (`step.py`): two exports of one assembly are
+  byte-identical; the header carries the fixed file name and time stamp,
+  the generator name and the caller's provenance with Part 21 escaping
+  (apostrophes doubled); the usage-occurrence identifiers are renumbered
+  from one in order; different extras change the bytes and the digest;
+  re-importing the written file reproduces both volumes within `1e-9`;
+  non-JSON extras and a writer output without the header entities are
+  refused.
+- **Faceting** (`facet.py`): the faceted cylinder and tube validate as
+  closed, outward-oriented `TriangleMesh` bodies (the G1 contract); the
+  faceted volume lies below the analytic one within the declared bound
+  `2 d / r` (measured deficit `2.0e-4` against the bound `4.0e-3` at
+  `d = 1e-4 m`, `r = 0.05 m`); the tube's area is within 1 % of the
+  analytic one; the exact inscribed-polygon ratio equals the G1 prism
+  volume ratio to `1e-12` for 8, 16 and 64 segments; the weld merges only
+  exact duplicates and keeps first-occurrence order; non-positive
+  deflections are refused; the faceted bodies pass through the STL
+  exporter unchanged.
+- **Volume mesh** (`volume_mesh.py`): two runs on the same STEP bytes
+  give the same MSH 4.1 bytes and digest; the sum of the tetrahedra
+  volumes agrees with the B-rep total within 2 % and per entity within
+  3 % at a characteristic length of `0.02 m` (the chordal deficit of the
+  declared coarseness, not a kernel error); the summary carries node and
+  element counts per entity; the unit right tetrahedron has volume `1/6`
+  independent of orientation; empty STEP bytes, non-positive lengths, a
+  STEP without a volume and a non-tetrahedral element type are refused,
+  and the back-end is finalised on every path.
+- **Benchmark**: `benchmarks/cad.py` per the ecosystem benchmark standard
+  (four operations, back-end versions in the provenance); results in
+  `docs/benchmarks.md` and the committed local artefact
+  `benchmarks/results/cad.local.json`.
+
+Bounded claims — what is NOT claimed:
+
+- No bit-exact parity: the B-rep and meshing kernels are third-party C++
+  code; the library proves agreement with analytic closed forms within
+  declared tolerances and determinism within one environment, recorded
+  with the back-end versions. Identity of STEP or MSH bytes across
+  OpenCASCADE or gmsh versions is not claimed.
+- The faceting and the volume mesh are approximations whose deficits are
+  bounded, not eliminated; they are inputs to simulation lanes, not
+  results of any simulation.
+- No body describes any device; no engineering, neutronic or structural
+  quantity is carried. Maturity stays `computational_prototype`.

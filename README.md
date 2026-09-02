@@ -134,6 +134,38 @@ VIRTUAL_ENV=.venv PATH=.venv/bin:$PATH maturin develop --release -m rust/Cargo.t
 .venv/bin/pytest -q tests/test_geometry_native_parity.py tests/test_numerics_native_parity.py
 ```
 
+The CAD kernels (ADR 0006, optional extra `cad`) build the same
+primitives as B-rep solids on the pinned OpenCASCADE kernel through
+CadQuery, keep them in an ordered assembly with a canonical manifest,
+export a deterministic STEP file (fixed header time stamp, renumbered
+assembly identifiers, provenance in the description), facet the solids
+back into the closed-mesh contract, and mesh a STEP assembly into
+tetrahedra with gmsh. Their measures are checked against the analytic
+forms within declared tolerances; they carry no bit-exact parity because
+the kernels are third-party, and that boundary is stated in the evidence
+record.
+
+```bash
+pip install "scpn-reactor-kernels[cad] @ git+https://github.com/anulum/scpn-reactor-kernels.git@<commit>"
+```
+
+```python
+from scpn_reactor_kernels.cad import (
+    BrepAssembly,
+    annular_tube_brep,
+    cylinder_solid_brep,
+    step_bytes,
+)
+
+assembly = BrepAssembly(
+    (
+        cylinder_solid_brep(0.05, 0.0, 0.3, "inner", "electrode", "conductor"),
+        annular_tube_brep(0.08, 0.1, -0.1, 0.4, "outer", "wall", "steel"),
+    )
+)
+step = step_bytes(assembly, {"design_digest": "..."})  # deterministic bytes
+```
+
 ## Consuming and pinning
 
 Consumers install the pure-Python distribution `scpn-reactor-kernels` (no

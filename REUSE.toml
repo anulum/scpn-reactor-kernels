@@ -22,6 +22,7 @@ path = [
     "benchmarks/results/geometry_tessellation.local.json",
     "benchmarks/results/transcendental.local.json",
     "benchmarks/results/bessel.local.json",
+    "benchmarks/results/cad.local.json",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = [
