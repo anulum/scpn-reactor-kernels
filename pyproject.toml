@@ -63,6 +63,7 @@ select = [
 # through shutil.which, without a shell and without untrusted input
 "benchmarks/geometry_tessellation.py" = ["S603"]
 "benchmarks/transcendental.py" = ["S603"]
+"benchmarks/bessel.py" = ["S603"]
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"

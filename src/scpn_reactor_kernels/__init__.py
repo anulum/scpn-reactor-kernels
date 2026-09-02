@@ -12,7 +12,8 @@ Public surface of the implemented kernel groups at
 ``computational_prototype`` maturity: the geometry kernels (deterministic
 unit circle, closed-mesh contract, cylinder and tube tessellation, STL and
 glTF exports), the numerics kernels (deterministic natural logarithm,
-exponential and real power) and the shared fail-closed validation helpers. Every kernel
+exponential and real power; the Bessel functions ``J0`` and ``J1`` with
+their first zeros) and the shared fail-closed validation helpers. Every kernel
 is a computational prototype of a cited closed form or a standard method;
 no value describes any real machine.
 """
@@ -44,10 +45,14 @@ from scpn_reactor_kernels.geometry import (
     write_stl,
 )
 from scpn_reactor_kernels.numerics import (
+    BESSEL_J0_FIRST_ZERO,
+    BESSEL_J1_FIRST_ZERO,
     EXP_MAX,
     EXP_MIN,
     LN2,
     MIN_NORMAL,
+    bessel_j0,
+    bessel_j1,
     exponential,
     natural_log,
     power,
@@ -62,6 +67,8 @@ from scpn_reactor_kernels.validation import (
 __version__: Final = "0.1.0.dev0"
 
 __all__ = [
+    "BESSEL_J0_FIRST_ZERO",
+    "BESSEL_J1_FIRST_ZERO",
     "EXP_MAX",
     "EXP_MIN",
     "GLTF_GENERATOR",
@@ -79,6 +86,8 @@ __all__ = [
     "Vertex",
     "__version__",
     "annular_tube",
+    "bessel_j0",
+    "bessel_j1",
     "cosine_polynomial",
     "cylinder_solid",
     "exponential",

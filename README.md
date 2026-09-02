@@ -104,6 +104,21 @@ inductance_factor = natural_log(0.16 / 0.116)  # ln(b / a) of a coaxial gun
 scaled = power(0.862, 3.8)  # a real-exponent scaling law
 ```
 
+The Bessel functions `J0` and `J1` (ADR 0005) serve the relaxed-state
+profiles of the reversed-field pinch and the spheromak: the DLMF 10.2.2
+series in Horner form with exact integer-quotient coefficients, thirty
+terms, on the declared domain `|x| <= 8` (refused beyond), verified against
+an exact rational evaluation of the series to `2e-14` absolute; the first
+zeros `j_{0,1}` and `j_{1,1}` are the correctly rounded OEIS expansions.
+
+```python
+from scpn_reactor_kernels import BESSEL_J0_FIRST_ZERO, bessel_j0, bessel_j1
+
+theta = 1.6  # pinch parameter of a Bessel-function-model profile
+reversal = theta * bessel_j0(2.0 * theta) / bessel_j1(2.0 * theta)  # F(theta)
+theta_at_reversal = BESSEL_J0_FIRST_ZERO / 2.0  # where F crosses zero
+```
+
 ### Native kernels (`rust/`, optional)
 
 The crate `scpn-reactor-kernels-rs` (library `scpn_reactor_kernels_native`,

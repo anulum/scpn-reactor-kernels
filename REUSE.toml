@@ -21,6 +21,7 @@ path = [
     "rust/Cargo.lock",
     "benchmarks/results/geometry_tessellation.local.json",
     "benchmarks/results/transcendental.local.json",
+    "benchmarks/results/bessel.local.json",
 ]
 precedence = "aggregate"
 SPDX-FileCopyrightText = [

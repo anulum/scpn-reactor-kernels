@@ -11,4 +11,5 @@
 //! logarithm, exponential and real power in [`transcendental`]. No `libm`
 //! call appears anywhere. Design record: ADR 0003.
 
+pub mod bessel;
 pub mod transcendental;

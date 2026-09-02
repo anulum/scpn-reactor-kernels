@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SCPN Reactor Kernels — native transcendental parity tests
 
-"""Bit-exact parity of the transcendental kernels between Python and Rust.
+"""Bit-exact parity of the transcendental and Bessel kernels between Python and Rust.
 
 Skipped hermetically when the optional native module is absent; when
 present, every result is compared by float64 bit pattern, never by
@@ -22,9 +22,13 @@ import pytest
 
 from geometry_fixtures import bits, stream_bits
 from scpn_reactor_kernels.numerics import (
+    BESSEL_J0_FIRST_ZERO,
+    BESSEL_J1_FIRST_ZERO,
     EXP_MAX,
     EXP_MIN,
     MIN_NORMAL,
+    bessel_j0,
+    bessel_j1,
     exponential,
     natural_log,
     power,
@@ -102,3 +106,21 @@ def test_native_refusals_mirror_the_floor() -> None:
         native.power_stream([1.0, 2.0], [1.0])
     with pytest.raises(ValueError, match="positive normal"):
         native.power_stream([0.0], [1.0])
+
+
+def test_bessel_kernels_are_bit_exact() -> None:
+    """``J0`` and ``J1`` agree bit for bit on a domain grid and at the zeros."""
+    generator = random.Random(17)
+    arguments = [0.0, 8.0, -8.0, BESSEL_J0_FIRST_ZERO, BESSEL_J1_FIRST_ZERO]
+    arguments += [generator.uniform(-8.0, 8.0) for _ in range(5000)]
+    floor_j0 = [bessel_j0(x) for x in arguments]
+    floor_j1 = [bessel_j1(x) for x in arguments]
+    assert stream_bits(floor_j0) == stream_bits(native.bessel_j0_stream(arguments))
+    assert stream_bits(floor_j1) == stream_bits(native.bessel_j1_stream(arguments))
+    for x, j0, j1 in zip(arguments[:64], floor_j0[:64], floor_j1[:64], strict=True):
+        assert bits(native.bessel_j0(x)) == bits(j0)
+        assert bits(native.bessel_j1(x)) == bits(j1)
+    with pytest.raises(ValueError, match=r"<= 8\.0"):
+        native.bessel_j0(8.5)
+    with pytest.raises(ValueError, match="must be finite"):
+        native.bessel_j1_stream([1.0, math.nan])

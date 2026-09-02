@@ -59,5 +59,7 @@ jobs:
         run: |
           python benchmarks/geometry_tessellation.py --segments 64 --warmup 1 --repeats 3 --label ci-smoke --output "$RUNNER_TEMP"
           python benchmarks/transcendental.py --points 1000 --warmup 1 --repeats 3 --label ci-smoke --output "$RUNNER_TEMP"
+          python benchmarks/bessel.py --points 1000 --warmup 1 --repeats 3 --label ci-smoke --output "$RUNNER_TEMP"
+          python -c "import json,os; d=json.load(open(os.environ['RUNNER_TEMP']+'/bessel.ci-smoke.json')); assert all(r['status']=='measured' for r in d['results']), d['results']"
           python -c "import json,os; d=json.load(open(os.environ['RUNNER_TEMP']+'/geometry_tessellation.ci-smoke.json')); assert all(r['status']=='measured' for r in d['results']), d['results']"
           python -c "import json,os; d=json.load(open(os.environ['RUNNER_TEMP']+'/transcendental.ci-smoke.json')); assert all(r['status']=='measured' for r in d['results']), d['results']"

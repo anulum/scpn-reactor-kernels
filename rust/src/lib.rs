@@ -14,7 +14,8 @@
 //! `-`, `*`, `/` and `sqrt` (all correctly rounded) plus vendored
 //! deterministic implementations of anything else (the polynomial unit
 //! circle of [`geometry::trig`]; the logarithm, exponential and power of
-//! [`numerics::transcendental`]). Nothing here solves an equation and no
+//! [`numerics::transcendental`]; the Bessel functions of
+//! [`numerics::bessel`]). Nothing here solves an equation and no
 //! value describes a real machine; design records are the ADRs of the
 //! repository (ADR 0002 for the geometry kernels, ADR 0003 for the
 //! numerics kernels).
@@ -180,6 +181,42 @@ mod python {
             .collect()
     }
 
+    /// `J0` of one argument on `|x| <= 8`.
+    #[pyfunction]
+    fn bessel_j0(x: f64) -> PyResult<f64> {
+        crate::numerics::bessel::bessel_j0(x).map_err(|e| PyValueError::new_err(e.to_string()))
+    }
+
+    /// `J1` of one argument on `|x| <= 8`.
+    #[pyfunction]
+    fn bessel_j1(x: f64) -> PyResult<f64> {
+        crate::numerics::bessel::bessel_j1(x).map_err(|e| PyValueError::new_err(e.to_string()))
+    }
+
+    /// `J0` of every value of a stream (the first refusal aborts).
+    #[pyfunction]
+    fn bessel_j0_stream(values: Vec<f64>) -> PyResult<Vec<f64>> {
+        values
+            .iter()
+            .map(|&x| {
+                crate::numerics::bessel::bessel_j0(x)
+                    .map_err(|e| PyValueError::new_err(e.to_string()))
+            })
+            .collect()
+    }
+
+    /// `J1` of every value of a stream (the first refusal aborts).
+    #[pyfunction]
+    fn bessel_j1_stream(values: Vec<f64>) -> PyResult<Vec<f64>> {
+        values
+            .iter()
+            .map(|&x| {
+                crate::numerics::bessel::bessel_j1(x)
+                    .map_err(|e| PyValueError::new_err(e.to_string()))
+            })
+            .collect()
+    }
+
     /// Python module `scpn_reactor_kernels_native`.
     #[pymodule]
     fn scpn_reactor_kernels_native(m: &Bound<'_, PyModule>) -> PyResult<()> {
@@ -194,6 +231,10 @@ mod python {
         m.add_function(wrap_pyfunction!(natural_log_stream, m)?)?;
         m.add_function(wrap_pyfunction!(exponential_stream, m)?)?;
         m.add_function(wrap_pyfunction!(power_stream, m)?)?;
+        m.add_function(wrap_pyfunction!(bessel_j0, m)?)?;
+        m.add_function(wrap_pyfunction!(bessel_j1, m)?)?;
+        m.add_function(wrap_pyfunction!(bessel_j0_stream, m)?)?;
+        m.add_function(wrap_pyfunction!(bessel_j1_stream, m)?)?;
         Ok(())
     }
 }

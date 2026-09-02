@@ -12,6 +12,18 @@ SCPN Reactor Kernels — CHANGELOG
 
 ## [Unreleased]
 
+### Added
+
+- Bessel kernels (`src/scpn_reactor_kernels/numerics/bessel.py`, kernel
+  `numerics_bessel`, ADR 0005): `J0` and `J1` by the DLMF 10.2.2 ascending
+  series in Horner form with exact integer-quotient coefficients, thirty
+  terms, on the declared domain `|x| <= 8` (refused beyond, never
+  clamped); the first zeros `j_{0,1}` and `j_{1,1}` as the correctly
+  rounded OEIS expansions; verified against an exact rational evaluation
+  of the same series; native kernels in `rust/src/numerics/bessel.rs`
+  with scalar and stream bindings proven bit-exact by parity tests; a
+  standard-conformant benchmark with a committed local artefact.
+
 ### Changed
 
 - First consumer recorded (ADR 0004): SCPN-Z-PINCH-CORE pins the

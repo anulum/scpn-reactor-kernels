@@ -128,8 +128,9 @@ Bounded claims — what is NOT claimed:
 ## Numerics kernels
 
 Evidence record of the `numerics` kernel group (`computational_prototype`;
-design record: `docs/adr/0003-numerics-transcendental-kernels.md`; kernel
-`numerics_transcendental` in `kernels-domain.json`).
+design records: `docs/adr/0003-numerics-transcendental-kernels.md` and
+`docs/adr/0005-numerics-bessel-kernels.md`; kernels `numerics_transcendental`
+and `numerics_bessel` in `kernels-domain.json`).
 
 What is exercised, all under the 100 % statement-and-branch coverage gate
 (`src/scpn_reactor_kernels/numerics/`):
@@ -164,11 +165,28 @@ What is exercised, all under the 100 % statement-and-branch coverage gate
 - **Benchmark**: `benchmarks/transcendental.py` per the ecosystem
   benchmark standard; results in `docs/benchmarks.md` and the committed
   local artefact `benchmarks/results/transcendental.local.json`.
+- **Bessel functions `J0`, `J1`** (`bessel.py`; DLMF 10.2.2 series in
+  Horner form, thirty terms, domain `|x| <= 8`): the two zero constants are
+  proven to be the correctly rounded doubles of the OEIS expansions
+  A115368 and A115369; both orders agree with an exact rational
+  evaluation of the same series (sixty terms, `fractions.Fraction` on the
+  exact binary argument) within `2e-14` absolute on a 400-point grid of the
+  domain and around both zeros; the thirty-term truncation differs from
+  sixty terms by less than `1e-15` at the domain edge; `J0(0) = 1` and
+  `J1(0) = 0` exactly; `J0` is even and `J1` odd bit for bit; the OEIS
+  zeros are zeros of the series within `1e-14` with the sign change; the
+  derivative identity `J0' = -J1` holds to `1e-9` by central difference;
+  non-finite and out-of-domain arguments are refused (the edges `±8` are
+  admitted). Native parity: `rust/src/numerics/bessel.rs`; a 5 000-point
+  seeded sweep through the scalar and stream bindings plus the refusal
+  paths. Benchmark: `benchmarks/bessel.py`, artefact
+  `benchmarks/results/bessel.local.json`.
 
 Bounded claims — what is NOT claimed:
 
 - The kernels are not correctly rounded; their accuracy is the measured
-  bound above, and the power's error grows with `|y ln x|`.
+  bound above, and the power's error grows with `|y ln x|`; the Bessel
+  series is exact-rational-verified only on `|x| <= 8` and refuses beyond.
 - No value describes any physical quantity; the benchmark measures series
   cost, not physics.
 - Maturity stays `computational_prototype`.

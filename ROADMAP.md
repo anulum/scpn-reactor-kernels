@@ -36,6 +36,13 @@ this repository until it appears in the kernel inventory with evidence.
   platform `math` module, and a standard-conformant benchmark;
   `computational_prototype` (ADR 0003, `VALIDATION.md#numerics-kernels`).
   The physics kernel groups below consume this group instead of `libm`.
+- **Bessel kernels** (landed 2026-09-02) — `J0` and `J1` by the DLMF
+  ascending series in Horner form on `|x| <= 8` with the OEIS first zeros,
+  verified against an exact rational evaluation, native kernels bit-exact
+  with the Python floor, and a standard-conformant benchmark;
+  `computational_prototype` (ADR 0005, `VALIDATION.md#numerics-kernels`).
+  Consumers: the reversed-field-pinch Bessel-function model and the
+  spheromak Taylor eigenvalue.
 
 ## Planned (no implementation exists; ordering is not a commitment)
 

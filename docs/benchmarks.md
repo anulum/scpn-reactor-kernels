@@ -70,6 +70,30 @@ P50 speed-up of the native stream bindings over the Python floor: 3.6×,
 bounded by the per-element conversions of the binding, not by the series.
 The fast row requires the optional native module and is never the default.
 
+## Bessel kernels
+
+Artefact: `benchmarks/results/bessel.local.json` (schema
+`scpn-reactor-kernels.bessel-benchmark.v1`, generated 2026-09-02T20:54:54.380080+00:00
+at commit `f1189915` with the working tree of the landing commit).
+Host: 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz, Linux-7.0.0-30-generic-x86_64-with-glibc2.39, Python 3.12.3; load average at start
+13.16 (other work was running on the host); cores not isolated
+(shared workstation, so treat the numbers as indicative). Operation: one pass
+of `J0` and `J1` over a deterministic grid of 100000 points on
+`[-8, 8]` (200000 evaluations; grid built outside the timed
+region); 3 warm-up passes, 20 timed passes; time per evaluation. The
+Python floor row calls the public scalar functions; the native row calls the
+stream bindings once per kernel and pass (conversions included).
+
+| Backend | P50 ns/eval | P95 ns/eval | P99 ns/eval | mean ns/eval | throughput eval/s | status |
+|---|---|---|---|---|---|---|
+| `python_floor` (public API, always available) | 2214.2 | 2526.6 | 2558.0 | 2222.8 | 451623 | measured |
+| `rust_native` (optional build: `rust/`, maturin, stream bindings) | 159.3 | 189.2 | 192.3 | 157.7 | 6276717 | measured |
+
+P50 speed-up of the native stream bindings over the Python floor: 13.9×
+(thirty Horner steps per evaluation; the Python floor pays the interpreter
+per step). The fast row requires the optional native module and is never
+the default.
+
 ## Fixed-runner (CI) number
 
 Not yet published: the hosted `rust` job runs a benchmark smoke that
