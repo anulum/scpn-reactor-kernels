@@ -20,6 +20,11 @@
       "inventory_sha256": "a5ec0daf5c17957652d649f31a1d6810f47db1529c2ed47d3c8b0a74601ed71a",
       "project": "SCPN-RFP-CORE",
       "version": "0.1.0.dev0"
+    },
+    {
+      "inventory_sha256": "a5ec0daf5c17957652d649f31a1d6810f47db1529c2ed47d3c8b0a74601ed71a",
+      "project": "SCPN-SPHEROMAK-CORE",
+      "version": "0.1.0.dev0"
     }
   ],
   "evidence_maturity": "computational_prototype",
@@ -106,6 +111,6 @@
   "schema_version": "1.0.0",
   "source": {
     "manifest_path": "kernels-domain.json",
-    "manifest_sha256": "ff6a6682cb7cc873cba50d239ddf38f5d5e4dc84ee33e4583e04216c2b2bff95"
+    "manifest_sha256": "78a2ed7ca0359f062514e433b76cd2cd32632415b396b298fa77a61de0ac4161"
   }
 }

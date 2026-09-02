@@ -152,8 +152,9 @@ pins, never the inventory that lists it. Consumers so far: SCPN-Z-PINCH-CORE
 (geometry kernels; ADR 0004), SCPN-MIRROR-CORE and
 SCPN-DENSE-PLASMA-FOCUS-CORE (numerics kernel, with their native crates
 depending on this repository's Rust crate at the same commit), and
-SCPN-RFP-CORE (Bessel kernel, pinned at the commit that introduced it,
-native crate likewise).
+SCPN-RFP-CORE and SCPN-SPHEROMAK-CORE (Bessel kernel, pinned at the
+commit that introduced it, native crates likewise; the spheromak also
+consumes the unit-circle kernel for its axial phases).
 
 ## Scope
 

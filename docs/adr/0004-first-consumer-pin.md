@@ -56,6 +56,10 @@ SCPN-RFP-CORE is the fourth consumer and the first of the Bessel kernel
 kernel and the inventory digest at that commit, with its native crate
 `scpn-rfp-rs` depending on this crate at the same commit; the table
 carries four entries.
+SCPN-SPHEROMAK-CORE is the fifth consumer, pinning the same commit for
+`numerics_bessel` and `geometry_unit_circle` (the phases of its axial
+stations come from the unit circle, so no platform trigonometric function
+enters the device); the table carries five entries.
 
 ## Consequences
 

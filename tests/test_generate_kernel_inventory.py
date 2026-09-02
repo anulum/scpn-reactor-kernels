@@ -45,6 +45,7 @@ def test_inventory_reports_exact_kernel_set() -> None:
         "SCPN-MIRROR-CORE",
         "SCPN-DENSE-PLASMA-FOCUS-CORE",
         "SCPN-RFP-CORE",
+        "SCPN-SPHEROMAK-CORE",
     ]
     assert inventory["claims"] == []
     assert inventory["source"]["manifest_sha256"] == sha256_of_file(MANIFEST)

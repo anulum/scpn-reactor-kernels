@@ -43,6 +43,9 @@ SCPN Reactor Kernels — CHANGELOG
   the Bessel kernel `numerics_bessel` and its inventory digest, the first
   consumer of that kernel; its native crate depends on the Rust crate at
   that commit.
+- Fifth consumer recorded: SCPN-SPHEROMAK-CORE pins the same commit for
+  the Bessel kernel and the unit-circle kernel (its axial phases), the
+  first device consumer of `geometry_unit_circle` outside a mesh.
 
 ### Added
 

@@ -194,6 +194,13 @@ def test_manifest_declares_the_library_truth() -> None:
                 "a5ec0daf5c17957652d649f31a1d6810f47db1529c2ed47d3c8b0a74601ed71a"
             ),
         },
+        {
+            "project": "SCPN-SPHEROMAK-CORE",
+            "version": "0.1.0.dev0",
+            "inventory_sha256": (
+                "a5ec0daf5c17957652d649f31a1d6810f47db1529c2ed47d3c8b0a74601ed71a"
+            ),
+        },
     ]
 
 
