@@ -31,6 +31,108 @@ evidence: `VALIDATION.md#numerics-kernels`) — each with native kernels
 proven bit-exact against the Python floor. The claim inventory is empty
 and verified by the domain validator.
 
+## Why a kernel library
+
+A closed form implemented twenty times is twenty sources of truth. A
+closed form left inside one family's solver ties nineteen other families
+to a solver they do not consume. This library is the single implementation
+of every published relation and standard method that more than one device
+family needs, versioned and pinned by digest, with one evidence record per
+kernel. Its contract, fixed in
+[`docs/adr/0001-repository-boundary.md`](docs/adr/0001-repository-boundary.md):
+
+- every kernel is a pure-Python floor (the public API, zero runtime
+  dependencies, Python 3.12 or newer);
+- every numerical kernel has an optional native counterpart in `rust/`
+  that reproduces the floor bit for bit, proven by parity tests that
+  compare float64 bit patterns, never tolerances; anything a platform
+  `libm` would evaluate differently between languages (trigonometry,
+  logarithm, exponential, power) is vendored on both sides;
+- every input outside a kernel's declared domain is refused with an error
+  naming the field and the bound; nothing is clamped, defaulted or
+  silently corrected, and no kernel returns a non-finite value;
+- every kernel carries statement- and branch-complete tests, a benchmark
+  row per the ecosystem benchmark standard, and its sources in the
+  manifest.
+
+## Implemented kernels
+
+### Geometry (`scpn_reactor_kernels.geometry`, ADR 0002)
+
+The substrate of every device 3D model in the group: a unit circle whose
+points are bit-exact across backends (degree-15 sine and degree-16 cosine
+Taylor polynomials on `[0, pi/4]` with exact octant and quadrant
+symmetry), a closed and consistently oriented triangle-mesh contract
+(`TriangleMesh`: closure and orientation validation, signed volume by the
+divergence theorem, surface area, bounding box, canonical bytes and a
+SHA-256 digest), analytic primitives tessellated in a fixed vertex and
+face order (solid cylinder, annular tube), and open-format exports
+(binary STL, glTF 2.0 binary) that carry caller-supplied provenance.
+
+```python
+from scpn_reactor_kernels import TriangleMesh, annular_tube, glb_bytes
+
+vertices, faces = annular_tube(0.10, 0.11, 0.0, 1.6, segments=64)
+wall = TriangleMesh(
+    name="chamber_wall",
+    role="structure",
+    material_identifier="steel",
+    vertices=vertices,
+    faces=faces,
+)
+volume_m3 = wall.signed_volume_m3()          # positive: outward orientation
+digest = wall.digest_sha256()                # over the float64 canonical bytes
+document = glb_bytes([wall], extras={"schema": "your.model.schema.v1"})
+```
+
+### Numerics (`scpn_reactor_kernels.numerics`, ADR 0003)
+
+Deterministic `natural_log`, `exponential` and `power` built only from
+`+ - * /`, exact binary decomposition and exact power-of-two scaling:
+`ln(x) = k ln 2 + 2 atanh((m - 1)/(m + 1))` with `x = m 2^k` and `m` in
+`[sqrt(1/2), sqrt(2))`; `exp(y) = 2^k exp(r)` with the Cody–Waite
+reduction of `ln 2`; `pow(x, y) = exp(y ln x)`. The logarithm needs a
+positive normal double, the exponential an argument in `[-708, 709]` so
+that the result is a normal double; the tests bound both to `1e-15`
+relative against the platform `math` module over their whole domains and
+the power to `1e-13` for `|y ln x| <= 100`.
+
+```python
+from scpn_reactor_kernels import natural_log, power
+
+inductance_factor = natural_log(0.16 / 0.116)   # ln(b / a) of a coaxial gun
+scaled = power(0.862, 3.8)                       # a real-exponent scaling law
+```
+
+### Native kernels (`rust/`, optional)
+
+The crate `scpn-reactor-kernels-rs` (library `scpn_reactor_kernels_native`,
+optional Python distribution `scpn-reactor-kernels-native` built with
+maturin) mirrors every numerical kernel operation for operation and
+exposes scalar and stream bindings. The Python floor is always the default;
+the native module is an acceleration a consumer may install, never a
+requirement, and the parity tests skip hermetically when it is absent.
+
+```bash
+python -m venv .venv && .venv/bin/pip install -r requirements-dev.txt maturin
+VIRTUAL_ENV=.venv PATH=.venv/bin:$PATH maturin develop --release -m rust/Cargo.toml
+.venv/bin/pytest -q tests/test_geometry_native_parity.py tests/test_numerics_native_parity.py
+```
+
+## Consuming and pinning
+
+Consumers install the pure-Python distribution `scpn-reactor-kernels` (no
+release is published yet; install from a repository checkout) and record
+`{distribution, version, inventory_sha256}` of the generated
+[`kernel-inventory.json`](kernel-inventory.json) in their own manifests.
+The inventory is derived from the kernel manifest
+[`kernels-domain.json`](kernels-domain.json) (schema
+`scpn.reactor-kernels-domain.v1`) and drift-checked, so a pin identifies
+the exact set of implemented kernels and their evidence pointers. A kernel
+whose numerical output changes for any input is a breaking change of that
+kernel and bumps the major version. The `consumers` list of the manifest is
+updated when a consumer lands its pin.
+
 ## Scope
 
 This repository owns, for the reactor systems portfolio:
@@ -42,14 +144,14 @@ This repository owns, for the reactor systems portfolio:
 - shared geometry kernels: deterministic tessellation of analytic bodies,
   the closed-mesh contract, and open-format exporters used by every device
   3D model;
-- shared numerical integrators with bit-exact native counterparts;
+- shared numerical substrate and integrators with bit-exact native
+  counterparts;
 - the machine-readable kernel inventory (`kernels-domain.json`) that
   consumers pin by version and digest.
 
-Every kernel ships a pure-Python floor (the public API, zero runtime
-dependencies), an optional native kernel in `rust/` reproducing the floor
-bit for bit, parity tests by float64 bit pattern, statement- and
-branch-complete tests, a benchmark row, and its sources.
+Planned kernel groups and their ordering are listed in
+[`ROADMAP.md`](ROADMAP.md); nothing listed there carries an implementation
+or a claim until it appears in the inventory with evidence.
 
 ## Explicit exclusions
 
@@ -73,21 +175,46 @@ reactor-ready. It contains no solver, no controller, no dataset, no
 experimental correlation, and no published artefact; every kernel is a
 computational prototype of a cited closed form or a standard method, and
 no value describes or validates any real machine. A kernel's presence
-here says nothing about any device's performance.
+here says nothing about any device's performance. The numerics kernels are
+not correctly rounded; their accuracy is the measured bound recorded in
+`VALIDATION.md`.
+
+## Repository layout
+
+| Path | Role |
+|---|---|
+| `kernels-domain.json` | portable source of library identity, kernel inventory and consumers |
+| `kernel-inventory.json` | generated inventory of the implemented kernels (drift-checked) |
+| `src/scpn_reactor_kernels/geometry/` | deterministic unit circle, mesh contract, primitives, STL/GLB exports |
+| `src/scpn_reactor_kernels/numerics/` | deterministic natural logarithm, exponential and real power |
+| `src/scpn_reactor_kernels/validation.py` | shared fail-closed input validation |
+| `rust/` | native kernels (`scpn-reactor-kernels-rs`), bit-exact with the Python floor |
+| `benchmarks/` | standard-conformant benchmarks and committed local artefacts |
+| `docs/adr/` | decision records (boundary, geometry kernels, numerics kernels) |
+| `docs/THREAT_MODEL.md` | assets, trust boundaries, misuse paths |
+| `tools/` | manifest validator, inventory generator, workflow guard, preflight |
+| `tests/` | statement- and branch-complete tests for `src/` and `tools/`, native parity tests |
+| `.github/workflows/` | read-only CI definitions (no publication) |
 
 ## Architecture
 
 The boundary and the position of this library in the SCPN ecosystem are
 defined in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) and fixed by
-[`docs/adr/0001-repository-boundary.md`](docs/adr/0001-repository-boundary.md).
+[`docs/adr/0001-repository-boundary.md`](docs/adr/0001-repository-boundary.md);
+the kernel groups are recorded in
+[`docs/adr/0002-geometry-kernels.md`](docs/adr/0002-geometry-kernels.md) and
+[`docs/adr/0003-numerics-transcendental-kernels.md`](docs/adr/0003-numerics-transcendental-kernels.md).
 The threat model is in [`docs/THREAT_MODEL.md`](docs/THREAT_MODEL.md).
 
 ## Validation
 
 Every gate currently active in this repository is listed in
-[`VALIDATION.md`](VALIDATION.md). The local sequence is:
+[`VALIDATION.md`](VALIDATION.md), together with the evidence record of
+each kernel group (what is exercised, what is anchored, what is not
+claimed). The local sequence is:
 
 ```bash
+make venv        # .venv with the pinned development toolchain
 make lint        # ruff check + ruff format --check
 make typecheck   # mypy --strict src tools tests benchmarks
 make test        # pytest with 100 % statement and branch coverage
@@ -95,6 +222,28 @@ make validate    # kernel manifest and inventory checks
 make rust        # native crate: fmt, clippy (warnings denied), tests
 make preflight   # the full fail-closed gate sequence
 ```
+
+Hosted CI runs the same gates read-only (static analysis and policy,
+tests with complete coverage, the native crate with parity and a
+benchmark smoke, licensing, secrets, dependency and workflow audits); it
+publishes nothing.
+
+## Benchmarks
+
+Every number in [`docs/benchmarks.md`](docs/benchmarks.md) is regenerated
+by a script under `benchmarks/` per the ecosystem benchmark standard
+(warm-up, repeated samples, percentiles, one row per backend, provenance in
+the committed artefact) and is labelled with the host it was measured on.
+Nothing there is a physics or engineering claim.
+
+## Contributing, governance, support
+
+Contributions follow [`CONTRIBUTING.md`](CONTRIBUTING.md) (every commit
+carries the provenance header, the authorship line and a seat trailer, and
+passes the full gate sequence); decisions follow
+[`GOVERNANCE.md`](GOVERNANCE.md); support routes are in
+[`SUPPORT.md`](SUPPORT.md); conduct is governed by
+[`CODE_OF_CONDUCT.md`](CODE_OF_CONDUCT.md).
 
 ## Security
 
