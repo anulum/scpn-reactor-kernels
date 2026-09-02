@@ -42,6 +42,7 @@ def test_inventory_reports_exact_kernel_set() -> None:
     assert [c["project"] for c in inventory["consumers"]] == [
         "SCPN-Z-PINCH-CORE",
         "SCPN-MIRROR-CORE",
+        "SCPN-DENSE-PLASMA-FOCUS-CORE",
     ]
     assert inventory["claims"] == []
     assert inventory["source"]["manifest_sha256"] == sha256_of_file(MANIFEST)

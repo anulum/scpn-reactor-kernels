@@ -25,6 +25,8 @@ SCPN Reactor Kernels — CHANGELOG
   inventory digest for the numerics kernel `numerics_transcendental`; its
   native crate depends on `scpn-reactor-kernels-rs` as a git dependency
   at that commit, the first use of the Rust crate as a library.
+- Third consumer recorded: SCPN-DENSE-PLASMA-FOCUS-CORE retired its
+  byte-identical copy of the numerics kernel for the same pin.
 
 ### Added
 

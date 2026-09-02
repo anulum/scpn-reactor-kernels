@@ -48,7 +48,9 @@ kernel `numerics_transcendental` and its native crate `scpn-mirror-rs`
 declares `scpn-reactor-kernels-rs` as a git dependency at that commit
 (default features, no Python binding), the first use of this crate as a
 Rust library. The same rule on digests applies; the consumer table
-carries both entries.
+carries both entries. SCPN-DENSE-PLASMA-FOCUS-CORE followed the same day,
+retiring the byte-identical copy it had carried since its first level-0
+landing; the table carries three entries.
 
 ## Consequences
 

@@ -10,6 +10,11 @@
       "inventory_sha256": "b065c46b9f54d478d94be5cfeb61e1300b4ddae47e57f3992a985adfb2cb5dbf",
       "project": "SCPN-MIRROR-CORE",
       "version": "0.1.0.dev0"
+    },
+    {
+      "inventory_sha256": "b065c46b9f54d478d94be5cfeb61e1300b4ddae47e57f3992a985adfb2cb5dbf",
+      "project": "SCPN-DENSE-PLASMA-FOCUS-CORE",
+      "version": "0.1.0.dev0"
     }
   ],
   "evidence_maturity": "computational_prototype",
@@ -84,6 +89,6 @@
   "schema_version": "1.0.0",
   "source": {
     "manifest_path": "kernels-domain.json",
-    "manifest_sha256": "09ddddfa9443e517930243f5cb66e02a7e458b83589698d59262f63a8c7ac1db"
+    "manifest_sha256": "4e9e29b6ec9d9a6506fd86b3466f8440613d6740d7d36261b73faf0805e472a7"
   }
 }
