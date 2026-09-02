@@ -5,6 +5,11 @@
       "inventory_sha256": "b065c46b9f54d478d94be5cfeb61e1300b4ddae47e57f3992a985adfb2cb5dbf",
       "project": "SCPN-Z-PINCH-CORE",
       "version": "0.1.0.dev0"
+    },
+    {
+      "inventory_sha256": "b065c46b9f54d478d94be5cfeb61e1300b4ddae47e57f3992a985adfb2cb5dbf",
+      "project": "SCPN-MIRROR-CORE",
+      "version": "0.1.0.dev0"
     }
   ],
   "evidence_maturity": "computational_prototype",
@@ -79,6 +84,6 @@
   "schema_version": "1.0.0",
   "source": {
     "manifest_path": "kernels-domain.json",
-    "manifest_sha256": "9cbe09da331bab351035e2bc934aff549b860b49d954bb0406dd9bd1609ce433"
+    "manifest_sha256": "09ddddfa9443e517930243f5cb66e02a7e458b83589698d59262f63a8c7ac1db"
   }
 }

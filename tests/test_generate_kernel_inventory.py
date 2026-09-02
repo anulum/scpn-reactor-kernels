@@ -39,7 +39,10 @@ def test_inventory_reports_exact_kernel_set() -> None:
     assert inventory["evidence_maturity"] == "computational_prototype"
     assert inventory["implemented_kernel_count"] == 5
     assert [k["identifier"] for k in inventory["kernels"]] == KERNEL_IDENTIFIERS
-    assert [c["project"] for c in inventory["consumers"]] == ["SCPN-Z-PINCH-CORE"]
+    assert [c["project"] for c in inventory["consumers"]] == [
+        "SCPN-Z-PINCH-CORE",
+        "SCPN-MIRROR-CORE",
+    ]
     assert inventory["claims"] == []
     assert inventory["source"]["manifest_sha256"] == sha256_of_file(MANIFEST)
 

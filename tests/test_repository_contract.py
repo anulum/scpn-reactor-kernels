@@ -166,7 +166,14 @@ def test_manifest_declares_the_library_truth() -> None:
             "inventory_sha256": (
                 "b065c46b9f54d478d94be5cfeb61e1300b4ddae47e57f3992a985adfb2cb5dbf"
             ),
-        }
+        },
+        {
+            "project": "SCPN-MIRROR-CORE",
+            "version": "0.1.0.dev0",
+            "inventory_sha256": (
+                "b065c46b9f54d478d94be5cfeb61e1300b4ddae47e57f3992a985adfb2cb5dbf"
+            ),
+        },
     ]
 
 

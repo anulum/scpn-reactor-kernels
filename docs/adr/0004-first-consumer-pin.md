@@ -41,6 +41,15 @@ is proven bit-exact body by body against this library's native module.
    published release will let consumers replace the commit pin by a
    version pin, recorded then as a new decision.
 
+## Addendum (2026-09-02, same day)
+
+SCPN-MIRROR-CORE is the second consumer: it pins the same commit for the
+kernel `numerics_transcendental` and its native crate `scpn-mirror-rs`
+declares `scpn-reactor-kernels-rs` as a git dependency at that commit
+(default features, no Python binding), the first use of this crate as a
+Rust library. The same rule on digests applies; the consumer table
+carries both entries.
+
 ## Consequences
 
 The library now has a consumer whose numerics depend on it; a change of

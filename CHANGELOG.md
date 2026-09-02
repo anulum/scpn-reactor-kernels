@@ -21,6 +21,10 @@ SCPN Reactor Kernels — CHANGELOG
   carry the entry. The README states that a consumer's digest names the
   inventory at the pinned commit, since recording the consumer changes
   the inventory.
+- Second consumer recorded: SCPN-MIRROR-CORE pins the same commit and
+  inventory digest for the numerics kernel `numerics_transcendental`; its
+  native crate depends on `scpn-reactor-kernels-rs` as a git dependency
+  at that commit, the first use of the Rust crate as a library.
 
 ### Added
 

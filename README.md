@@ -133,8 +133,10 @@ whose numerical output changes for any input is a breaking change of that
 kernel and bumps the major version. The `consumers` list of the manifest is
 updated when a consumer lands its pin; because that update changes the
 inventory, a consumer's digest always names the inventory at the commit it
-pins, never the inventory that lists it. First consumer: SCPN-Z-PINCH-CORE
-(geometry kernels; ADR 0004).
+pins, never the inventory that lists it. Consumers so far: SCPN-Z-PINCH-CORE
+(geometry kernels; ADR 0004) and SCPN-MIRROR-CORE (numerics kernel, with
+its native crate depending on this repository's Rust crate at the same
+commit).
 
 ## Scope
 
