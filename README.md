@@ -80,8 +80,8 @@ wall = TriangleMesh(
     vertices=vertices,
     faces=faces,
 )
-volume_m3 = wall.signed_volume_m3()          # positive: outward orientation
-digest = wall.digest_sha256()                # over the float64 canonical bytes
+volume_m3 = wall.signed_volume_m3()  # positive: outward orientation
+digest = wall.digest_sha256()  # over the float64 canonical bytes
 document = glb_bytes([wall], extras={"schema": "your.model.schema.v1"})
 ```
 
@@ -100,8 +100,8 @@ the power to `1e-13` for `|y ln x| <= 100`.
 ```python
 from scpn_reactor_kernels import natural_log, power
 
-inductance_factor = natural_log(0.16 / 0.116)   # ln(b / a) of a coaxial gun
-scaled = power(0.862, 3.8)                       # a real-exponent scaling law
+inductance_factor = natural_log(0.16 / 0.116)  # ln(b / a) of a coaxial gun
+scaled = power(0.862, 3.8)  # a real-exponent scaling law
 ```
 
 ### Native kernels (`rust/`, optional)
