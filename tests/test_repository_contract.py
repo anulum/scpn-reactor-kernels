@@ -187,6 +187,13 @@ def test_manifest_declares_the_library_truth() -> None:
                 "b065c46b9f54d478d94be5cfeb61e1300b4ddae47e57f3992a985adfb2cb5dbf"
             ),
         },
+        {
+            "project": "SCPN-RFP-CORE",
+            "version": "0.1.0.dev0",
+            "inventory_sha256": (
+                "a5ec0daf5c17957652d649f31a1d6810f47db1529c2ed47d3c8b0a74601ed71a"
+            ),
+        },
     ]
 
 

@@ -151,7 +151,9 @@ inventory, a consumer's digest always names the inventory at the commit it
 pins, never the inventory that lists it. Consumers so far: SCPN-Z-PINCH-CORE
 (geometry kernels; ADR 0004), SCPN-MIRROR-CORE and
 SCPN-DENSE-PLASMA-FOCUS-CORE (numerics kernel, with their native crates
-depending on this repository's Rust crate at the same commit).
+depending on this repository's Rust crate at the same commit), and
+SCPN-RFP-CORE (Bessel kernel, pinned at the commit that introduced it,
+native crate likewise).
 
 ## Scope
 

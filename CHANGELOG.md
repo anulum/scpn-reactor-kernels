@@ -39,6 +39,10 @@ SCPN Reactor Kernels — CHANGELOG
   at that commit, the first use of the Rust crate as a library.
 - Third consumer recorded: SCPN-DENSE-PLASMA-FOCUS-CORE retired its
   byte-identical copy of the numerics kernel for the same pin.
+- Fourth consumer recorded: SCPN-RFP-CORE pins the commit that introduced
+  the Bessel kernel `numerics_bessel` and its inventory digest, the first
+  consumer of that kernel; its native crate depends on the Rust crate at
+  that commit.
 
 ### Added
 

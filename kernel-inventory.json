@@ -15,6 +15,11 @@
       "inventory_sha256": "b065c46b9f54d478d94be5cfeb61e1300b4ddae47e57f3992a985adfb2cb5dbf",
       "project": "SCPN-DENSE-PLASMA-FOCUS-CORE",
       "version": "0.1.0.dev0"
+    },
+    {
+      "inventory_sha256": "a5ec0daf5c17957652d649f31a1d6810f47db1529c2ed47d3c8b0a74601ed71a",
+      "project": "SCPN-RFP-CORE",
+      "version": "0.1.0.dev0"
     }
   ],
   "evidence_maturity": "computational_prototype",
@@ -101,6 +106,6 @@
   "schema_version": "1.0.0",
   "source": {
     "manifest_path": "kernels-domain.json",
-    "manifest_sha256": "e6be81da70705086b6da8d5eae2c4c837b9dfdd0127decdb27b5cc727bd74c8b"
+    "manifest_sha256": "ff6a6682cb7cc873cba50d239ddf38f5d5e4dc84ee33e4583e04216c2b2bff95"
   }
 }

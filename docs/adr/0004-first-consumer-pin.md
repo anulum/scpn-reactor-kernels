@@ -51,6 +51,11 @@ Rust library. The same rule on digests applies; the consumer table
 carries both entries. SCPN-DENSE-PLASMA-FOCUS-CORE followed the same day,
 retiring the byte-identical copy it had carried since its first level-0
 landing; the table carries three entries.
+SCPN-RFP-CORE is the fourth consumer and the first of the Bessel kernel
+`numerics_bessel` (ADR 0005): it pins the commit that introduced the
+kernel and the inventory digest at that commit, with its native crate
+`scpn-rfp-rs` depending on this crate at the same commit; the table
+carries four entries.
 
 ## Consequences
 
