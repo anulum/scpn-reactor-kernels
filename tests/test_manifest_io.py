@@ -51,7 +51,7 @@ def test_load_json_object_rejects_invalid_json(tmp_path: Path) -> None:
 
 def test_load_json_object_missing_file_raises_oserror(tmp_path: Path) -> None:
     """A missing file is an ``OSError``, not an empty result."""
-    with pytest.raises(OSError):
+    with pytest.raises(FileNotFoundError, match=r"absent\.json"):
         load_json_object(tmp_path / "absent.json")
 
 
@@ -66,7 +66,7 @@ def test_canonical_json_bytes_is_deterministic_and_sorted() -> None:
 
 def test_canonical_json_bytes_rejects_nan() -> None:
     """Non-finite numbers cannot enter a drift-checked artefact."""
-    with pytest.raises(ValueError):
+    with pytest.raises(ValueError, match="Out of range float values"):
         canonical_json_bytes({"value": float("nan")})
 
 

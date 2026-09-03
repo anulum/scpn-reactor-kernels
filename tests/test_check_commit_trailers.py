@@ -32,8 +32,10 @@ def test_valid_message_has_no_violations() -> None:
     [
         ("feat: x\n\nSeat: rs01\n", "missing required authorship line"),
         (
-            f"feat: x\n\nSeat: rs01\n{REQUIRED_AUTHORSHIP_LINE}\n"
-            f"{REQUIRED_AUTHORSHIP_LINE}\n",
+            (
+                f"feat: x\n\nSeat: rs01\n{REQUIRED_AUTHORSHIP_LINE}\n"
+                f"{REQUIRED_AUTHORSHIP_LINE}\n"
+            ),
             "exactly one authorship line",
         ),
         (f"feat: x\n\n{REQUIRED_AUTHORSHIP_LINE}\n", "missing `Seat:"),
@@ -55,13 +57,17 @@ def test_valid_message_has_no_violations() -> None:
             "immediately precede",
         ),
         (
-            f"feat: x\n\nCo-Authored-By: Someone\nSeat: rs01\n"
-            f"{REQUIRED_AUTHORSHIP_LINE}\n",
+            (
+                f"feat: x\n\nCo-Authored-By: Someone\nSeat: rs01\n"
+                f"{REQUIRED_AUTHORSHIP_LINE}\n"
+            ),
             "Co-Authored-By",
         ),
         (
-            f"feat: comprehensive robust module\n\nSeat: rs01\n"
-            f"{REQUIRED_AUTHORSHIP_LINE}\n",
+            (
+                f"feat: comprehensive robust module\n\nSeat: rs01\n"
+                f"{REQUIRED_AUTHORSHIP_LINE}\n"
+            ),
             "banned public subject term(s): comprehensive, robust",
         ),
     ],

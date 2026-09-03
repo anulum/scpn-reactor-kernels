@@ -25,7 +25,7 @@ import re
 import subprocess
 import sys
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Final
 
@@ -49,8 +49,8 @@ class GateResult:
     """
 
     name: str
-    passed: bool
-    detail: str
+    passed: bool = field(kw_only=True)
+    detail: str = field(kw_only=True)
 
 
 def run_command_gate(name: str, command: list[str], root: Path) -> GateResult:
@@ -80,11 +80,15 @@ def run_command_gate(name: str, command: list[str], root: Path) -> GateResult:
             check=False,
         )
     except OSError as exc:
-        return GateResult(name, False, f"cannot execute {command[0]}: {exc}")
+        return GateResult(
+            name, passed=False, detail=f"cannot execute {command[0]}: {exc}"
+        )
     if completed.returncode != 0:
         detail = (completed.stdout + completed.stderr).strip()
-        return GateResult(name, False, detail or f"exit {completed.returncode}")
-    return GateResult(name, True, "")
+        return GateResult(
+            name, passed=False, detail=detail or f"exit {completed.returncode}"
+        )
+    return GateResult(name, passed=True, detail="")
 
 
 def iter_markdown_files(root: Path) -> Iterable[Path]:
@@ -151,7 +155,7 @@ def docs_gate(root: Path) -> GateResult:
         Aggregated documentation findings.
     """
     findings = check_docs(root)
-    return GateResult("docs", not findings, "; ".join(findings))
+    return GateResult("docs", passed=not findings, detail="; ".join(findings))
 
 
 def build_gate_plan(root: Path) -> list[tuple[str, list[str] | None]]:

@@ -239,7 +239,15 @@ def _optimal_box(shape: Any) -> tuple[float, float, float, float, float, float]:
     bnd = load_backend("OCP.Bnd")
     brep_bnd_lib = load_backend("OCP.BRepBndLib")
     box = bnd.Bnd_Box()
-    brep_bnd_lib.BRepBndLib.AddOptimal_s(shape.wrapped, box, False, False)
+    # The back-end takes both flags positionally. Naming them here is the
+    # only place a reader can learn what they mean: the triangulation is not
+    # consulted (so a faceted body reports the same box as an unfaceted one)
+    # and the shape tolerance is not added (so the box is the geometry's).
+    use_triangulation = False
+    add_shape_tolerance = False
+    brep_bnd_lib.BRepBndLib.AddOptimal_s(
+        shape.wrapped, box, use_triangulation, add_shape_tolerance
+    )
     return tuple(float(value) for value in box.Get())  # type: ignore[return-value]
 
 

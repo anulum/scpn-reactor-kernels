@@ -58,12 +58,88 @@ select = [
     "PTH", # pathlib usage
     "RUF", # ruff-specific
     "S",   # bandit-class security rules
+    "PL",  # pylint
+    "PERF",# performance anti-patterns
+    "FBT", # boolean traps
+    "ISC", # implicit string concatenation
+    "PT",  # pytest style
+    "RET", # return simplification
+    "SLF", # private member access
+    "DTZ", # naive datetimes
+    "PIE", # misc lints
+    "C90", # mccabe complexity
+    "FURB",# modernisation
+    "LOG", # logging defects
+    "G",   # logging format
+    "YTT", # sys.version misuse
+    "EXE", # shebang and executable bits
+    "ICN", # import conventions
+    "INT", # gettext
+    "TID", # tidy imports
+    "FLY", # static join
+    "NPY", # numpy legacy
+    "Q",   # quote consistency
+    "TRY", # exception anti-patterns
+    "ANN", # missing annotations
 ]
+# Rules deliberately NOT adopted, each with the reason it is wrong here
+# rather than merely inconvenient. A rule that is silenced without a reason
+# is debt; a rule that is silenced with one is a decision.
+ignore = [
+    # TRY003 demands short, generic exception messages. Every refusal in this
+    # library deliberately names the offending field and its value, because
+    # that message is load-bearing evidence for the caller. Adopting TRY003
+    # would degrade exactly what the validation discipline exists to produce.
+    "TRY003",
+    # TRY004 asks for TypeError when an isinstance check fails. The group's
+    # convention is that a rejected input raises a domain error naming the
+    # field, never a builtin type error; honouring TRY004 in the two places
+    # it fires would make the codebase less consistent, not more.
+    "TRY004",
+    # ANN401 forbids `Any`. The CAD group wraps a third-party kernel that
+    # ships no type information, so `Any` is the honest annotation for a
+    # back-end shape; a narrower lie would be worse.
+    "ANN401",
+    # PLR2004 flags comparisons against small integers. Here they are tuple
+    # arities (a pair has two entries, a triangle three), and naming them
+    # would obscure rather than explain.
+    "PLR2004",
+    # PLC0415 forbids imports inside functions. The CAD back-end is loaded
+    # lazily on purpose (ADR 0006) and the benchmarks import their subject
+    # after the timer setup on purpose; both are design decisions.
+    "PLC0415",
+    # PERF401 rewrites a filtered append loop into list.extend. Where it
+    # fires, the loop body builds a multi-line message and the comprehension
+    # form is less readable for no measurable gain on three iterations.
+    "PERF401",
+    # TC001/TC002/TC003 move imports under TYPE_CHECKING. The runtime needs
+    # several of these annotations (dataclass field resolution), so the move
+    # trades a real risk for no benefit at this size.
+    "TC001",
+    "TC002",
+    "TC003",
+]
+
+[tool.ruff.lint.mccabe]
+# Ratchet at the current ceiling: passes today, forbids anything worse.
+max-complexity = 20
+
+[tool.ruff.lint.pylint]
+max-args = 7
+max-positional-args = 7
+# Same ratchet for the two structural counters: the manifest validators and
+# the workflow auditor legitimately test many independent fields in sequence,
+# and splitting them would scatter one contract across several functions.
+max-branches = 16
+max-statements = 52
 
 [tool.ruff.lint.per-file-ignores]
 # assert is the pytest contract surface; the accuracy and parity sweeps use
 # seeded standard pseudo-random grids (deterministic, not cryptographic)
 "tests/*" = ["S101", "S311"]
+# these two tests exist to prove that a boolean is refused as a count, so
+# passing a boolean positionally IS the test (scope of FBT003)
+"tests/test_geometry_trig.py" = ["S101", "S311", "FBT003"]
 # preflight executes fixed argument vectors of repository gates without a
 # shell and without untrusted input (scope of S603/S607)
 "tools/preflight.py" = ["S603", "S607"]
