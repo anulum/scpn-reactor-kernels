@@ -59,6 +59,7 @@ jobs:
         run: |
           cargo fmt --check
           cargo clippy --all-targets --features python -- -D warnings
+          cargo doc --no-deps --features python
           cargo test
       - name: Build the native module and prove bit-exact parity
         run: |

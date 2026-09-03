@@ -121,6 +121,13 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Changed
 
+- Native surface documentation is now a compiler gate, not a habit: the crate
+  denies `missing_docs`, `missing_debug_implementations` and `unsafe_code`, and
+  denies rustdoc's broken and private intra-doc links and invalid Rust code
+  blocks. `cargo doc --no-deps` joins the local `rust` target and the hosted
+  `rust` job, so a public item that ships without documentation fails the build
+  rather than accumulating as debt for the next reader.
+
 - First consumer recorded (ADR 0004): SCPN-Z-PINCH-CORE pins the
   distribution at `0.1.0.dev0` and the kernel-inventory digest of the
   commit it depends on, consuming the four geometry kernels; the
