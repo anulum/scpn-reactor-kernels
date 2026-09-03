@@ -50,6 +50,7 @@ ANGULAR_DEFLECTION_RAD: Final = 0.1
 CHARACTERISTIC_LENGTH_M: Final = 0.02
 RING_COUNT: Final = 12
 RING_RADIUS_M: Final = 0.1
+EVIDENCE_SEGMENTS: Final = 64
 
 
 def operations() -> list[tuple[str, str, Callable[[], float]]]:
@@ -68,13 +69,19 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
     from scpn_reactor_kernels.cad import (
         BrepAssembly,
         annular_tube_brep,
+        assembly_evidence,
         cylinder_solid_brep,
         facet_assembly,
         gmsh_volume_mesh,
         ring_brep_bodies,
         step_bytes,
     )
-    from scpn_reactor_kernels.geometry import ring_offsets
+    from scpn_reactor_kernels.geometry import (
+        TriangleMesh,
+        annular_tube,
+        cylinder_solid,
+        ring_offsets,
+    )
 
     def build() -> float:
         assembly = BrepAssembly(
@@ -104,6 +111,39 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
     def volume_mesh() -> float:
         return gmsh_volume_mesh(step, CHARACTERISTIC_LENGTH_M).total_volume_m3
 
+    faceted = facet_assembly(assembly, LINEAR_DEFLECTION_M, ANGULAR_DEFLECTION_RAD)
+    cylinder_vertices, cylinder_faces = cylinder_solid(
+        0.05, 0.0, 0.3, EVIDENCE_SEGMENTS
+    )
+    tube_vertices, tube_faces = annular_tube(0.08, 0.1, -0.1, 0.4, EVIDENCE_SEGMENTS)
+    reference_meshes = (
+        TriangleMesh(
+            name="inner",
+            role="electrode",
+            material_identifier="conductor",
+            vertices=cylinder_vertices,
+            faces=cylinder_faces,
+        ),
+        TriangleMesh(
+            name="outer",
+            role="wall",
+            material_identifier="steel",
+            vertices=tube_vertices,
+            faces=tube_faces,
+        ),
+    )
+
+    def evidence() -> float:
+        checked = assembly_evidence(
+            assembly.bodies,
+            (0.05, 0.08),
+            faceted,
+            reference_meshes,
+            LINEAR_DEFLECTION_M,
+            EVIDENCE_SEGMENTS,
+        )
+        return sum(item.volume_relative_error for item in checked)
+
     rod = cylinder_solid_brep(0.006, 0.0, 0.16, "rod", "electrode", "conductor")
     rod_names = tuple(f"rod_{index:02d}" for index in range(RING_COUNT))
     centres = ring_offsets(RING_COUNT, RING_RADIUS_M)
@@ -118,6 +158,7 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
         ("facet_two_bodies", "cadquery_ocp", facet),
         ("gmsh_volume_mesh", "gmsh", volume_mesh),
         ("place_ring_of_bodies", "cadquery_ocp", place_ring),
+        ("assembly_body_evidence", "cadquery_ocp", evidence),
     ]
 
 
@@ -232,6 +273,7 @@ def main(argv: list[str] | None = None) -> int:
             ("facet_two_bodies", "cadquery_ocp"),
             ("gmsh_volume_mesh", "gmsh"),
             ("place_ring_of_bodies", "cadquery_ocp"),
+            ("assembly_body_evidence", "cadquery_ocp"),
         ):
             results.append(
                 {

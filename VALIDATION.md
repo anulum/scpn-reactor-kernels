@@ -214,10 +214,11 @@ Bounded claims — what is NOT claimed:
 ## CAD kernels
 
 Evidence record of the `cad` kernel group (`computational_prototype`;
-design records `docs/adr/0006-cad-kernels.md` and
-`docs/adr/0008-cad-placement-kernel.md`; kernels `cad_brep_solids`,
-`cad_step_export`, `cad_faceting`, `cad_volume_mesh` and `cad_placement`
-in `kernels-domain.json`). The group adapts two pinned third-party kernels
+design records `docs/adr/0006-cad-kernels.md`,
+`docs/adr/0008-cad-placement-kernel.md` and
+`docs/adr/0009-cad-body-evidence-in-the-library.md`; kernels
+`cad_brep_solids`, `cad_step_export`, `cad_faceting`, `cad_volume_mesh`,
+`cad_evidence` and `cad_placement` in `kernels-domain.json`). The group adapts two pinned third-party kernels
 (CadQuery 2.8.0 on OpenCASCADE 7.9 and gmsh 4.15.2) behind the optional
 extra `cad`; the evidence class is stated below and differs from the
 bit-exact groups.
@@ -285,8 +286,16 @@ none of it is skipped there):
   the back-end integrates over the moved surface, so the measured volumes
   of identical placed bodies are NOT required to be equal to one another
   — only to agree with the analytic form within the declared tolerance.
+- **Body evidence** (`evidence.py`): the checked record of one body
+  carries every measured value next to the bound it is under, and refuses
+  at construction — each of the four bounds (both measure tolerances, the
+  chord deficit of the faceting, the polygon deficit against the tier-G1
+  mesh) is proven to raise, naming the body and the bound; the assembly
+  form keeps the body order and refuses a ragged input rather than
+  zipping four sequences of different lengths into a short answer; the
+  record is frozen after it has been checked.
 - **Benchmark**: `benchmarks/cad.py` per the ecosystem benchmark standard
-  (five operations, back-end versions in the provenance); results in
+  (six operations, back-end versions in the provenance); results in
   `docs/benchmarks.md` and the committed local artefact
   `benchmarks/results/cad.local.json`.
 

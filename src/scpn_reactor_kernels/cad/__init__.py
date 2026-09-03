@@ -25,6 +25,11 @@ from scpn_reactor_kernels.cad.assembly import (
     MANIFEST_SCHEMA_VERSION,
     BrepAssembly,
 )
+from scpn_reactor_kernels.cad.evidence import (
+    BodyEvidence,
+    assembly_evidence,
+    body_evidence,
+)
 from scpn_reactor_kernels.cad.facet import (
     DEFLECTION_DEFICIT_FACTOR,
     deflection_volume_bound,
@@ -75,12 +80,15 @@ __all__ = [
     "STEP_FILE_NAME",
     "STEP_FIXED_TIMESTAMP",
     "STEP_GENERATOR",
+    "BodyEvidence",
     "BrepAssembly",
     "BrepBody",
     "VolumeEntity",
     "VolumeMesh",
     "annular_tube_brep",
+    "assembly_evidence",
     "backend_versions",
+    "body_evidence",
     "cylinder_solid_brep",
     "deflection_volume_bound",
     "facet_assembly",

@@ -96,16 +96,18 @@ the default.
 ## CAD kernels
 
 Artefact: `benchmarks/results/cad.local.json` (schema `scpn-reactor-kernels.cad-benchmark.v1`,
-generated 2026-09-03T11:24:58.143257+00:00, at parent commit `e276e7c749be` with
+generated 2026-09-03T11:32:41.018336+00:00, at parent commit `d1352f766497` with
 the working tree of the landing commit). Host: 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz,
 Linux-7.0.0-30-generic-x86_64-with-glibc2.39, Python 3.12.3; back-ends cadquery 2.8.0,
 OCP 7.9.3.1, gmsh 4.15.2; load average at start
-5.43 (other work was running on the host); cores not isolated. Parameters:
+4.80 (other work was running on the host); cores not isolated. Parameters:
 2 warm-up runs, 10 timed runs per operation; linear deflection
 0.0001 m, angular deflection 0.1 rad, characteristic
 length 0.02 m. One synthetic two-body assembly (solid cylinder and
 annular tube), and for the placement row a ring of 12 identical rods of
-radius 0.006 m on a circle of radius 0.1 m. There is no Python-floor row:
+radius 0.006 m on a circle of radius 0.1 m; the evidence row checks both
+bodies of the two-body assembly against their analytic forms and against
+their tier-G1 meshes at 64 segments. There is no Python-floor row:
 these kernels adapt pinned third-party code and carry no bit-exact floor
 (ADR 0006). The whole table is a fresh run of the landing working tree;
 the earlier run of 2026-09-02 was taken under a load average of 11.40 and
@@ -113,14 +115,18 @@ its numbers are not comparable with these.
 
 | Operation | Backend | P50 ms | P95 ms | mean ms | operations/s | status |
 |---|---|---|---|---|---|---|
-| `brep_build_and_manifest` | `cadquery_ocp` | 6.51 | 7.77 | 6.79 | 153.7 | measured |
-| `step_export_normalised` | `cadquery_ocp` | 2.53 | 3.48 | 2.64 | 394.8 | measured |
-| `facet_two_bodies` | `cadquery_ocp` | 17.99 | 62.98 | 22.58 | 55.6 | measured |
-| `gmsh_volume_mesh` | `gmsh` | 180.38 | 200.97 | 185.05 | 5.5 | measured |
-| `place_ring_of_bodies` | `cadquery_ocp` | 1.49 | 1.57 | 1.51 | 670.5 | measured |
+| `brep_build_and_manifest` | `cadquery_ocp` | 6.39 | 8.89 | 6.75 | 156.5 | measured |
+| `step_export_normalised` | `cadquery_ocp` | 2.30 | 2.86 | 2.41 | 434.7 | measured |
+| `facet_two_bodies` | `cadquery_ocp` | 19.28 | 77.08 | 24.96 | 51.9 | measured |
+| `gmsh_volume_mesh` | `gmsh` | 184.14 | 194.53 | 185.13 | 5.4 | measured |
+| `place_ring_of_bodies` | `cadquery_ocp` | 1.54 | 1.85 | 1.59 | 648.8 | measured |
+| `assembly_body_evidence` | `cadquery_ocp` | 1.63 | 1.87 | 1.67 | 613.8 | measured |
 
 The placement row is twelve rigid translations and twelve back-end volume
-measures, so about 0.12 ms per placed body.
+measures, so about 0.13 ms per placed body. The evidence row is dominated
+by the back-end measures it asks for, not by the arithmetic of the bounds;
+the faceting and the reference meshes are built outside the timed region,
+because a device model builds them once and checks them once.
 
 ## Fixed-runner (CI) number
 

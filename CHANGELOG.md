@@ -26,6 +26,22 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Added
 
+- CAD body evidence kernel `cad_evidence`
+  (`src/scpn_reactor_kernels/cad/evidence.py`, ADR 0009): the fail-closed
+  record of one B-rep body against its analytic closed forms, the
+  chord-deficit bound of its faceting and the tier-G1 mesh of the same body,
+  plus the assembly form that keeps the body order. It refuses at
+  construction — a violated bound raises with the body and the bound named —
+  and refuses a ragged input rather than zipping four sequences of different
+  lengths into a short answer. The machinery was written once inside a device
+  repository; none of it is device knowledge, and keeping it there would have
+  copied the same two hundred lines into every family that gains a CAD model,
+  with nothing forcing the copies to stay equal. A family now writes its
+  schema identity, its body composition and its non-claims, and consumes the
+  evidence. The pilot family's copy is recorded in ADR 0009 as a second
+  implementation scheduled to migrate; the library is the reference. The CAD
+  benchmark gains `assembly_body_evidence`.
+
 - CAD placement kernel `cad_placement`
   (`src/scpn_reactor_kernels/cad/placement.py`, ADR 0008): the tier-G2
   counterpart of `geometry_placement`. `translate_brep` places a B-rep body

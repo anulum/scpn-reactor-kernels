@@ -76,6 +76,15 @@ this repository until it appears in the kernel inventory with evidence.
   model of any family with an off-axis part, first the plasma-focus
   cathode cage.
 
+- **CAD body evidence** (landed 2026-09-03) — `cad_evidence` (ADR 0009):
+  the fail-closed record of one body against its analytic closed forms,
+  the chord-deficit bound of the faceting and the tier-G1 mesh of the same
+  body, refusing at construction and refusing a ragged assembly. It was
+  written once in a device repository and belongs here, because none of
+  those checks is device knowledge; a family now writes its composition
+  and its record, not a checking apparatus. Consumers: every tier-G2
+  device model.
+
 ## Planned (no implementation exists; ordering is not a commitment)
 
 1. **Collision kernels** — Coulomb logarithms, Spitzer resistivity,
