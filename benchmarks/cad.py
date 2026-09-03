@@ -48,6 +48,8 @@ SCHEMA: Final = "scpn-reactor-kernels.cad-benchmark.v1"
 LINEAR_DEFLECTION_M: Final = 1.0e-4
 ANGULAR_DEFLECTION_RAD: Final = 0.1
 CHARACTERISTIC_LENGTH_M: Final = 0.02
+RING_COUNT: Final = 12
+RING_RADIUS_M: Final = 0.1
 
 
 def operations() -> list[tuple[str, str, Callable[[], float]]]:
@@ -69,8 +71,10 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
         cylinder_solid_brep,
         facet_assembly,
         gmsh_volume_mesh,
+        ring_brep_bodies,
         step_bytes,
     )
+    from scpn_reactor_kernels.geometry import ring_offsets
 
     def build() -> float:
         assembly = BrepAssembly(
@@ -100,11 +104,20 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
     def volume_mesh() -> float:
         return gmsh_volume_mesh(step, CHARACTERISTIC_LENGTH_M).total_volume_m3
 
+    rod = cylinder_solid_brep(0.006, 0.0, 0.16, "rod", "electrode", "conductor")
+    rod_names = tuple(f"rod_{index:02d}" for index in range(RING_COUNT))
+    centres = ring_offsets(RING_COUNT, RING_RADIUS_M)
+
+    def place_ring() -> float:
+        bodies = ring_brep_bodies(rod, rod_names, centres)
+        return sum(body.volume_m3 for body in bodies)
+
     return [
         ("brep_build_and_manifest", "cadquery_ocp", build),
         ("step_export_normalised", "cadquery_ocp", export),
         ("facet_two_bodies", "cadquery_ocp", facet),
         ("gmsh_volume_mesh", "gmsh", volume_mesh),
+        ("place_ring_of_bodies", "cadquery_ocp", place_ring),
     ]
 
 
@@ -218,6 +231,7 @@ def main(argv: list[str] | None = None) -> int:
             ("step_export_normalised", "cadquery_ocp"),
             ("facet_two_bodies", "cadquery_ocp"),
             ("gmsh_volume_mesh", "gmsh"),
+            ("place_ring_of_bodies", "cadquery_ocp"),
         ):
             results.append(
                 {

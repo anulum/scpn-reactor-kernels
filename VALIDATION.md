@@ -214,9 +214,10 @@ Bounded claims — what is NOT claimed:
 ## CAD kernels
 
 Evidence record of the `cad` kernel group (`computational_prototype`;
-design record `docs/adr/0006-cad-kernels.md`; kernels `cad_brep_solids`,
-`cad_step_export`, `cad_faceting` and `cad_volume_mesh` in
-`kernels-domain.json`). The group adapts two pinned third-party kernels
+design records `docs/adr/0006-cad-kernels.md` and
+`docs/adr/0008-cad-placement-kernel.md`; kernels `cad_brep_solids`,
+`cad_step_export`, `cad_faceting`, `cad_volume_mesh` and `cad_placement`
+in `kernels-domain.json`). The group adapts two pinned third-party kernels
 (CadQuery 2.8.0 on OpenCASCADE 7.9 and gmsh 4.15.2) behind the optional
 extra `cad`; the evidence class is stated below and differs from the
 bit-exact groups.
@@ -269,8 +270,23 @@ none of it is skipped there):
   independent of orientation; empty STEP bytes, non-positive lengths, a
   STEP without a volume and a non-tetrahedral element type are refused,
   and the back-end is finalised on every path.
+- **Placement** (`placement.py`): a translated body carries the analytic
+  closed forms of its source unchanged and its own measured volume and
+  area stay within `1e-9` relative of them; the bounding box shifts by
+  exactly the offset in every component; the identity (role, material
+  token) survives and the caller may rename a member of a ring; faceting
+  a placed solid agrees in volume with the tier-G1 mesh of the same body
+  translated by the same offset, within the exact inscribed-polygon
+  deficit bound of the reference tessellation; a ring built on the
+  tier-G1 `ring_offsets` puts every member's box centre on the circle to
+  `1e-9`; non-finite offsets are named in the refusal, and the ring
+  refuses an empty centre list, a mismatched name count and repeated
+  names. One test states the boundary of the evidence class explicitly:
+  the back-end integrates over the moved surface, so the measured volumes
+  of identical placed bodies are NOT required to be equal to one another
+  — only to agree with the analytic form within the declared tolerance.
 - **Benchmark**: `benchmarks/cad.py` per the ecosystem benchmark standard
-  (four operations, back-end versions in the provenance); results in
+  (five operations, back-end versions in the provenance); results in
   `docs/benchmarks.md` and the committed local artefact
   `benchmarks/results/cad.local.json`.
 

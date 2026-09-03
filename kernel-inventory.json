@@ -28,7 +28,7 @@
     }
   ],
   "evidence_maturity": "computational_prototype",
-  "implemented_kernel_count": 11,
+  "implemented_kernel_count": 12,
   "kernels": [
     {
       "benchmark": "docs/benchmarks.md#geometry-tessellation",
@@ -156,6 +156,18 @@
         "Gmsh 4.15.2 reference manual: OpenCASCADE import (model.occ.importShapes), Mesh.MeshSizeMin/Max, Mesh.Algorithm3D, MSH 4.1 ASCII format",
         "Tetrahedron volume |det(v1 - v0, v2 - v0, v3 - v0)| / 6 (elementary; no external source)"
       ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#cad-kernels",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#cad-kernels",
+      "identifier": "cad_placement",
+      "module": "src/scpn_reactor_kernels/cad/placement.py",
+      "native_parity": false,
+      "sources": [
+        "Open CASCADE Technology 7.9 through CadQuery 2.8: Shape.translate (gp_Trsf rigid translation); the ring centres are those of the tier-G1 geometry_placement kernel",
+        "Invariance of volume and surface area under a rigid motion (elementary; no external source): the analytic closed forms are carried over, the kernel's own measure of the placed solid is checked against them within the declared tolerance and is not claimed bit-identical to the measure of the source solid"
+      ]
     }
   ],
   "library": {
@@ -169,6 +181,6 @@
   "schema_version": "1.0.0",
   "source": {
     "manifest_path": "kernels-domain.json",
-    "manifest_sha256": "a179b428d3c61c2305a9395ee45131b7495ab4f18fd91e13ead13f2a5534f132"
+    "manifest_sha256": "52c74d04054a6d4ac3ff58b2762f7f5801488fa791c2492246a1a7dbd6cb9f5f"
   }
 }

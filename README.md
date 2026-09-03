@@ -140,11 +140,14 @@ primitives as B-rep solids on the pinned OpenCASCADE kernel through
 CadQuery, keep them in an ordered assembly with a canonical manifest,
 export a deterministic STEP file (fixed header time stamp, renumbered
 assembly identifiers, provenance in the description), facet the solids
-back into the closed-mesh contract, and mesh a STEP assembly into
+back into the closed-mesh contract, place a body off the axis or once per
+centre of a ring (ADR 0008, the tier-G2 counterpart of the tessellating
+placement, on the same circle points), and mesh a STEP assembly into
 tetrahedra with gmsh. Their measures are checked against the analytic
 forms within declared tolerances; they carry no bit-exact parity because
 the kernels are third-party, and that boundary is stated in the evidence
-record.
+record — including the fact that the back-end's measure of a placed solid
+is not bit-identical to its measure of the source solid.
 
 ```bash
 pip install "scpn-reactor-kernels[cad] @ git+https://github.com/anulum/scpn-reactor-kernels.git@<commit>"

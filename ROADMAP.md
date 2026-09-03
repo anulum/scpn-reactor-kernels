@@ -65,6 +65,17 @@ this repository until it appears in the kernel inventory with evidence.
   `VALIDATION.md#cad-kernels`). Consumers: the tier-G2 lane of the device
   repositories (pilot SCPN-Z-PINCH-CORE).
 
+- **CAD placement** (landed 2026-09-03) — `cad_placement` (ADR 0008): the
+  tier-G2 counterpart of the tessellating placement kernel. A rigid
+  translation of a B-rep body and one placement per centre of a ring, on
+  the same circle points tier G1 uses, so both models of a family sit on
+  one circle by construction. The analytic closed forms are carried over
+  exactly; the placed solid's measured volume and area are checked against
+  them within `1e-9`, and the record states plainly that they are not
+  bit-identical to the source solid's measures. Consumers: the tier-G2
+  model of any family with an off-axis part, first the plasma-focus
+  cathode cage.
+
 ## Planned (no implementation exists; ordering is not a commitment)
 
 1. **Collision kernels** — Coulomb logarithms, Spitzer resistivity,

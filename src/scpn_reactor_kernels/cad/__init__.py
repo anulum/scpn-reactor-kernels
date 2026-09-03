@@ -34,6 +34,10 @@ from scpn_reactor_kernels.cad.facet import (
     require_deflection,
     weld,
 )
+from scpn_reactor_kernels.cad.placement import (
+    ring_brep_bodies,
+    translate_brep,
+)
 from scpn_reactor_kernels.cad.solids import (
     MEASURE_TOLERANCE,
     BrepBody,
@@ -87,9 +91,11 @@ __all__ = [
     "require_deflection",
     "require_extent",
     "require_radius",
+    "ring_brep_bodies",
     "step_bytes",
     "step_sha256",
     "tetrahedron_volume",
+    "translate_brep",
     "weld",
     "write_step",
 ]

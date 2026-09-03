@@ -181,6 +181,18 @@
         "Gmsh 4.15.2 reference manual: OpenCASCADE import (model.occ.importShapes), Mesh.MeshSizeMin/Max, Mesh.Algorithm3D, MSH 4.1 ASCII format",
         "Tetrahedron volume |det(v1 - v0, v2 - v0, v3 - v0)| / 6 (elementary; no external source)"
       ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#cad-kernels",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#cad-kernels",
+      "identifier": "cad_placement",
+      "module": "src/scpn_reactor_kernels/cad/placement.py",
+      "native_parity": false,
+      "sources": [
+        "Open CASCADE Technology 7.9 through CadQuery 2.8: Shape.translate (gp_Trsf rigid translation); the ring centres are those of the tier-G1 geometry_placement kernel",
+        "Invariance of volume and surface area under a rigid motion (elementary; no external source): the analytic closed forms are carried over, the kernel's own measure of the placed solid is checked against them within the declared tolerance and is not claimed bit-identical to the measure of the source solid"
+      ]
     }
   ],
   "library": {

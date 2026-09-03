@@ -26,6 +26,25 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Added
 
+- CAD placement kernel `cad_placement`
+  (`src/scpn_reactor_kernels/cad/placement.py`, ADR 0008): the tier-G2
+  counterpart of `geometry_placement`. `translate_brep` places a B-rep body
+  by a rigid translation and may rename it; `ring_brep_bodies` places one
+  body once per centre of a ring, on the tier-G1 `ring_offsets`, so both
+  tiers of a family sit on the same circle by construction. The analytic
+  closed forms are carried over exactly and the placed solid's own measures
+  are checked against them within the group's `1e-9` tolerance; the record
+  and a test state the boundary rather than assuming it — OpenCASCADE
+  integrates over the moved surface, so its volume of a placed solid is not
+  bit-identical to its volume of the source solid, and on a ring of twelve
+  identical rods the measured volumes differ in the last unit in the last
+  place. Cross-tier evidence: faceting a placed solid agrees in volume with
+  the tier-G1 mesh of the same body translated by the same offset, within
+  the exact inscribed-polygon deficit bound. The CAD benchmark gains
+  `place_ring_of_bodies` and the whole CAD table was re-measured on the
+  landing tree. The kernel inventory gains the entry and its digest changes
+  accordingly.
+
 - Placement kernel `geometry_placement`
   (`src/scpn_reactor_kernels/geometry/placement.py`, ADR 0007): exact
   translation of a vertex stream, the centres of `count` identical bodies
