@@ -18,7 +18,15 @@ from __future__ import annotations
 import pytest
 
 from geometry_fixtures import bits, sample_bodies, stream_bits
-from scpn_reactor_kernels.geometry import annular_tube, cylinder_solid, unit_circle
+from scpn_reactor_kernels.geometry import (
+    annular_tube,
+    circle_points,
+    cylinder_solid,
+    ring_offsets,
+    ring_separation_m,
+    translate,
+    unit_circle,
+)
 
 native = pytest.importorskip("scpn_reactor_kernels_native")
 
@@ -79,3 +87,40 @@ def test_native_refusals_mirror_the_floor() -> None:
         native.mesh_volume([0.0, 0.0], [0, 1, 2])
     with pytest.raises(ValueError, match="out of range"):
         native.mesh_area([0.0] * 9, [0, 1, 7])
+
+
+@pytest.mark.parametrize("count", [3, 6, 8, 12, 13, 64, 257])
+def test_circle_points_and_ring_placement_are_bit_exact(count: int) -> None:
+    """Arbitrary circle counts, ring offsets and the separation agree bit for bit."""
+    radius = 0.0517
+    floor_points = [c for point in circle_points(count) for c in point]
+    assert stream_bits(floor_points) == stream_bits(list(native.circle_points(count)))
+    floor_offsets = [c for point in ring_offsets(count, radius) for c in point]
+    assert stream_bits(floor_offsets) == stream_bits(
+        list(native.ring_offsets(count, radius))
+    )
+    assert bits(ring_separation_m(count, radius)) == bits(
+        native.ring_separation(count, radius)
+    )
+
+
+def test_translation_of_a_body_is_bit_exact() -> None:
+    """A translated tessellated body agrees coordinate for coordinate."""
+    vertices, _ = cylinder_solid(0.006, 0.0, 0.16, 32)
+    floor = [c for v in translate(vertices, 0.0517, -0.013, 0.25) for c in v]
+    flat = [c for v in vertices for c in v]
+    assert stream_bits(floor) == stream_bits(
+        list(native.translate(flat, 0.0517, -0.013, 0.25))
+    )
+
+
+def test_native_placement_refusals_mirror_the_floor() -> None:
+    """The native bindings refuse the same inputs as the floor."""
+    with pytest.raises(ValueError, match="at least 3"):
+        native.circle_points(2)
+    with pytest.raises(ValueError, match="at least 3"):
+        native.ring_offsets(2, 0.05)
+    with pytest.raises(ValueError, match="at least 3"):
+        native.ring_separation(2, 0.05)
+    with pytest.raises(ValueError, match="multiple of three"):
+        native.translate([0.0, 1.0], 0.0, 0.0, 0.0)

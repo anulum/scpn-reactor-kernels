@@ -33,6 +33,7 @@ from scpn_reactor_kernels.errors import GeometryError
 HALF_PI: Final = math.pi / 2.0
 MIN_SEGMENTS: Final = 8
 SEGMENT_MULTIPLE: Final = 8
+MIN_CIRCLE_POINTS: Final = 3
 
 # Reciprocal factorials as exact integer quotients (every integer below is
 # exactly representable, so each quotient is correctly rounded identically
@@ -137,8 +138,87 @@ def require_segments(segments: int) -> int:
     return segments
 
 
+def require_circle_points(count: int) -> int:
+    """Validate a count of equally spaced circle points.
+
+    Parameters
+    ----------
+    count
+        Number of points on the circle.
+
+    Returns
+    -------
+    int
+        The validated count.
+
+    Raises
+    ------
+    GeometryError
+        If ``count`` is below :data:`MIN_CIRCLE_POINTS`; three points are
+        the smallest arrangement that encloses the axis.
+    """
+    if isinstance(count, bool) or count < MIN_CIRCLE_POINTS:
+        raise GeometryError(
+            f"count: must be at least {MIN_CIRCLE_POINTS}, got {count!r}"
+        )
+    return count
+
+
+def circle_points(count: int) -> tuple[tuple[float, float], ...]:
+    """Return equally spaced circle points for any count, bit-exact across backends.
+
+    The angle of point ``k`` is ``2 pi k / count``. The quadrant and the
+    residue inside it are found by integer arithmetic on ``(k, count)``,
+    so a point that falls exactly on an axis is exactly ``0`` and ``±1``;
+    the residual angle is always reduced into ``[0, pi/4]`` before the
+    polynomials are evaluated, and the remaining points follow by exact
+    sign changes and swaps. Every floating-point operation has the fixed
+    order the native kernel repeats, so the result agrees bit for bit
+    across backends for every count.
+
+    Parameters
+    ----------
+    count
+        Number of points; at least three.
+
+    Returns
+    -------
+    tuple of (float, float)
+        ``(cos, sin)`` of ``2 pi k / count`` for ``k = 0 .. count - 1`` in
+        increasing angle, starting at ``(1, 0)``.
+
+    Raises
+    ------
+    GeometryError
+        If the count is below three.
+    """
+    require_circle_points(count)
+    points: list[tuple[float, float]] = []
+    for index in range(count):
+        quadrant, residue = divmod(4 * index, count)
+        if 2 * residue <= count:
+            angle = (HALF_PI * residue) / count
+            cosine, sine = cosine_polynomial(angle), sine_polynomial(angle)
+        else:
+            angle = (HALF_PI * (count - residue)) / count
+            cosine, sine = sine_polynomial(angle), cosine_polynomial(angle)
+        if quadrant == 0:
+            points.append((cosine, sine))
+        elif quadrant == 1:
+            points.append((0.0 - sine, cosine))
+        elif quadrant == 2:
+            points.append((0.0 - cosine, 0.0 - sine))
+        else:
+            points.append((sine, 0.0 - cosine))
+    return tuple(points)
+
+
 def unit_circle(segments: int) -> tuple[tuple[float, float], ...]:
-    """Return equally spaced unit-circle points, bit-exact across backends.
+    """Return equally spaced unit-circle points for a tessellation.
+
+    A tessellation segment count is restricted to multiples of eight (the
+    octant symmetry of the primitives); the points themselves are those of
+    :func:`circle_points`, which this function only validates for.
 
     Parameters
     ----------
@@ -149,10 +229,8 @@ def unit_circle(segments: int) -> tuple[tuple[float, float], ...]:
     -------
     tuple of (float, float)
         ``(cos, sin)`` of ``2 pi k / segments`` for ``k = 0 ..
-        segments - 1`` in increasing angle, starting at ``(1, 0)``. The
-        first octant is evaluated by the polynomials; every other point is
-        obtained by exact symmetry, so points at multiples of ``pi/2`` are
-        exactly ``0`` and ``±1``.
+        segments - 1`` in increasing angle, starting at ``(1, 0)``; points
+        at multiples of ``pi/2`` are exactly ``0`` and ``±1``.
 
     Raises
     ------
@@ -160,26 +238,4 @@ def unit_circle(segments: int) -> tuple[tuple[float, float], ...]:
         If the segment count is invalid.
     """
     require_segments(segments)
-    quarter = segments // 4
-    eighth = segments // 8
-    first_octant: list[tuple[float, float]] = []
-    for index in range(eighth + 1):
-        angle = (HALF_PI * index) / quarter
-        first_octant.append((cosine_polynomial(angle), sine_polynomial(angle)))
-    quadrant: list[tuple[float, float]] = []
-    for index in range(quarter):
-        if index <= eighth:
-            cosine, sine = first_octant[index]
-        else:
-            sine, cosine = first_octant[quarter - index]
-        quadrant.append((cosine, sine))
-    points: list[tuple[float, float]] = []
-    for cosine, sine in quadrant:
-        points.append((cosine, sine))
-    for cosine, sine in quadrant:
-        points.append((0.0 - sine, cosine))
-    for cosine, sine in quadrant:
-        points.append((0.0 - cosine, 0.0 - sine))
-    for cosine, sine in quadrant:
-        points.append((sine, 0.0 - cosine))
-    return tuple(points)
+    return circle_points(segments)

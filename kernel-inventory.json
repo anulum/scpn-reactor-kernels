@@ -28,7 +28,7 @@
     }
   ],
   "evidence_maturity": "computational_prototype",
-  "implemented_kernel_count": 10,
+  "implemented_kernel_count": 11,
   "kernels": [
     {
       "benchmark": "docs/benchmarks.md#geometry-tessellation",
@@ -73,6 +73,17 @@
       "sources": [
         "The Khronos Group, glTF 2.0 Specification (binary glTF container, accessors, buffer views)",
         "Binary STL file layout (80-byte header, uint32 triangle count, float32 normal and vertices, uint16 attribute)"
+      ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#geometry-tessellation",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#geometry-kernels",
+      "identifier": "geometry_placement",
+      "module": "src/scpn_reactor_kernels/geometry/placement.py",
+      "native_parity": true,
+      "sources": [
+        "translation of a vertex stream and equally spaced centres on a circle (elementary; the circle points are those of geometry_unit_circle)"
       ]
     },
     {
@@ -158,6 +169,6 @@
   "schema_version": "1.0.0",
   "source": {
     "manifest_path": "kernels-domain.json",
-    "manifest_sha256": "4bb8316b3a08ea7e893d219abe51f0b39be771de97820e2b67486b9a32ee29c8"
+    "manifest_sha256": "a179b428d3c61c2305a9395ee45131b7495ab4f18fd91e13ead13f2a5534f132"
   }
 }

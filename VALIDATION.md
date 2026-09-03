@@ -69,21 +69,28 @@ JSON integrity, defensive ignore rules).
 ## Geometry kernels
 
 Evidence record of the `geometry` kernel group (`computational_prototype`;
-design record: `docs/adr/0002-geometry-kernels.md`; kernels
+design records: `docs/adr/0002-geometry-kernels.md` and
+`docs/adr/0007-geometry-placement-kernel.md`; kernels
 `geometry_unit_circle`, `geometry_mesh_contract`, `geometry_primitives`,
-`geometry_exports` in `kernels-domain.json`).
+`geometry_exports`, `geometry_placement` in `kernels-domain.json`).
 
 What is exercised, all under the 100 % statement-and-branch coverage gate
 (`src/scpn_reactor_kernels/geometry/`):
 
-- **Deterministic unit circle** (`trig.py`): vendored degree-15 sine and
+- **Deterministic circle points** (`trig.py`): vendored degree-15 sine and
   degree-16 cosine Taylor polynomials in Horner form on `[0, pi/4]` with
-  exact octant and quadrant symmetry. Tests prove every point of circles
-  with 8 to 4096 segments agrees with `math.cos`/`math.sin` to `1e-15`,
-  that points at multiples of `pi/2` are exactly `0` and `±1`, that every
+  exact octant and quadrant symmetry. `circle_points(count)` serves any
+  count of at least three; `unit_circle(segments)` is the tessellation
+  entry point that additionally enforces the multiple-of-eight rule and
+  returns the same points, proven by a test that the two agree exactly for
+  every tessellation count, so the reference digests consumers pin are
+  unchanged by the generalisation. Tests prove every point of circles with
+  8 to 4096 segments and of arbitrary counts (3, 5, 6, 7, 9, 12, 13, 20,
+  100) agrees with `math.cos`/`math.sin` to `1e-15`, that points on an axis
+  are exactly `0` and `±1` for every count divisible by four, that every
   quadrant is an exact sign/swap image of the first, that no negative zero
-  is emitted, and that inadmissible segment counts (below 8, not a
-  multiple of 8, booleans) are refused.
+  is emitted, and that inadmissible counts (below 8 or not a multiple of 8
+  for a tessellation, below 3 for a circle, booleans) are refused.
 - **Mesh contract** (`mesh.py`, `TriangleMesh`): closure and consistent
   orientation (every directed edge exactly once with its reverse), refusal
   of too few vertices or faces, non-finite coordinates, out-of-range or
@@ -107,14 +114,27 @@ What is exercised, all under the 100 % statement-and-branch coverage gate
   position and index streams read back, caller-supplied document extras)
   verified with minimal specification-level readers; determinism of the
   bytes; the file writers.
-- **Native parity**: `rust/src/geometry/` mirrors the unit circle, both
-  primitives, the signed volume and the surface area;
+- **Placement** (`placement.py`): `translate` is one addition per
+  coordinate in a fixed order, proven to move a tessellated body rigidly
+  (face stream and axial coordinates unchanged, the transverse extent
+  shifted) and to refuse an empty stream and non-finite offsets;
+  `ring_offsets` returns the scaled circle points, starting on the positive
+  `x` axis; `ring_separation_m` equals the analytic chord
+  `2 R sin(pi / count)` to `1e-15` and is proven equal for every
+  neighbouring pair of the ring, which is what a consumer uses to show that
+  identical bodies on the ring do not intersect; counts below three and
+  non-positive or non-finite radii are refused.
+- **Native parity**: `rust/src/geometry/` mirrors the circle points, both
+  primitives, the placement kernel, the signed volume and the surface area;
   `tests/test_geometry_native_parity.py` compares float64 bit patterns of
-  every vertex coordinate, the face index streams and the measures, and
-  the refusal paths of the bindings.
+  every vertex coordinate, the face index streams, the measures, the circle
+  points and ring offsets for counts 3 to 257, the ring separation, a
+  translated body, and the refusal paths of the bindings.
 - **Benchmark**: `benchmarks/geometry_tessellation.py` per the ecosystem
-  benchmark standard; results in `docs/benchmarks.md` and the committed
-  local artefact `benchmarks/results/geometry_tessellation.local.json`.
+  benchmark standard, tessellating three bodies on the axis and placing a
+  ring of twelve rods off it so the placement kernel is measured on both
+  backends; results in `docs/benchmarks.md` and the committed local
+  artefact `benchmarks/results/geometry_tessellation.local.json`.
 
 Bounded claims — what is NOT claimed:
 

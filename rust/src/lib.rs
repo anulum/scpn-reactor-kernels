@@ -71,6 +71,51 @@ mod python {
         Ok(points.iter().flat_map(|p| p.iter().copied()).collect())
     }
 
+    /// Equally spaced circle points for any count as a flat stream.
+    #[pyfunction]
+    fn circle_points(count: usize) -> PyResult<Vec<f64>> {
+        let points = crate::geometry::trig::circle_points(count)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok(points.iter().flat_map(|p| p.iter().copied()).collect())
+    }
+
+    /// Ring centres of `count` bodies on a circle as a flat stream.
+    #[pyfunction]
+    fn ring_offsets(count: usize, radius_m: f64) -> PyResult<Vec<f64>> {
+        let offsets = crate::geometry::placement::ring_offsets(count, radius_m)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok(offsets.iter().flat_map(|p| p.iter().copied()).collect())
+    }
+
+    /// Centre-to-centre distance of neighbouring bodies on a ring.
+    #[pyfunction]
+    fn ring_separation(count: usize, radius_m: f64) -> PyResult<f64> {
+        crate::geometry::placement::ring_separation_m(count, radius_m)
+            .map_err(|e| PyValueError::new_err(e.to_string()))
+    }
+
+    /// Translation of a flat vertex stream by a fixed offset.
+    #[pyfunction]
+    fn translate(
+        vertices: Vec<f64>,
+        offset_x_m: f64,
+        offset_y_m: f64,
+        offset_z_m: f64,
+    ) -> PyResult<Vec<f64>> {
+        if vertices.len() % 3 != 0 {
+            return Err(PyValueError::new_err(
+                "vertices: length must be a multiple of three",
+            ));
+        }
+        let triples: Vec<[f64; 3]> = vertices
+            .chunks_exact(3)
+            .map(|c| [c[0], c[1], c[2]])
+            .collect();
+        let moved =
+            crate::geometry::placement::translate(&triples, [offset_x_m, offset_y_m, offset_z_m]);
+        Ok(moved.iter().flat_map(|p| p.iter().copied()).collect())
+    }
+
     /// Solid cylinder tessellation as flat vertex and face streams.
     #[pyfunction]
     fn tessellate_cylinder(
@@ -221,6 +266,10 @@ mod python {
     #[pymodule]
     fn scpn_reactor_kernels_native(m: &Bound<'_, PyModule>) -> PyResult<()> {
         m.add_function(wrap_pyfunction!(unit_circle, m)?)?;
+        m.add_function(wrap_pyfunction!(circle_points, m)?)?;
+        m.add_function(wrap_pyfunction!(ring_offsets, m)?)?;
+        m.add_function(wrap_pyfunction!(ring_separation, m)?)?;
+        m.add_function(wrap_pyfunction!(translate, m)?)?;
         m.add_function(wrap_pyfunction!(tessellate_cylinder, m)?)?;
         m.add_function(wrap_pyfunction!(tessellate_annular_tube, m)?)?;
         m.add_function(wrap_pyfunction!(mesh_volume, m)?)?;

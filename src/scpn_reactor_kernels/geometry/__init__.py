@@ -32,11 +32,19 @@ from scpn_reactor_kernels.geometry.mesh import (
     Vertex,
     face_normal_and_area,
 )
+from scpn_reactor_kernels.geometry.placement import (
+    ring_offsets,
+    ring_separation_m,
+    translate,
+)
 from scpn_reactor_kernels.geometry.primitives import annular_tube, cylinder_solid
 from scpn_reactor_kernels.geometry.trig import (
+    MIN_CIRCLE_POINTS,
     MIN_SEGMENTS,
     SEGMENT_MULTIPLE,
+    circle_points,
     cosine_polynomial,
+    require_circle_points,
     require_segments,
     sine_polynomial,
     unit_circle,
@@ -45,6 +53,7 @@ from scpn_reactor_kernels.geometry.trig import (
 __all__ = [
     "GLTF_GENERATOR",
     "MESH_BYTES_LAYOUT",
+    "MIN_CIRCLE_POINTS",
     "MIN_SEGMENTS",
     "SEGMENT_MULTIPLE",
     "STL_HEADER",
@@ -52,13 +61,18 @@ __all__ = [
     "TriangleMesh",
     "Vertex",
     "annular_tube",
+    "circle_points",
     "cosine_polynomial",
     "cylinder_solid",
     "face_normal_and_area",
     "glb_bytes",
+    "require_circle_points",
     "require_segments",
+    "ring_offsets",
+    "ring_separation_m",
     "sine_polynomial",
     "stl_bytes",
+    "translate",
     "unit_circle",
     "write_glb",
     "write_stl",

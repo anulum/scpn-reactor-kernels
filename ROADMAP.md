@@ -28,6 +28,15 @@ this repository until it appears in the kernel inventory with evidence.
   `computational_prototype` (ADR 0002, `VALIDATION.md#geometry-kernels`).
   Origin: moved from `SCPN-Z-PINCH-CORE` (its copies are retired once it
   pins this library).
+- **Placement kernel** (landed 2026-09-03) — exact translation of a vertex
+  stream, the centres of identical bodies equally spaced on a circle around
+  the axis, and their neighbour separation, so a device can carry a part that
+  is not axisymmetric (a squirrel-cage cathode, a ring of feed conductors)
+  without re-implementing geometry; the unit circle is generalised to any
+  point count of at least three while keeping the tessellation counts
+  bit-identical, and both are mirrored natively and measured in the geometry
+  benchmark; `computational_prototype` (ADR 0007,
+  `VALIDATION.md#geometry-kernels`).
 - **Numerics kernels** (landed 2026-09-02) — vendored deterministic natural
   logarithm (exact binary decomposition and the odd series of
   `atanh`), exponential (Cody–Waite reduction and Taylor series) and real

@@ -19,6 +19,9 @@ pub const MIN_SEGMENTS: usize = 8;
 /// Every segment count must be a multiple of this (eight equal arcs).
 pub const SEGMENT_MULTIPLE: usize = 8;
 
+/// Smallest number of equally spaced points that encloses the axis.
+pub const MIN_CIRCLE_POINTS: usize = 3;
+
 const S3: f64 = 1.0 / 6.0;
 const S5: f64 = 1.0 / 120.0;
 const S7: f64 = 1.0 / 5040.0;
@@ -53,6 +56,25 @@ impl fmt::Display for SegmentsError {
 }
 
 impl std::error::Error for SegmentsError {}
+
+/// Rejection of an inadmissible circle-point count.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct CircleCountError {
+    /// The rejected count.
+    pub count: usize,
+}
+
+impl fmt::Display for CircleCountError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "count: must be at least {MIN_CIRCLE_POINTS}, got {}",
+            self.count
+        )
+    }
+}
+
+impl std::error::Error for CircleCountError {}
 
 /// Degree-15 Taylor sine on the reduced interval (Horner form in `x^2`).
 #[must_use]
@@ -97,43 +119,61 @@ pub fn require_segments(segments: usize) -> Result<usize, SegmentsError> {
     Ok(segments)
 }
 
-/// Equally spaced unit-circle points `(cos, sin)` of `2 pi k / segments`.
+/// Validates a count of equally spaced circle points.
 ///
 /// # Errors
 ///
-/// Returns [`SegmentsError`] when the count is inadmissible.
-pub fn unit_circle(segments: usize) -> Result<Vec<[f64; 2]>, SegmentsError> {
-    require_segments(segments)?;
-    let quarter = segments / 4;
-    let eighth = segments / 8;
-    let mut first_octant: Vec<[f64; 2]> = Vec::with_capacity(eighth + 1);
-    for index in 0..=eighth {
-        let angle = (HALF_PI * index as f64) / quarter as f64;
-        first_octant.push([cosine_polynomial(angle), sine_polynomial(angle)]);
+/// Returns [`CircleCountError`] when the count is below
+/// [`MIN_CIRCLE_POINTS`].
+pub fn require_circle_points(count: usize) -> Result<usize, CircleCountError> {
+    if count < MIN_CIRCLE_POINTS {
+        return Err(CircleCountError { count });
     }
-    let mut quadrant: Vec<[f64; 2]> = Vec::with_capacity(quarter);
-    for index in 0..quarter {
-        if index <= eighth {
-            quadrant.push(first_octant[index]);
+    Ok(count)
+}
+
+/// Equally spaced circle points for any count, bit-exact with the Python floor.
+///
+/// The quadrant and the residue inside it come from integer arithmetic on
+/// `(k, count)`, so a point on an axis is exactly `0` and `±1`; the residual
+/// angle is reduced into `[0, pi/4]` before the polynomials run.
+///
+/// # Errors
+///
+/// Returns [`CircleCountError`] when the count is below
+/// [`MIN_CIRCLE_POINTS`].
+pub fn circle_points(count: usize) -> Result<Vec<[f64; 2]>, CircleCountError> {
+    require_circle_points(count)?;
+    let mut points: Vec<[f64; 2]> = Vec::with_capacity(count);
+    for index in 0..count {
+        let quadrant = (4 * index) / count;
+        let residue = 4 * index - quadrant * count;
+        let (cosine, sine) = if 2 * residue <= count {
+            let angle = (HALF_PI * residue as f64) / count as f64;
+            (cosine_polynomial(angle), sine_polynomial(angle))
         } else {
-            let [sine, cosine] = first_octant[quarter - index];
-            quadrant.push([cosine, sine]);
-        }
-    }
-    let mut points: Vec<[f64; 2]> = Vec::with_capacity(segments);
-    for &[cosine, sine] in &quadrant {
-        points.push([cosine, sine]);
-    }
-    for &[cosine, sine] in &quadrant {
-        points.push([0.0 - sine, cosine]);
-    }
-    for &[cosine, sine] in &quadrant {
-        points.push([0.0 - cosine, 0.0 - sine]);
-    }
-    for &[cosine, sine] in &quadrant {
-        points.push([sine, 0.0 - cosine]);
+            let angle = (HALF_PI * (count - residue) as f64) / count as f64;
+            (sine_polynomial(angle), cosine_polynomial(angle))
+        };
+        points.push(match quadrant {
+            0 => [cosine, sine],
+            1 => [0.0 - sine, cosine],
+            2 => [0.0 - cosine, 0.0 - sine],
+            _ => [sine, 0.0 - cosine],
+        });
     }
     Ok(points)
+}
+
+/// Equally spaced unit-circle points for a tessellation segment count.
+///
+/// # Errors
+///
+/// Returns [`SegmentsError`] when the count is below [`MIN_SEGMENTS`] or not
+/// a multiple of [`SEGMENT_MULTIPLE`].
+pub fn unit_circle(segments: usize) -> Result<Vec<[f64; 2]>, SegmentsError> {
+    require_segments(segments)?;
+    Ok(circle_points(segments).expect("a valid segment count exceeds three"))
 }
 
 #[cfg(test)]

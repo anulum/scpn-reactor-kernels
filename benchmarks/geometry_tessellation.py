@@ -44,6 +44,8 @@ from scpn_reactor_kernels.geometry import (  # noqa: E402
     TriangleMesh,
     annular_tube,
     cylinder_solid,
+    ring_offsets,
+    translate,
 )
 
 SCHEMA: Final = "scpn-reactor-kernels.geometry-tessellation-benchmark.v1"
@@ -52,6 +54,9 @@ BODIES: Final = (
     ("tube", 0.1, 0.11, 0.0, 1.6),
     ("column", 0.01, None, 1.0, 1.5),
 )
+#: One ring of identical rods placed off the axis, so the pass also measures
+#: the placement kernel: (count, ring radius, rod radius, z_low, z_high).
+RING: Final = (12, 0.13, 0.012, 0.0, 1.6)
 
 
 def floor_pass(segments: int) -> tuple[float, int]:
@@ -81,6 +86,18 @@ def floor_pass(segments: int) -> tuple[float, int]:
             material_identifier="synthetic",
             vertices=vertices,
             faces=indices,
+        )
+        total += mesh.signed_volume_m3() + mesh.surface_area_m2()
+        faces += mesh.face_count
+    count, ring_radius, rod_radius, low, high = RING
+    rod_vertices, rod_faces = cylinder_solid(rod_radius, low, high, segments)
+    for index, (offset_x, offset_y) in enumerate(ring_offsets(count, ring_radius)):
+        mesh = TriangleMesh(
+            name=f"rod_{index:02d}",
+            role="synthetic",
+            material_identifier="synthetic",
+            vertices=translate(rod_vertices, offset_x, offset_y, 0.0),
+            faces=rod_faces,
         )
         total += mesh.signed_volume_m3() + mesh.surface_area_m2()
         faces += mesh.face_count
@@ -115,6 +132,18 @@ def native_pass_factory() -> Callable[[int], tuple[float, int]] | None:
             total += native.mesh_volume(vertices, indices)
             total += native.mesh_area(vertices, indices)
             faces += len(indices) // 3
+        count, ring_radius, rod_radius, low, high = RING
+        rod_vertices, rod_faces = native.tessellate_cylinder(
+            rod_radius, low, high, segments
+        )
+        offsets = native.ring_offsets(count, ring_radius)
+        for index in range(count):
+            moved = native.translate(
+                rod_vertices, offsets[2 * index], offsets[2 * index + 1], 0.0
+            )
+            total += native.mesh_volume(moved, rod_faces)
+            total += native.mesh_area(moved, rod_faces)
+            faces += len(rod_faces) // 3
         return total, faces
 
     return native_pass

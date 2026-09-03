@@ -26,6 +26,24 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Added
 
+- Placement kernel `geometry_placement`
+  (`src/scpn_reactor_kernels/geometry/placement.py`, ADR 0007): exact
+  translation of a vertex stream, the centres of `count` identical bodies
+  equally spaced on a circle around the axis, and the centre-to-centre
+  distance of neighbours on that ring. A device repository can now carry a
+  part that is not axisymmetric — the rods of a squirrel-cage cathode, a ring
+  of feed conductors — without re-implementing geometry or substituting an
+  axisymmetric body for it. The vendored circle is generalised in the same
+  record: `circle_points(count)` serves any count of at least three and
+  `unit_circle(segments)` becomes the tessellation entry point over the same
+  points, which a test proves is bit-identical for every tessellation count,
+  so no reference digest a consumer pins changes. The native crate mirrors
+  both and the parity file compares bit patterns for counts 3 to 257, for the
+  ring offsets and separation, and for a translated body; the geometry
+  benchmark places a ring of twelve rods in the same pass so the kernel is
+  measured on both backends. The kernel inventory gains the entry and its
+  digest changes accordingly.
+
 - CAD kernels (`src/scpn_reactor_kernels/cad/`, kernels `cad_brep_solids`,
   `cad_step_export`, `cad_faceting`, `cad_volume_mesh`, ADR 0006) behind
   the optional extra `cad` (`cadquery==2.8.0`, `gmsh==4.15.2`): B-rep

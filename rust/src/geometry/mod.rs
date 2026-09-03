@@ -14,5 +14,6 @@
 //! [`trig`]; no `libm` call appears anywhere. Design record: ADR 0002.
 
 pub mod mesh;
+pub mod placement;
 pub mod primitives;
 pub mod trig;

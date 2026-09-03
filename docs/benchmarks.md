@@ -18,30 +18,29 @@ engineering claim.
 ## Geometry tessellation
 
 Artefact: `benchmarks/results/geometry_tessellation.local.json`
-(schema `scpn-reactor-kernels.geometry-tessellation-benchmark.v1`, generated 2026-09-02T01:57:58.899803+00:00, at commit
-`HEAD` — the initial commit of this repository did not exist yet
-when the artefact was generated, so the recorded commit field carries the
-value the script found at run time — with the working tree of the landing
-commit).
+(schema `scpn-reactor-kernels.geometry-tessellation-benchmark.v1`, generated 2026-09-03T10:35:04.734472+00:00, at parent commit
+`706a5979450c` with the working tree of the landing commit).
 Host: 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz, Linux-7.0.0-30-generic-x86_64-with-glibc2.39, Python 3.12.3;
-load average at start 5.66; cores not
+load average at start 2.74; cores not
 isolated (shared workstation, so treat the numbers as indicative).
-Operation: tessellation of three synthetic bodies (two solid cylinders and
-one annular tube, 65536 faces at 4096 segments) followed by the
-signed volume and surface area of every body; 3 warm-up passes,
-20 timed passes; time per generated face. The Python floor row includes
-the `TriangleMesh` validation (closure and orientation checks) that every
-public build performs; the native row measures the kernels through their
-bindings (tessellation, volume, area) without that validation, so the ratio
-compares a validated build against the raw kernel cost.
+Operation: tessellation of three synthetic bodies on the axis (two solid
+cylinders and one annular tube) plus a ring of twelve identical rods placed
+off the axis through the placement kernel (262144 faces at
+4096 segments), followed by the signed volume and surface area of
+every body; 3 warm-up passes, 20 timed passes; time per generated face.
+The Python floor row includes the `TriangleMesh` validation (closure and
+orientation checks) that every public build performs; the native row
+measures the kernels through their bindings (tessellation, ring offsets,
+translation, volume, area) without that validation, so the ratio compares a
+validated build against the raw kernel cost.
 
 | Backend | P50 µs/face | P95 µs/face | P99 µs/face | mean µs/face | throughput faces/s | status |
 |---|---|---|---|---|---|---|
-| `python_floor` (public API, always available) | 3.720 | 4.613 | 5.698 | 3.869 | 268823 | measured |
-| `rust_native` (optional build: `rust/`, maturin) | 0.114 | 0.147 | 0.148 | 0.117 | 8740936 | measured |
+| `python_floor` (public API, always available) | 3.420 | 4.159 | 4.243 | 3.502 | 292377 | measured |
+| `rust_native` (optional build: `rust/`, maturin) | 0.092 | 0.097 | 0.101 | 0.094 | 10856286 | measured |
 
 P50 speed-up of the native kernels over the validated Python floor:
-32.5×. The fast row requires the optional native module and is never
+37.1×. The fast row requires the optional native module and is never
 the default.
 
 ## Transcendental kernels
