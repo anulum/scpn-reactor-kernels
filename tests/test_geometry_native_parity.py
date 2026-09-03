@@ -22,6 +22,10 @@ from scpn_reactor_kernels.geometry import (
     annular_tube,
     circle_points,
     cylinder_solid,
+    profile_lateral_area_m2,
+    profile_volume_m3,
+    profiled_solid,
+    profiled_tube,
     ring_offsets,
     ring_separation_m,
     translate,
@@ -124,3 +128,57 @@ def test_native_placement_refusals_mirror_the_floor() -> None:
         native.ring_separation(2, 0.05)
     with pytest.raises(ValueError, match="multiple of three"):
         native.translate([0.0, 1.0], 0.0, 0.0, 0.0)
+
+
+#: A narrow-wide-narrow profile and its aligned outer surface.
+WAIST = (
+    (0.0, 0.0225),
+    (0.5, 0.06),
+    (0.98, 0.1),
+    (1.46, 0.06),
+    (1.96, 0.0225),
+)
+WAIST_OUTER = tuple((z, radius + 0.004) for z, radius in WAIST)
+
+
+@pytest.mark.parametrize("segments", [8, 32, 64])
+def test_profiled_solid_is_bit_exact(segments: int) -> None:
+    """Every vertex of a varying body agrees bit for bit."""
+    vertices, faces = profiled_solid(WAIST, segments)
+    flat = [value for sample in WAIST for value in sample]
+    got_vertices, got_faces = native.tessellate_profiled_solid(flat, segments)
+    assert stream_bits([c for v in vertices for c in v]) == stream_bits(got_vertices)
+    assert [i for f in faces for i in f] == got_faces
+
+
+@pytest.mark.parametrize("segments", [8, 32])
+def test_profiled_tube_is_bit_exact(segments: int) -> None:
+    """The hollow varying body agrees bit for bit on both surfaces."""
+    vertices, faces = profiled_tube(WAIST, WAIST_OUTER, segments)
+    inner_flat = [value for sample in WAIST for value in sample]
+    outer_flat = [value for sample in WAIST_OUTER for value in sample]
+    got_vertices, got_faces = native.tessellate_profiled_tube(
+        inner_flat, outer_flat, segments
+    )
+    assert stream_bits([c for v in vertices for c in v]) == stream_bits(got_vertices)
+    assert [i for f in faces for i in f] == got_faces
+
+
+def test_profile_closed_forms_are_bit_exact() -> None:
+    """The frustum-stack volume and lateral area agree bit for bit."""
+    flat = [value for sample in WAIST for value in sample]
+    assert bits(profile_volume_m3(WAIST)) == bits(native.profile_volume(flat))
+    assert bits(profile_lateral_area_m2(WAIST)) == bits(
+        native.profile_lateral_area(flat)
+    )
+
+
+def test_native_profile_refusals_mirror_the_floor() -> None:
+    """The native binding refuses a ragged stream and a bad segment count."""
+    flat = [value for sample in WAIST for value in sample]
+    with pytest.raises(ValueError, match="multiple"):
+        native.tessellate_profiled_solid(flat, 20)
+    with pytest.raises(ValueError, match="even number of values"):
+        native.tessellate_profiled_solid([0.0, 1.0, 2.0], 8)
+    with pytest.raises(ValueError, match="even number of values"):
+        native.profile_volume([0.0, 1.0, 2.0])

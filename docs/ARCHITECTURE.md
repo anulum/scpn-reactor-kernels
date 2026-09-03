@@ -78,7 +78,7 @@ protection or any actuator; it computes numbers from declared inputs.
 |---|---|
 | `kernels-domain.json` | portable source of library identity, kernel inventory and consumers |
 | `kernel-inventory.json` | generated inventory of the implemented kernels (drift-checked) |
-| `src/scpn_reactor_kernels/geometry/` | deterministic circle points, mesh contract, primitives, off-axis placement, STL/GLB exports |
+| `src/scpn_reactor_kernels/geometry/` | deterministic circle points, mesh contract, primitives, axial profiles, off-axis placement, STL/GLB exports |
 | `src/scpn_reactor_kernels/numerics/` | deterministic natural logarithm, exponential, real power and the Bessel functions |
 | `src/scpn_reactor_kernels/cad/` | tier-G2 adapters on pinned third-party kernels (optional extra `cad`): B-rep solids, assembly manifest, deterministic STEP, faceting, placement off the axis, fail-closed body evidence, gmsh volume mesh |
 | `src/scpn_reactor_kernels/validation.py` | shared fail-closed input validation |

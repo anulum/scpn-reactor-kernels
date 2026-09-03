@@ -23,9 +23,10 @@ device repository carries a second copy.
 **Evidence maturity: `computational_prototype`** (per kernel; ADR 0001).
 Two kernel groups are implemented: the geometry kernels — deterministic
 circle points for any count, a closed-mesh contract with canonical bytes and
-digests, solid-cylinder and annular-tube tessellation, exact placement of
-bodies off the axis, and binary STL and glTF 2.0 exports (ADR 0002 and ADR
-0007, evidence: `VALIDATION.md#geometry-kernels`) —
+digests, solid-cylinder and annular-tube tessellation, bodies whose radius
+varies along the axis with their exact closed forms, exact placement of
+bodies off the axis, and binary STL and glTF 2.0 exports (ADR 0002, ADR 0007
+and ADR 0010, evidence: `VALIDATION.md#geometry-kernels`) —
 and the numerics kernels — a vendored deterministic natural logarithm,
 exponential and real power with refused, never clamped, domains (ADR 0003,
 evidence: `VALIDATION.md#numerics-kernels`) — each with native kernels

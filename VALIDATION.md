@@ -69,10 +69,12 @@ JSON integrity, defensive ignore rules).
 ## Geometry kernels
 
 Evidence record of the `geometry` kernel group (`computational_prototype`;
-design records: `docs/adr/0002-geometry-kernels.md` and
-`docs/adr/0007-geometry-placement-kernel.md`; kernels
+design records: `docs/adr/0002-geometry-kernels.md`,
+`docs/adr/0007-geometry-placement-kernel.md` and
+`docs/adr/0010-axial-profile-primitive.md`; kernels
 `geometry_unit_circle`, `geometry_mesh_contract`, `geometry_primitives`,
-`geometry_exports`, `geometry_placement` in `kernels-domain.json`).
+`geometry_exports`, `geometry_placement`, `geometry_profiles` in
+`kernels-domain.json`).
 
 What is exercised, all under the 100 % statement-and-branch coverage gate
 (`src/scpn_reactor_kernels/geometry/`):
@@ -107,6 +109,27 @@ What is exercised, all under the 100 % statement-and-branch coverage gate
   (error ratio 4 per doubling of segments, checked at 64 and 128) and of
   the areas to the closed forms; every refusal branch (radii, extents,
   ordering, segments).
+- **Axial profiles** (`profiles.py`: profiled solid and profiled tube): a
+  two-sample profile of constant radius reproduces the vertex and face
+  streams of `cylinder_solid` exactly, and a pair of such profiles those of
+  `annular_tube` exactly, for every tessellation count tested — so a body
+  that moves from a constant radius to a profile of the same shape keeps
+  every pinned digest. A genuinely varying five-sample body satisfies the
+  closed-mesh contract with the declared vertex and face counts and the
+  expected bounding box; the hollow form closes over both surfaces and both
+  annuli. The tessellated volume differs from the exact frustum-stack
+  closed form by exactly the inscribed-polygon deficit of the segment count
+  (equality to `1e-9` relative at 8, 64 and 512 segments), which is the
+  statement that the closed form is exact and the tessellation is the
+  approximation, not the other way round. The closed forms agree with the
+  textbook cone and cylinder forms to `1e-15`, and are unchanged by
+  inserting a sample on the existing straight line — the profile is linear
+  between samples, so such a sample is not new information. Refusals: fewer
+  than two samples, a malformed pair, a non-finite height, a non-positive
+  radius, a height that does not increase, two profiles of different
+  lengths, samples at different heights, an outer radius that does not
+  exceed its inner radius, and an inadmissible segment count; every message
+  names the offending sample index.
 - **Exports** (`export.py`): binary STL (header, triangle count, unit
   normals, float32 vertices, zero attributes, exact byte length) and glTF
   2.0 binary of any body list (magic, version, chunk types and alignment,
@@ -125,16 +148,20 @@ What is exercised, all under the 100 % statement-and-branch coverage gate
   identical bodies on the ring do not intersect; counts below three and
   non-positive or non-finite radii are refused.
 - **Native parity**: `rust/src/geometry/` mirrors the circle points, both
-  primitives, the placement kernel, the signed volume and the surface area;
+  constant-radius primitives, both profiled primitives and their closed
+  forms, the placement kernel, the signed volume and the surface area;
   `tests/test_geometry_native_parity.py` compares float64 bit patterns of
   every vertex coordinate, the face index streams, the measures, the circle
   points and ring offsets for counts 3 to 257, the ring separation, a
-  translated body, and the refusal paths of the bindings.
+  translated body, a five-sample profiled solid and profiled tube, the
+  frustum-stack volume and lateral area, and the refusal paths of the
+  bindings.
 - **Benchmark**: `benchmarks/geometry_tessellation.py` per the ecosystem
-  benchmark standard, tessellating three bodies on the axis and placing a
-  ring of twelve rods off it so the placement kernel is measured on both
-  backends; results in `docs/benchmarks.md` and the committed local
-  artefact `benchmarks/results/geometry_tessellation.local.json`.
+  benchmark standard, tessellating three bodies on the axis, placing a ring
+  of twelve rods off it and tessellating one five-sample profiled body, so
+  the placement and profile kernels are measured on both backends; results
+  in `docs/benchmarks.md` and the committed local artefact
+  `benchmarks/results/geometry_tessellation.local.json`.
 
 Bounded claims — what is NOT claimed:
 

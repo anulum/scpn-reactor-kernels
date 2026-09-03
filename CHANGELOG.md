@@ -12,6 +12,30 @@ SCPN Reactor Kernels — CHANGELOG
 
 ## [Unreleased]
 
+### Added
+
+- Axial profile kernel `geometry_profiles`
+  (`src/scpn_reactor_kernels/geometry/profiles.py`, ADR 0010): surfaces of
+  revolution through a sampled `(z, radius)` profile — a closed solid, a
+  closed tube between two aligned profiles, and the exact frustum-stack
+  closed forms of the resulting body. Every tier-G1 primitive so far built a
+  body of constant radius; a magnetic mirror confines a flux tube, whose
+  radius is a function of the field along the axis, and the filed source for
+  that family prints a plasma radius and a magnet bore that a body of
+  constant radius cannot satisfy at the same time. The surface passes exactly
+  through the samples it is given and is linear between them: the kernel
+  interpolates nothing beyond that, so a record built on it can say what the
+  surface is without appealing to an undeclared smoothing rule. The
+  generalisation is exact — a two-sample profile of constant radius
+  reproduces `cylinder_solid` vertex for vertex, and a pair of them
+  `annular_tube` — so no pinned digest moves for a shape that did not change.
+  The tessellated volume differs from the closed form by exactly the
+  inscribed-polygon deficit of the segment count, asserted as an equality
+  rather than a bound. The native crate mirrors both primitives and both
+  closed forms with bit-pattern parity, and the geometry benchmark
+  tessellates a varying body in the same pass. The kernel inventory gains the
+  entry and its digest changes accordingly.
+
 ### Fixed
 
 - Bounding box of a B-rep body (`cad/solids.py`): the kernel's optimal box

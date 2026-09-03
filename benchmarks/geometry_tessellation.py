@@ -44,6 +44,8 @@ from scpn_reactor_kernels.geometry import (  # noqa: E402
     TriangleMesh,
     annular_tube,
     cylinder_solid,
+    profile_volume_m3,
+    profiled_solid,
     ring_offsets,
     translate,
 )
@@ -57,6 +59,15 @@ BODIES: Final = (
 #: One ring of identical rods placed off the axis, so the pass also measures
 #: the placement kernel: (count, ring radius, rod radius, z_low, z_high).
 RING: Final = (12, 0.13, 0.012, 0.0, 1.6)
+#: One body whose radius varies along the axis, so the pass also measures the
+#: profile kernel: a narrow-wide-narrow waist of five samples.
+WAIST: Final = (
+    (0.0, 0.0225),
+    (0.5, 0.06),
+    (0.98, 0.1),
+    (1.46, 0.06),
+    (1.96, 0.0225),
+)
 
 
 def floor_pass(segments: int) -> tuple[float, int]:
@@ -101,6 +112,17 @@ def floor_pass(segments: int) -> tuple[float, int]:
         )
         total += mesh.signed_volume_m3() + mesh.surface_area_m2()
         faces += mesh.face_count
+    waist_vertices, waist_faces = profiled_solid(WAIST, segments)
+    waist = TriangleMesh(
+        name="waist",
+        role="synthetic",
+        material_identifier="synthetic",
+        vertices=waist_vertices,
+        faces=waist_faces,
+    )
+    total += waist.signed_volume_m3() + waist.surface_area_m2()
+    total += profile_volume_m3(WAIST)
+    faces += waist.face_count
     return total, faces
 
 
@@ -144,6 +166,12 @@ def native_pass_factory() -> Callable[[int], tuple[float, int]] | None:
             total += native.mesh_volume(moved, rod_faces)
             total += native.mesh_area(moved, rod_faces)
             faces += len(rod_faces) // 3
+        flat = [value for sample in WAIST for value in sample]
+        waist_vertices, waist_faces = native.tessellate_profiled_solid(flat, segments)
+        total += native.mesh_volume(waist_vertices, waist_faces)
+        total += native.mesh_area(waist_vertices, waist_faces)
+        total += native.profile_volume(flat)
+        faces += len(waist_faces) // 3
         return total, faces
 
     return native_pass

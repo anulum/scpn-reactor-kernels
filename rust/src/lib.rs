@@ -149,6 +149,56 @@ mod python {
         Ok((flatten_vertices(&t.vertices), flatten_faces(&t.faces)))
     }
 
+    /// Unflatten a flat `(z, radius, ...)` stream into profile samples.
+    fn unflatten_profile(stream: &[f64]) -> PyResult<Vec<[f64; 2]>> {
+        if stream.len() % 2 != 0 {
+            return Err(PyValueError::new_err(
+                "profile: must carry an even number of values (z, radius pairs)",
+            ));
+        }
+        Ok(stream.chunks_exact(2).map(|c| [c[0], c[1]]).collect())
+    }
+
+    /// Profiled solid tessellation as flat vertex and face streams.
+    #[pyfunction]
+    fn tessellate_profiled_solid(
+        profile: Vec<f64>,
+        segments: usize,
+    ) -> PyResult<(Vec<f64>, Vec<u32>)> {
+        let samples = unflatten_profile(&profile)?;
+        let t = crate::geometry::profiles::profiled_solid(&samples, segments)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok((flatten_vertices(&t.vertices), flatten_faces(&t.faces)))
+    }
+
+    /// Profiled tube tessellation as flat vertex and face streams.
+    #[pyfunction]
+    fn tessellate_profiled_tube(
+        inner_profile: Vec<f64>,
+        outer_profile: Vec<f64>,
+        segments: usize,
+    ) -> PyResult<(Vec<f64>, Vec<u32>)> {
+        let inner = unflatten_profile(&inner_profile)?;
+        let outer = unflatten_profile(&outer_profile)?;
+        let t = crate::geometry::profiles::profiled_tube(&inner, &outer, segments)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok((flatten_vertices(&t.vertices), flatten_faces(&t.faces)))
+    }
+
+    /// Exact volume of the solid of revolution of a linear profile.
+    #[pyfunction]
+    fn profile_volume(profile: Vec<f64>) -> PyResult<f64> {
+        let samples = unflatten_profile(&profile)?;
+        Ok(crate::geometry::profiles::profile_volume_m3(&samples))
+    }
+
+    /// Exact lateral area of the surface of revolution of a linear profile.
+    #[pyfunction]
+    fn profile_lateral_area(profile: Vec<f64>) -> PyResult<f64> {
+        let samples = unflatten_profile(&profile)?;
+        Ok(crate::geometry::profiles::profile_lateral_area_m2(&samples))
+    }
+
     /// Signed volume of a mesh given as flat streams, see `crate::geometry::mesh::signed_volume`.
     #[pyfunction]
     fn mesh_volume(vertices: Vec<f64>, faces: Vec<u32>) -> PyResult<f64> {
@@ -272,6 +322,10 @@ mod python {
         m.add_function(wrap_pyfunction!(translate, m)?)?;
         m.add_function(wrap_pyfunction!(tessellate_cylinder, m)?)?;
         m.add_function(wrap_pyfunction!(tessellate_annular_tube, m)?)?;
+        m.add_function(wrap_pyfunction!(tessellate_profiled_solid, m)?)?;
+        m.add_function(wrap_pyfunction!(tessellate_profiled_tube, m)?)?;
+        m.add_function(wrap_pyfunction!(profile_volume, m)?)?;
+        m.add_function(wrap_pyfunction!(profile_lateral_area, m)?)?;
         m.add_function(wrap_pyfunction!(mesh_volume, m)?)?;
         m.add_function(wrap_pyfunction!(mesh_area, m)?)?;
         m.add_function(wrap_pyfunction!(natural_log, m)?)?;

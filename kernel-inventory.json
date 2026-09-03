@@ -28,7 +28,7 @@
     }
   ],
   "evidence_maturity": "computational_prototype",
-  "implemented_kernel_count": 13,
+  "implemented_kernel_count": 14,
   "kernels": [
     {
       "benchmark": "docs/benchmarks.md#geometry-tessellation",
@@ -73,6 +73,18 @@
       "sources": [
         "The Khronos Group, glTF 2.0 Specification (binary glTF container, accessors, buffer views)",
         "Binary STL file layout (80-byte header, uint32 triangle count, float32 normal and vertices, uint16 attribute)"
+      ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#geometry-tessellation",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#geometry-kernels",
+      "identifier": "geometry_profiles",
+      "module": "src/scpn_reactor_kernels/geometry/profiles.py",
+      "native_parity": true,
+      "sources": [
+        "Surface of revolution through a sampled axial radius profile, linear between samples (elementary; the rings are those of geometry_unit_circle and the vertex and face order is that of geometry_primitives)",
+        "Closed forms of the conical frustum: volume (pi / 3) (r1^2 + r1 r2 + r2^2) h and lateral area pi (r1 + r2) sqrt((r2 - r1)^2 + h^2) (elementary; no external source)"
       ]
     },
     {
@@ -192,6 +204,6 @@
   "schema_version": "1.0.0",
   "source": {
     "manifest_path": "kernels-domain.json",
-    "manifest_sha256": "33b89e2c130606d95cdd3601276a792214d64caf024d3c0809c0397e5431aac4"
+    "manifest_sha256": "67a484690e5d58383906bc73a423f73b39924fb974202e454ae0ed89fcac83c1"
   }
 }

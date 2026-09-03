@@ -37,6 +37,18 @@ this repository until it appears in the kernel inventory with evidence.
   bit-identical, and both are mirrored natively and measured in the geometry
   benchmark; `computational_prototype` (ADR 0007,
   `VALIDATION.md#geometry-kernels`).
+
+- **Axial profile kernel** (landed 2026-09-03) — bodies whose radius varies
+  along the axis: a closed solid and a closed tube through a sampled
+  `(z, radius)` profile, linear between samples and interpolating nothing
+  beyond that, with the exact frustum-stack volume and lateral area. A
+  constant-radius profile reproduces the existing primitives vertex for
+  vertex, so the generalisation moves no pinned digest; the tessellation
+  deficit against the closed form is exactly the polygon deficit of the
+  segment count. Mirrored natively with bit-pattern parity and measured in
+  the geometry benchmark; `computational_prototype` (ADR 0010,
+  `VALIDATION.md#geometry-kernels`). Consumers: any family with a part whose
+  radius is a function of the axis, first the mirror flux tube.
 - **Numerics kernels** (landed 2026-09-02) — vendored deterministic natural
   logarithm (exact binary decomposition and the odd series of
   `atanh`), exponential (Cody–Waite reduction and Taylor series) and real
