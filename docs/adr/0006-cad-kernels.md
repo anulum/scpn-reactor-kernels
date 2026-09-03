@@ -85,3 +85,17 @@ STEP digest and the back-end versions, and proves its bodies against the
 analytic forms and its faceting against the G1 volumes. Torus and sphere
 primitives, DAGMC-ready faceting for OpenMC and per-body physical groups in
 the volume mesh are separate increments with their own sources.
+
+## Addendum 2026-09-03 — continuation-line unfolding
+
+Item 3 as landed renumbered the usage-occurrence identifiers but left the
+writer's line wrapping untouched; the wrap column is counted from the
+pre-renumbering identifier lengths, so two exports of one assembly in one
+process diverged once the process-wide counter crossed a digit boundary
+(found by the pilot consumer's six-body assembly). The normaliser now
+unfolds the writer's continuation lines (newline plus indent) before
+renumbering — Part 21 whitespace is insignificant outside string literals
+and the writer never wraps inside a string — and a regression test proves
+byte identity across repeated exports and across an interleaved import.
+The correction changes the normalised bytes of every export; no consumer
+was pinned to the earlier form (the group had not been pushed).

@@ -12,6 +12,18 @@ SCPN Reactor Kernels — CHANGELOG
 
 ## [Unreleased]
 
+### Fixed
+
+- STEP export normalisation (`cad/step.py`): the OpenCASCADE writer wraps
+  long lines onto indented continuation lines at a column counted from the
+  pre-renumbering usage-occurrence identifier lengths, so once the
+  process-wide counter crossed a digit boundary the renumbered exports
+  still differed in their wrap positions (found with a six-body assembly
+  exported twice in one process). The normaliser now unfolds the writer's
+  continuation lines before renumbering; repeated exports of a six-body
+  assembly and an export after an in-process STEP import are byte-identical
+  (regression test in `tests/test_cad_step.py`).
+
 ### Added
 
 - CAD kernels (`src/scpn_reactor_kernels/cad/`, kernels `cad_brep_solids`,

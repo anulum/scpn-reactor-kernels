@@ -18,10 +18,16 @@ becomes the fixed literal :data:`STEP_FIXED_TIMESTAMP`, the file name the
 fixed :data:`STEP_FILE_NAME`, the usage-occurrence identifiers are
 renumbered from ``1`` in order of appearance, and the ``FILE_DESCRIPTION``
 carries the generator name and the caller's provenance extras as a JSON
-string (apostrophes doubled per Part 21). The same assembly then yields
-the same bytes in the same environment, identified by SHA-256; identity
-across OpenCASCADE versions is not claimed (the versions travel in the
-extras a consumer records).
+string (apostrophes doubled per Part 21). The writer also wraps long
+lines onto indented continuation lines at a fixed column counted from the
+PRE-renumbering identifier lengths, so the normaliser first unfolds every
+continuation line (a newline followed by indentation is deleted: Part 21
+whitespace is insignificant outside string literals, and the writer never
+wraps inside a string); only then are the identifiers renumbered, making
+the bytes independent of the counter's digit length. The same assembly
+then yields the same bytes in the same environment, identified by
+SHA-256; identity across OpenCASCADE versions is not claimed (the
+versions travel in the extras a consumer records).
 """
 
 from __future__ import annotations
@@ -43,6 +49,8 @@ STEP_GENERATOR: Final = "scpn-reactor-kernels cad_step_export"
 _FILE_NAME: Final = re.compile(r"FILE_NAME\('[^']*','[^']*'")
 _FILE_DESCRIPTION: Final = re.compile(r"FILE_DESCRIPTION\(\('[^']*'\)")
 _USAGE_OCCURRENCE: Final = re.compile(r"NEXT_ASSEMBLY_USAGE_OCCURRENCE\('\d+',")
+#: The writer's line wrap: a newline followed by the continuation indent.
+_CONTINUATION: Final = re.compile(r"\n +")
 
 
 def _part21_string(text: str) -> str:
@@ -63,13 +71,16 @@ def normalise_step_text(text: str, extras: dict[str, Any]) -> str:
     Returns
     -------
     str
-        The normalised text.
+        The normalised text: continuation lines unfolded, fixed file name
+        and time stamp, provenance in the description, usage-occurrence
+        identifiers renumbered from one.
 
     Raises
     ------
     CadError
         If the text lacks the expected header entities.
     """
+    text = _CONTINUATION.sub("", text)
     if _FILE_NAME.search(text) is None or _FILE_DESCRIPTION.search(text) is None:
         raise CadError("step: the writer output lacks the Part 21 header entities")
     description = _part21_string(

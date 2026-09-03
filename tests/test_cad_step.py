@@ -15,13 +15,14 @@ from pathlib import Path
 
 import pytest
 
-from cad_fixtures import assembly, cylinder
+from cad_fixtures import assembly, cylinder, tube
 from scpn_reactor_kernels.cad import (
     MEASURE_TOLERANCE,
     STEP_FILE_NAME,
     STEP_FIXED_TIMESTAMP,
     STEP_GENERATOR,
     BrepAssembly,
+    cylinder_solid_brep,
     normalise_step_text,
     step_bytes,
     step_sha256,
@@ -98,3 +99,37 @@ def test_malformed_writer_output_is_refused() -> None:
     single = BrepAssembly((cylinder(),))
     text = step_bytes(single, {}).decode("utf-8")
     assert normalise_step_text(text, {}) == text
+
+
+def test_repeated_exports_stay_byte_identical_past_the_counter_digit_boundary(
+    tmp_path: Path,
+) -> None:
+    """Six bodies, three exports, one import: the bytes never drift.
+
+    Regression: the writer numbers the assembly usage occurrences from a
+    process-wide counter and wraps long lines at a fixed column counted
+    from the pre-renumbering identifier length, so beyond nine cumulative
+    occurrences the wrap positions moved and renumbering alone could not
+    restore the bytes. The normaliser unfolds the writer's continuation
+    lines first; an in-process STEP import between exports must not
+    perturb later exports either.
+    """
+    bodies = (
+        cylinder(),
+        tube(),
+        cylinder_solid_brep(0.02, 0.0, 0.1, "third", "part", "steel"),
+        cylinder_solid_brep(0.02, 0.0, 0.1, "fourth", "part", "steel"),
+        cylinder_solid_brep(0.02, 0.0, 0.1, "fifth", "part", "steel"),
+        cylinder_solid_brep(0.02, 0.0, 0.1, "sixth", "part", "steel"),
+    )
+    six = BrepAssembly(bodies)
+    first = step_bytes(six, EXTRAS)
+    second = step_bytes(six, EXTRAS)
+    assert first == second
+    target = tmp_path / "six.step"
+    target.write_bytes(first)
+    cadquery = load_backend("cadquery")
+    imported = cadquery.importers.importStep(str(target))
+    assert len(imported.solids().vals()) == 6
+    third = step_bytes(six, EXTRAS)
+    assert first == third

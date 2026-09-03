@@ -217,7 +217,13 @@ none of it is skipped there):
   order, refuses empty lists and duplicate names, and its manifest is
   canonical with a stable digest.
 - **STEP export** (`step.py`): two exports of one assembly are
-  byte-identical; the header carries the fixed file name and time stamp,
+  byte-identical, including past the digit boundary of the writer's
+  process-wide usage-occurrence counter (six-body assembly exported
+  repeatedly in one process) and across an interleaved in-process STEP
+  import (the writer's continuation lines are unfolded before the
+  identifiers are renumbered, so the wrap column cannot leak the
+  pre-renumbering identifier lengths); the header carries the fixed file
+  name and time stamp,
   the generator name and the caller's provenance with Part 21 escaping
   (apostrophes doubled); the usage-occurrence identifiers are renumbered
   from one in order; different extras change the bytes and the digest;
