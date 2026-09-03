@@ -14,6 +14,20 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Fixed
 
+- Bounding box of a B-rep body (`cad/solids.py`): the kernel's optimal box
+  consults an attached triangulation by default, so once a body had been
+  faceted its recorded box became the box of the faceted approximation —
+  looser by the mesher's deflection — and every assembly manifest digest
+  taken after a faceting differed from one taken before, for the same
+  geometry and with nothing in the record saying why. The box is now taken
+  from the geometry alone, without the triangulation and without the shape
+  tolerance, so it is the exact box and does not depend on whether an
+  unrelated kernel has run over the body (regression test in
+  `tests/test_cad_solids.py`). Found while building the second tier-G2
+  device model, whose placement identities are read from these boxes.
+  Consumers that pin a manifest or model digest containing bounding boxes
+  re-pin it when they re-pin the library: this is a governed data change.
+
 - STEP export normalisation (`cad/step.py`): the OpenCASCADE writer wraps
   long lines onto indented continuation lines at a column counted from the
   pre-renumbering usage-occurrence identifier lengths, so once the

@@ -32,6 +32,7 @@ from scpn_reactor_kernels.cad import (
     BrepBody,
     annular_tube_brep,
     cylinder_solid_brep,
+    facet_assembly,
     require_extent,
     require_radius,
 )
@@ -130,3 +131,26 @@ def test_assembly_refusals() -> None:
     with pytest.raises(CadError, match="unique"):
         BrepAssembly((cylinder(), cylinder()))
     assert isinstance(cylinder(), BrepBody)
+
+
+def test_the_bounding_box_is_the_exact_box_and_survives_faceting() -> None:
+    """The recorded box is the geometry's, not the triangulation's.
+
+    Faceting attaches a triangulation to the shape, and the kernel's
+    optimal box consults it by default: the same body would then report a
+    box looser by the mesher's deflection purely because an unrelated
+    kernel had run over it, and every manifest digest taken afterwards
+    would differ from one taken before. The box is therefore taken from
+    the geometry alone.
+    """
+    body = cylinder()
+    before = body.bounding_box_m()
+    assert before == (
+        (0.0 - CYLINDER_RADIUS_M, 0.0 - CYLINDER_RADIUS_M, CYLINDER_EXTENT_M[0]),
+        (CYLINDER_RADIUS_M, CYLINDER_RADIUS_M, CYLINDER_EXTENT_M[1]),
+    )
+    assembly = BrepAssembly((body,))
+    manifest_before = assembly.manifest_sha256()
+    facet_assembly(assembly, 1.0e-4, 0.1)
+    assert body.bounding_box_m() == before
+    assert assembly.manifest_sha256() == manifest_before

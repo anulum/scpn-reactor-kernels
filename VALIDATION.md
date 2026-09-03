@@ -234,8 +234,10 @@ none of it is skipped there):
 - **B-rep solids** (`solids.py`): the cylinder and the annular tube built
   by the kernel agree with the analytic volume and area of the primitive
   within `1e-9` relative (measured `0` and `1.5e-16` in the local run);
-  bounding boxes agree with the extents; every argument is validated
-  before the kernel is asked for a shape; the assembly keeps the body
+  bounding boxes agree exactly with the extents and are taken from the
+  geometry alone, so faceting a body does not move its box and does not
+  change the assembly manifest digest (regression test); every argument
+  is validated before the kernel is asked for a shape; the assembly keeps the body
   order, refuses empty lists and duplicate names, and its manifest is
   canonical with a stable digest.
 - **STEP export** (`step.py`): two exports of one assembly are

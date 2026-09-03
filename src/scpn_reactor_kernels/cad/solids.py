@@ -152,17 +152,26 @@ class BrepBody:
         return float(self.shape.Area())
 
     def bounding_box_m(self) -> Bounds:
-        """Axis-aligned bounding box measured by the B-rep kernel.
+        """Axis-aligned bounding box of the exact geometry.
+
+        The box is the kernel's optimal box of the geometry itself: the
+        triangulation is not consulted and the shape tolerance is not
+        added. Both matter. A body that has been faceted carries a
+        triangulation, and a box taken from it is the box of the faceted
+        approximation, looser by the mesher's deflection — so the same
+        body would report a different box depending on whether an
+        unrelated kernel had run over it. The record must not depend on
+        that, so it does not.
 
         Returns
         -------
         Bounds
-            Component-wise minimum and maximum.
+            Component-wise minimum and maximum of the exact geometry.
         """
-        box = self.shape.BoundingBox()
+        box = _optimal_box(self.shape)
         return (
-            (float(box.xmin), float(box.ymin), float(box.zmin)),
-            (float(box.xmax), float(box.ymax), float(box.zmax)),
+            (float(box[0]), float(box[1]), float(box[2])),
+            (float(box[3]), float(box[4]), float(box[5])),
         )
 
     def volume_relative_error(self) -> float:
@@ -211,6 +220,27 @@ class BrepBody:
             "bounding_box_min_m": list(low),
             "bounding_box_max_m": list(high),
         }
+
+
+def _optimal_box(shape: Any) -> tuple[float, float, float, float, float, float]:
+    """Return the exact optimal bounding box of a shape.
+
+    Parameters
+    ----------
+    shape
+        The CadQuery ``Shape``.
+
+    Returns
+    -------
+    tuple of float
+        ``(xmin, ymin, zmin, xmax, ymax, zmax)`` of the geometry, taken
+        without the triangulation and without the shape tolerance.
+    """
+    bnd = load_backend("OCP.Bnd")
+    brep_bnd_lib = load_backend("OCP.BRepBndLib")
+    box = bnd.Bnd_Box()
+    brep_bnd_lib.BRepBndLib.AddOptimal_s(shape.wrapped, box, False, False)
+    return tuple(float(value) for value in box.Get())  # type: ignore[return-value]
 
 
 def _workplane(z_low_m: float) -> Any:
