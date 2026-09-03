@@ -39,7 +39,9 @@ def test_translation_of_a_tessellated_body_moves_it_rigidly() -> None:
     vertices, faces = cylinder_solid(0.01, 0.0, 0.2, 8)
     moved = translate(vertices, 0.05, 0.0, 0.0)
     assert len(moved) == len(vertices)
-    assert faces == faces
+    # the face stream belongs to the body, not to its position: translating
+    # the vertices must leave the topology of the source body untouched
+    assert faces == cylinder_solid(0.01, 0.0, 0.2, 8)[1]
     assert min(v[0] for v in moved) == pytest.approx(min(v[0] for v in vertices) + 0.05)
     assert [v[2] for v in moved] == [v[2] for v in vertices]
 
