@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-09-03T11:43:34.915084+00:00",
+  "generated_at": "2026-09-03T12:55:40.466414+00:00",
   "label": "local",
   "parameters": {
     "angular_deflection_rad": 0.1,
@@ -14,10 +14,10 @@
       "gmsh": "4.15.2",
       "ocp": "7.9.3.1"
     },
-    "commit": "6e1e4482813783fa128a540097287eef681e57d5",
+    "commit": "5dd34c3f3531669789fcdfafce3c5209fc58b379",
     "cpu_model": "11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz",
     "isolated_cores": false,
-    "load_average_1min_at_start": "5.42",
+    "load_average_1min_at_start": "3.85",
     "machine": "x86_64",
     "platform": "Linux-7.0.0-30-generic-x86_64-with-glibc2.39",
     "python": "3.12.3"
@@ -28,13 +28,13 @@
       "name": "brep_build_and_manifest",
       "requires": "optional extra scpn-reactor-kernels[cad]",
       "stats": {
-        "max_ms_per_operation": 6.521063,
-        "mean_ms_per_operation": 6.3032829,
-        "min_ms_per_operation": 6.029814,
-        "p50_ms_per_operation": 6.226466,
-        "p95_ms_per_operation": 6.521063,
-        "p99_ms_per_operation": 6.521063,
-        "throughput_operations_per_s": 160.60474754057918
+        "max_ms_per_operation": 6.437056,
+        "mean_ms_per_operation": 6.2406472,
+        "min_ms_per_operation": 6.072392,
+        "p50_ms_per_operation": 6.237456,
+        "p95_ms_per_operation": 6.437056,
+        "p99_ms_per_operation": 6.437056,
+        "throughput_operations_per_s": 160.32177220969575
       },
       "status": "measured"
     },
@@ -43,13 +43,13 @@
       "name": "step_export_normalised",
       "requires": "optional extra scpn-reactor-kernels[cad]",
       "stats": {
-        "max_ms_per_operation": 2.536568,
-        "mean_ms_per_operation": 2.2590789,
-        "min_ms_per_operation": 2.121064,
-        "p50_ms_per_operation": 2.238231,
-        "p95_ms_per_operation": 2.536568,
-        "p99_ms_per_operation": 2.536568,
-        "throughput_operations_per_s": 446.7814090681436
+        "max_ms_per_operation": 7.759404,
+        "mean_ms_per_operation": 2.8151524,
+        "min_ms_per_operation": 2.202131,
+        "p50_ms_per_operation": 2.281555,
+        "p95_ms_per_operation": 7.759404,
+        "p99_ms_per_operation": 7.759404,
+        "throughput_operations_per_s": 438.2975645995823
       },
       "status": "measured"
     },
@@ -58,13 +58,13 @@
       "name": "facet_two_bodies",
       "requires": "optional extra scpn-reactor-kernels[cad]",
       "stats": {
-        "max_ms_per_operation": 62.168753,
-        "mean_ms_per_operation": 22.893784,
-        "min_ms_per_operation": 17.377573,
-        "p50_ms_per_operation": 18.790832,
-        "p95_ms_per_operation": 62.168753,
-        "p99_ms_per_operation": 62.168753,
-        "throughput_operations_per_s": 53.21744135650832
+        "max_ms_per_operation": 73.047346,
+        "mean_ms_per_operation": 25.524413700000004,
+        "min_ms_per_operation": 18.03479,
+        "p50_ms_per_operation": 20.136704,
+        "p95_ms_per_operation": 73.047346,
+        "p99_ms_per_operation": 73.047346,
+        "throughput_operations_per_s": 49.66056013933561
       },
       "status": "measured"
     },
@@ -73,13 +73,13 @@
       "name": "gmsh_volume_mesh",
       "requires": "optional extra scpn-reactor-kernels[cad]",
       "stats": {
-        "max_ms_per_operation": 190.750787,
-        "mean_ms_per_operation": 185.7085531,
-        "min_ms_per_operation": 179.26483,
-        "p50_ms_per_operation": 186.032289,
-        "p95_ms_per_operation": 190.750787,
-        "p99_ms_per_operation": 190.750787,
-        "throughput_operations_per_s": 5.375410932023741
+        "max_ms_per_operation": 191.635624,
+        "mean_ms_per_operation": 182.6947074,
+        "min_ms_per_operation": 175.637077,
+        "p50_ms_per_operation": 181.89164,
+        "p95_ms_per_operation": 191.635624,
+        "p99_ms_per_operation": 191.635624,
+        "throughput_operations_per_s": 5.497778787414309
       },
       "status": "measured"
     },
@@ -88,13 +88,13 @@
       "name": "place_ring_of_bodies",
       "requires": "optional extra scpn-reactor-kernels[cad]",
       "stats": {
-        "max_ms_per_operation": 1.620535,
-        "mean_ms_per_operation": 1.5137593,
-        "min_ms_per_operation": 1.471914,
-        "p50_ms_per_operation": 1.483489,
-        "p95_ms_per_operation": 1.620535,
-        "p99_ms_per_operation": 1.620535,
-        "throughput_operations_per_s": 674.0865621517921
+        "max_ms_per_operation": 1.571068,
+        "mean_ms_per_operation": 1.5147523,
+        "min_ms_per_operation": 1.493327,
+        "p50_ms_per_operation": 1.507271,
+        "p95_ms_per_operation": 1.571068,
+        "p99_ms_per_operation": 1.571068,
+        "throughput_operations_per_s": 663.450699973661
       },
       "status": "measured"
     },
@@ -103,13 +103,28 @@
       "name": "assembly_body_evidence",
       "requires": "optional extra scpn-reactor-kernels[cad]",
       "stats": {
-        "max_ms_per_operation": 2.150002,
-        "mean_ms_per_operation": 1.6838868999999999,
-        "min_ms_per_operation": 1.594199,
-        "p50_ms_per_operation": 1.62841,
-        "p95_ms_per_operation": 2.150002,
-        "p99_ms_per_operation": 2.150002,
-        "throughput_operations_per_s": 614.0959586344962
+        "max_ms_per_operation": 2.556941,
+        "mean_ms_per_operation": 1.8239589999999999,
+        "min_ms_per_operation": 1.701857,
+        "p50_ms_per_operation": 1.739032,
+        "p95_ms_per_operation": 2.556941,
+        "p99_ms_per_operation": 2.556941,
+        "throughput_operations_per_s": 575.0325468421513
+      },
+      "status": "measured"
+    },
+    {
+      "backend": "cadquery_ocp",
+      "name": "revolve_axial_profile",
+      "requires": "optional extra scpn-reactor-kernels[cad]",
+      "stats": {
+        "max_ms_per_operation": 4.90139,
+        "mean_ms_per_operation": 4.5403107,
+        "min_ms_per_operation": 4.415417,
+        "p50_ms_per_operation": 4.456444,
+        "p95_ms_per_operation": 4.90139,
+        "p99_ms_per_operation": 4.90139,
+        "throughput_operations_per_s": 224.39415821224276
       },
       "status": "measured"
     }

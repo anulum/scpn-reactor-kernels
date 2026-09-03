@@ -43,6 +43,11 @@ from scpn_reactor_kernels.cad.placement import (
     ring_brep_bodies,
     translate_brep,
 )
+from scpn_reactor_kernels.cad.profiles import (
+    FULL_TURN_DEGREES,
+    profiled_solid_brep,
+    profiled_tube_brep,
+)
 from scpn_reactor_kernels.cad.solids import (
     MEASURE_TOLERANCE,
     BrepBody,
@@ -71,6 +76,7 @@ from scpn_reactor_kernels.cad.volume_mesh import (
 
 __all__ = [
     "DEFLECTION_DEFICIT_FACTOR",
+    "FULL_TURN_DEGREES",
     "GMSH_OPTIONS",
     "INSTALL_HINT",
     "MANIFEST_SCHEMA",
@@ -96,6 +102,8 @@ __all__ = [
     "gmsh_volume_mesh",
     "inscribed_polygon_area_ratio",
     "normalise_step_text",
+    "profiled_solid_brep",
+    "profiled_tube_brep",
     "require_deflection",
     "require_extent",
     "require_radius",

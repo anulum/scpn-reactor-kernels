@@ -198,6 +198,17 @@
       "benchmark": "docs/benchmarks.md#cad-kernels",
       "evidence_maturity": "computational_prototype",
       "evidence_pointer": "VALIDATION.md#cad-kernels",
+      "identifier": "cad_profiles",
+      "module": "src/scpn_reactor_kernels/cad/profiles.py",
+      "native_parity": false,
+      "sources": [
+        "Open CASCADE Technology 7.9 through CadQuery 2.8: revolution of a closed polyline about the axis (Workplane.polyline, Workplane.revolve); the profile contract and the closed forms are those of the tier-G1 geometry_profiles kernel"
+      ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#cad-kernels",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#cad-kernels",
       "identifier": "cad_evidence",
       "module": "src/scpn_reactor_kernels/cad/evidence.py",
       "native_parity": false,

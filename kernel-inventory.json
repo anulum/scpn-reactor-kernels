@@ -28,7 +28,7 @@
     }
   ],
   "evidence_maturity": "computational_prototype",
-  "implemented_kernel_count": 14,
+  "implemented_kernel_count": 15,
   "kernels": [
     {
       "benchmark": "docs/benchmarks.md#geometry-tessellation",
@@ -173,6 +173,17 @@
       "benchmark": "docs/benchmarks.md#cad-kernels",
       "evidence_maturity": "computational_prototype",
       "evidence_pointer": "VALIDATION.md#cad-kernels",
+      "identifier": "cad_profiles",
+      "module": "src/scpn_reactor_kernels/cad/profiles.py",
+      "native_parity": false,
+      "sources": [
+        "Open CASCADE Technology 7.9 through CadQuery 2.8: revolution of a closed polyline about the axis (Workplane.polyline, Workplane.revolve); the profile contract and the closed forms are those of the tier-G1 geometry_profiles kernel"
+      ]
+    },
+    {
+      "benchmark": "docs/benchmarks.md#cad-kernels",
+      "evidence_maturity": "computational_prototype",
+      "evidence_pointer": "VALIDATION.md#cad-kernels",
       "identifier": "cad_evidence",
       "module": "src/scpn_reactor_kernels/cad/evidence.py",
       "native_parity": false,
@@ -204,6 +215,6 @@
   "schema_version": "1.0.0",
   "source": {
     "manifest_path": "kernels-domain.json",
-    "manifest_sha256": "67a484690e5d58383906bc73a423f73b39924fb974202e454ae0ed89fcac83c1"
+    "manifest_sha256": "bad22d4e79b9a2b9f5c62279924a46ac353f820ed6cabe096350d5303e042c49"
   }
 }

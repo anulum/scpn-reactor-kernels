@@ -14,6 +14,22 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Added
 
+- CAD axial profile kernel `cad_profiles`
+  (`src/scpn_reactor_kernels/cad/profiles.py`, ADR 0011): the tier-G2 twin of
+  `geometry_profiles`, revolving the closed polyline through the profile's
+  samples about the axis. The profile contract is not restated but imported:
+  the same validators, the same rules, the same messages, surfacing under the
+  CAD error type, so a caller who moves a profile between tiers meets one
+  contract rather than two that could drift. The analytic references are the
+  tier-G1 frustum-stack closed forms plus the end discs or annuli, exact for a
+  linear profile, and the back-end agrees with them to `1e-16` on the solid
+  and `2e-15` on the tube against a `1e-9` tolerance. A test proves the two
+  tiers describe one body: faceting the revolved solid agrees in volume with
+  the tessellated mesh of the same profile within the exact polygon deficit.
+  The CAD benchmark gains `revolve_axial_profile`; a revolution costs about
+  three times an extrusion, which is the price of a shape an extrusion cannot
+  express.
+
 - Axial profile kernel `geometry_profiles`
   (`src/scpn_reactor_kernels/geometry/profiles.py`, ADR 0010): surfaces of
   revolution through a sampled `(z, radius)` profile — a closed solid, a

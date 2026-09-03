@@ -242,10 +242,12 @@ Bounded claims — what is NOT claimed:
 
 Evidence record of the `cad` kernel group (`computational_prototype`;
 design records `docs/adr/0006-cad-kernels.md`,
-`docs/adr/0008-cad-placement-kernel.md` and
-`docs/adr/0009-cad-body-evidence-in-the-library.md`; kernels
+`docs/adr/0008-cad-placement-kernel.md`,
+`docs/adr/0009-cad-body-evidence-in-the-library.md` and
+`docs/adr/0011-cad-axial-profile-primitive.md`; kernels
 `cad_brep_solids`, `cad_step_export`, `cad_faceting`, `cad_volume_mesh`,
-`cad_evidence` and `cad_placement` in `kernels-domain.json`). The group adapts two pinned third-party kernels
+`cad_profiles`, `cad_evidence` and `cad_placement` in
+`kernels-domain.json`). The group adapts two pinned third-party kernels
 (CadQuery 2.8.0 on OpenCASCADE 7.9 and gmsh 4.15.2) behind the optional
 extra `cad`; the evidence class is stated below and differs from the
 bit-exact groups.
@@ -315,6 +317,20 @@ none of it is skipped there):
   the back-end integrates over the moved surface, so the measured volumes
   of identical placed bodies are NOT required to be equal to one another
   — only to agree with the analytic form within the declared tolerance.
+- **Axial profiles** (`profiles.py`): the revolved solid and the revolved
+  tube agree with the exact frustum-stack closed forms — volume and area,
+  end discs and annuli included — within the declared `1e-9` relative
+  tolerance (measured `1.4e-16` on the solid and `2.0e-15` on the tube in
+  the reference environment); a two-sample constant profile carries the
+  identical analytic references as the extruded cylinder, and a pair of
+  them the identical references as the extruded tube; faceting the
+  revolved solid agrees in volume with the tier-G1 mesh of the same
+  profile within the exact polygon deficit of the reference count, which
+  is the test that the two tiers describe one body rather than two similar
+  ones; the body assembles and its manifest record carries the usual
+  measures; and the profile contract is the tier-G1 contract, reused
+  rather than restated, so every rejection carries the geometry group's
+  wording and sample index under the CAD error type.
 - **Body evidence** (`evidence.py`): the checked record of one body
   carries every measured value next to the bound it is under, and refuses
   at construction — each of the four bounds (both measure tolerances, the
@@ -324,7 +340,7 @@ none of it is skipped there):
   zipping four sequences of different lengths into a short answer; the
   record is frozen after it has been checked.
 - **Benchmark**: `benchmarks/cad.py` per the ecosystem benchmark standard
-  (six operations, back-end versions in the provenance); results in
+  (seven operations, back-end versions in the provenance); results in
   `docs/benchmarks.md` and the committed local artefact
   `benchmarks/results/cad.local.json`.
 

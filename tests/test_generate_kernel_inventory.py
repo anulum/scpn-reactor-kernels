@@ -34,6 +34,7 @@ KERNEL_IDENTIFIERS = [
     "cad_step_export",
     "cad_faceting",
     "cad_volume_mesh",
+    "cad_profiles",
     "cad_evidence",
     "cad_placement",
 ]
@@ -46,7 +47,7 @@ def test_inventory_reports_exact_kernel_set() -> None:
     assert inventory["project"] == "SCPN-REACTOR-KERNELS"
     assert inventory["library"]["distribution"] == "scpn-reactor-kernels"
     assert inventory["evidence_maturity"] == "computational_prototype"
-    assert inventory["implemented_kernel_count"] == 14
+    assert inventory["implemented_kernel_count"] == 15
     assert [k["identifier"] for k in inventory["kernels"]] == KERNEL_IDENTIFIERS
     assert [c["project"] for c in inventory["consumers"]] == [
         "SCPN-Z-PINCH-CORE",

@@ -51,6 +51,14 @@ CHARACTERISTIC_LENGTH_M: Final = 0.02
 RING_COUNT: Final = 12
 RING_RADIUS_M: Final = 0.1
 EVIDENCE_SEGMENTS: Final = 64
+#: One five-sample narrow-wide-narrow profile for the revolution row.
+WAIST: Final = (
+    (0.0, 0.0225),
+    (0.5, 0.06),
+    (0.98, 0.1),
+    (1.46, 0.06),
+    (1.96, 0.0225),
+)
 
 
 def operations() -> list[tuple[str, str, Callable[[], float]]]:
@@ -73,6 +81,7 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
         cylinder_solid_brep,
         facet_assembly,
         gmsh_volume_mesh,
+        profiled_solid_brep,
         ring_brep_bodies,
         step_bytes,
     )
@@ -144,6 +153,10 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
         )
         return sum(item.volume_relative_error for item in checked)
 
+    def revolve_profile() -> float:
+        body = profiled_solid_brep(WAIST, "waist", "synthetic", "synthetic")
+        return body.volume_m3
+
     rod = cylinder_solid_brep(0.006, 0.0, 0.16, "rod", "electrode", "conductor")
     rod_names = tuple(f"rod_{index:02d}" for index in range(RING_COUNT))
     centres = ring_offsets(RING_COUNT, RING_RADIUS_M)
@@ -159,6 +172,7 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
         ("gmsh_volume_mesh", "gmsh", volume_mesh),
         ("place_ring_of_bodies", "cadquery_ocp", place_ring),
         ("assembly_body_evidence", "cadquery_ocp", evidence),
+        ("revolve_axial_profile", "cadquery_ocp", revolve_profile),
     ]
 
 
@@ -274,6 +288,7 @@ def main(argv: list[str] | None = None) -> int:
             ("gmsh_volume_mesh", "gmsh"),
             ("place_ring_of_bodies", "cadquery_ocp"),
             ("assembly_body_evidence", "cadquery_ocp"),
+            ("revolve_axial_profile", "cadquery_ocp"),
         ):
             results.append(
                 {

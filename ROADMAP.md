@@ -97,6 +97,15 @@ this repository until it appears in the kernel inventory with evidence.
   and its record, not a checking apparatus. Consumers: every tier-G2
   device model.
 
+- **CAD axial profiles** (landed 2026-09-03) — `cad_profiles` (ADR 0011):
+  the tier-G2 twin of the profile kernel, revolving the polyline through the
+  same samples the tessellating tier uses, with the same contract imported
+  rather than restated and the same exact closed forms as its analytic
+  references. A test proves the two tiers describe one body by facetting the
+  revolved solid against the tessellated mesh of the same profile. Consumers:
+  the tier-G2 model of any family with a part whose radius is a function of
+  the axis, first the mirror flux tube.
+
 ## Planned (no implementation exists; ordering is not a commitment)
 
 1. **Collision kernels** — Coulomb logarithms, Spitzer resistivity,
