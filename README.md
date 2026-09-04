@@ -27,11 +27,11 @@ digests, solid-cylinder and annular-tube tessellation, bodies whose radius
 varies along the axis with their exact closed forms, spheres and the shell
 between two of them, the rectangular prism — the one body here that is not a
 solid of revolution and the one that is tessellated exactly rather than
-approximated — exact placement of bodies off the axis, sine and cosine of
-an angle a source prints rather than a rational multiple of a turn, and
-binary STL
-and glTF 2.0 exports (ADR 0002, ADR 0007, ADR 0010, ADR 0013, ADR 0015
-and ADR 0016,
+approximated — exact placement of bodies off the axis and aimed at a point
+rather than along it, sine and cosine of an angle a source prints rather
+than a rational multiple of a turn, and binary STL
+and glTF 2.0 exports (ADR 0002, ADR 0007, ADR 0010, ADR 0013, ADR 0015,
+ADR 0016 and ADR 0017,
 evidence: `VALIDATION.md#geometry-kernels`) —
 and the numerics kernels — a vendored deterministic natural logarithm,
 exponential and real power with refused, never clamped, domains (ADR 0003,

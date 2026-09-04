@@ -70,6 +70,8 @@ REQUIRED_PATHS = (
     "docs/adr/0006-cad-kernels.md",
     "docs/adr/0015-bodies-without-curvature.md",
     "docs/adr/0016-arbitrary-angle-trigonometry.md",
+    "docs/adr/0017-aimed-and-spherical-placement.md",
+    "docs/adr/0018-cad-aimed-placement.md",
     "docs/benchmarks.md",
     "kernel-inventory.json",
     "kernels-domain.json",

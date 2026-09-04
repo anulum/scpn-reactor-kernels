@@ -134,7 +134,9 @@
       "module": "src/scpn_reactor_kernels/geometry/placement.py",
       "native_parity": true,
       "sources": [
-        "translation of a vertex stream and equally spaced centres on a circle (elementary; the circle points are those of geometry_unit_circle)"
+        "translation of a vertex stream and equally spaced centres on a circle (elementary; the circle points are those of geometry_unit_circle)",
+        "Rigid aiming of a body built about z, as Rz(azimuth) Ry(polar) from two circle points rather than from a direction vector, which removes the 1/(1+dz) term of the minimal rotation and its loss of precision near the negative z axis (elementary; no external source; ADR 0017)",
+        "Centres of a ring of bodies on one latitude of a sphere, with a declared twist of the ring, and the centre-to-centre distance a consumer proves non-intersection with (elementary; the azimuths are those of geometry_unit_circle and the latitude is its arbitrary-angle circle point)"
       ]
     },
     {
@@ -255,6 +257,7 @@
       "native_parity": false,
       "sources": [
         "Open CASCADE Technology 7.9 through CadQuery 2.8: Shape.translate (gp_Trsf rigid translation); the ring centres are those of the tier-G1 geometry_placement kernel",
+        "Open CASCADE Technology 7.9 through CadQuery 2.8: Shape.moved with a Location built from the frame whose first and third columns are those of the tier-G1 aiming rotation, so one rotation places both tiers (ADR 0018)",
         "Invariance of volume and surface area under a rigid motion (elementary; no external source): the analytic closed forms are carried over, the kernel's own measure of the placed solid is checked against them within the declared tolerance and is not claimed bit-identical to the measure of the source solid"
       ]
     }
@@ -270,6 +273,6 @@
   "schema_version": "1.0.0",
   "source": {
     "manifest_path": "kernels-domain.json",
-    "manifest_sha256": "50143b91fa1fed7933a705651c84ff56fa8273e2155f1ae1dfc92d5b2db4f82c"
+    "manifest_sha256": "1b32f7d2880f7f7c4ef6a34291da885a75d34a0cdcefe59c83f4afabf52080b1"
   }
 }

@@ -42,7 +42,9 @@ from scpn_reactor_kernels.cad.facet import (
     weld,
 )
 from scpn_reactor_kernels.cad.placement import (
+    place_brep,
     ring_brep_bodies,
+    sphere_ring_brep_bodies,
     translate_brep,
 )
 from scpn_reactor_kernels.cad.profiles import (
@@ -113,6 +115,7 @@ __all__ = [
     "gmsh_volume_mesh",
     "inscribed_polygon_area_ratio",
     "normalise_step_text",
+    "place_brep",
     "profiled_solid_brep",
     "profiled_tube_brep",
     "rectangular_prism_brep",
@@ -121,6 +124,7 @@ __all__ = [
     "require_radius",
     "ring_brep_bodies",
     "sphere_brep",
+    "sphere_ring_brep_bodies",
     "spherical_shell_brep",
     "step_bytes",
     "step_sha256",

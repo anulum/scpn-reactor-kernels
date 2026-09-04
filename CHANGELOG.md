@@ -14,6 +14,46 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Added
 
+- Aiming a body, and placing it on a sphere (`geometry_placement`,
+  `cad_placement`, ADR 0017 and ADR 0018). Until now there was **no
+  rotation anywhere in this library**: a body could be moved off the axis
+  but not turned, so every body stood parallel to the axis wherever it
+  was put. A machine whose bodies converge on a point could not be
+  modelled at all — one filed source prints thirty bodies on four
+  latitudes of a spherical chamber, at 20.1, 59.0, 121.0 and 159.9
+  degrees with five, ten, ten and five members, each pointing at the
+  centre.
+
+  **The rotation is built from two angles, never from a direction
+  vector**, and that choice was measured rather than argued. The textbook
+  minimal rotation from `z` to a unit vector divides by `1 + d_z`, which
+  loses every significant digit near the negative `z` axis even for a
+  perfect unit vector: one microradian short of half a turn it departs
+  from orthogonality by `3.6e-4`. The form used here has no such term and
+  departs by at most `4.440892098500626e-16` over two hundred thousand
+  angle pairs, the antipode included. A test computes both and asserts
+  the difference, so the reason cannot be lost.
+
+  Both entry points take circle points rather than angles, which keeps
+  the exactness where it exists: a ring with no twist returns the plain
+  circle bit for bit, and the reversals a sphere needs are sign changes
+  alone.
+
+  **The gate checks that a rotation is a rotation.** A scaling would
+  change every placed body's volume and a reflection its handedness — and
+  a reflection passes every orthonormality check, so only the determinant
+  catches it. Both are asserted.
+
+  The roll about the aimed axis is a convention, not a consequence, and
+  the record says so: a direction fixes two of three degrees of freedom.
+
+  Tier G2 is handed the same rotation, not a second one. The frame the
+  B-rep back-end builds from it departs by at most
+  `1.1102230246251565e-16` in any component, and its measures of the
+  thirty placed solids depart from the analytic forms by at most
+  `4.0e-16` relative. In tier G1 the corresponding drift over the same
+  thirty placements is `5.1e-14` in volume and `1.0e-15` in area.
+
 - Sine and cosine of an angle a source prints (`geometry_unit_circle`,
   ADR 0016). Every angle this library had needed was a rational multiple
   of a turn, which `circle_points` reaches by integer arithmetic without

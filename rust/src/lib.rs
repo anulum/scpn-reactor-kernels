@@ -113,6 +113,84 @@ mod python {
         Ok(offsets.iter().flat_map(|p| p.iter().copied()).collect())
     }
 
+    /// Unit direction of a polar and an azimuthal circle point.
+    #[pyfunction]
+    fn axis_direction(polar: [f64; 2], azimuth: [f64; 2]) -> PyResult<Vec<f64>> {
+        let axis = crate::geometry::placement::axis_direction(polar, azimuth)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok(axis.to_vec())
+    }
+
+    /// Aiming rotation as a flat nine-value row-major stream.
+    #[pyfunction]
+    fn aim_rotation(polar: [f64; 2], azimuth: [f64; 2]) -> PyResult<Vec<f64>> {
+        let rotation = crate::geometry::placement::aim_rotation(polar, azimuth)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok(rotation.iter().flat_map(|r| r.iter().copied()).collect())
+    }
+
+    /// Inward aiming rotation as a flat nine-value row-major stream.
+    #[pyfunction]
+    fn inward_aim(polar: [f64; 2], azimuth: [f64; 2]) -> PyResult<Vec<f64>> {
+        let rotation = crate::geometry::placement::inward_aim(polar, azimuth)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok(rotation.iter().flat_map(|r| r.iter().copied()).collect())
+    }
+
+    /// Rotation of a flat vertex stream about the origin.
+    #[pyfunction]
+    fn rotate(vertices: Vec<f64>, rotation: Vec<f64>) -> PyResult<Vec<f64>> {
+        if vertices.len() % 3 != 0 {
+            return Err(PyValueError::new_err(
+                "vertices: length must be a multiple of three",
+            ));
+        }
+        if rotation.len() != 9 {
+            return Err(PyValueError::new_err(
+                "rotation: must carry nine values in row-major order",
+            ));
+        }
+        let triples: Vec<[f64; 3]> = vertices
+            .chunks_exact(3)
+            .map(|c| [c[0], c[1], c[2]])
+            .collect();
+        let rows: [[f64; 3]; 3] = [
+            [rotation[0], rotation[1], rotation[2]],
+            [rotation[3], rotation[4], rotation[5]],
+            [rotation[6], rotation[7], rotation[8]],
+        ];
+        let turned = crate::geometry::placement::rotate(&triples, rows);
+        Ok(turned.iter().flat_map(|p| p.iter().copied()).collect())
+    }
+
+    /// Azimuths of a twisted ring as a flat cos/sin stream.
+    #[pyfunction]
+    fn ring_azimuths(count: usize, offset: [f64; 2]) -> PyResult<Vec<f64>> {
+        let azimuths = crate::geometry::placement::ring_azimuths(count, offset)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok(azimuths.iter().flat_map(|p| p.iter().copied()).collect())
+    }
+
+    /// Centres of one latitude of a sphere as a flat vertex stream.
+    #[pyfunction]
+    fn sphere_ring_offsets(
+        count: usize,
+        radius_m: f64,
+        polar: [f64; 2],
+        offset: [f64; 2],
+    ) -> PyResult<Vec<f64>> {
+        let centres =
+            crate::geometry::placement::sphere_ring_offsets(count, radius_m, polar, offset)
+                .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok(centres.iter().flat_map(|p| p.iter().copied()).collect())
+    }
+
+    /// Distance between two body centres.
+    #[pyfunction]
+    fn centre_separation(first: [f64; 3], second: [f64; 3]) -> f64 {
+        crate::geometry::placement::centre_separation_m(first, second)
+    }
+
     /// Centre-to-centre distance of neighbouring bodies on a ring.
     #[pyfunction]
     fn ring_separation(count: usize, radius_m: f64) -> PyResult<f64> {
@@ -398,6 +476,13 @@ mod python {
         m.add_function(wrap_pyfunction!(radians_from_degrees, m)?)?;
         m.add_function(wrap_pyfunction!(ring_offsets, m)?)?;
         m.add_function(wrap_pyfunction!(ring_separation, m)?)?;
+        m.add_function(wrap_pyfunction!(axis_direction, m)?)?;
+        m.add_function(wrap_pyfunction!(aim_rotation, m)?)?;
+        m.add_function(wrap_pyfunction!(inward_aim, m)?)?;
+        m.add_function(wrap_pyfunction!(rotate, m)?)?;
+        m.add_function(wrap_pyfunction!(ring_azimuths, m)?)?;
+        m.add_function(wrap_pyfunction!(sphere_ring_offsets, m)?)?;
+        m.add_function(wrap_pyfunction!(centre_separation, m)?)?;
         m.add_function(wrap_pyfunction!(translate, m)?)?;
         m.add_function(wrap_pyfunction!(tessellate_cylinder, m)?)?;
         m.add_function(wrap_pyfunction!(tessellate_annular_tube, m)?)?;

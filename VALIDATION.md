@@ -73,8 +73,9 @@ design records: `docs/adr/0002-geometry-kernels.md`,
 `docs/adr/0007-geometry-placement-kernel.md` and
 `docs/adr/0010-axial-profile-primitive.md`,
 `docs/adr/0012-bodies-that-close-on-the-axis.md`,
-`docs/adr/0015-bodies-without-curvature.md` and
-`docs/adr/0016-arbitrary-angle-trigonometry.md`; kernels
+`docs/adr/0015-bodies-without-curvature.md`,
+`docs/adr/0016-arbitrary-angle-trigonometry.md` and
+`docs/adr/0017-aimed-and-spherical-placement.md`; kernels
 `geometry_unit_circle`, `geometry_mesh_contract`, `geometry_primitives`,
 `geometry_exports`, `geometry_placement`, `geometry_profiles` in
 `kernels-domain.json`).
@@ -187,6 +188,28 @@ What is exercised, all under the 100 % statement-and-branch coverage gate
   neighbouring pair of the ring, which is what a consumer uses to show that
   identical bodies on the ring do not intersect; counts below three and
   non-positive or non-finite radii are refused.
+- **Aiming and spherical placement** (`placement.py`, ADR 0017): tests
+  prove that aiming along `z` is exactly the identity; that the third
+  column of the rotation is `axis_direction` of the same two circle
+  points, bit for bit; that `R^T R` departs from the identity by at most
+  `4.440892098500626e-16` and the determinant from one by four times
+  that, at every printed latitude including half a turn; that the
+  angle-built rotation beats the vector-built one, by computing the
+  textbook minimal rotation from the same direction one microradian short
+  of half a turn and measuring its departure at over `1e-4`; that the
+  inward aim is the exact negation of the outward axis and points at the
+  centre for all thirty of a printed node set's members; that every
+  centre of a latitude lies on the sphere and shares one height exactly;
+  that a ring with no twist is the plain circle bit for bit and a
+  half-turn twist negates every member; that a rotated body's signed
+  volume and surface area drift by at most `5.1e-14` and `1.0e-15`
+  relative over those thirty placements; that the closest pair of the
+  thirty centres is `0.6059943008542816` metres apart, which is what
+  bounds the largest body radius that cannot intersect; and that the
+  gate is a gate — a scaling is refused, and so is a **reflection**,
+  which passes every orthonormality check and is caught only by the
+  determinant. The tolerance is accepted at its edge and refused at the
+  next case on either side.
 - **Native parity**: `rust/src/geometry/` mirrors the circle points, both
   constant-radius primitives, both profiled primitives and their closed
   forms, the placement kernel, the signed volume and the surface area;
@@ -194,8 +217,11 @@ What is exercised, all under the 100 % statement-and-branch coverage gate
   every vertex coordinate, the face index streams, the measures, the circle
   points and ring offsets for counts 3 to 257, the ring separation, a
   translated body, a five-sample profiled solid and profiled tube, the
-  frustum-stack volume and lateral area, and the refusal paths of the
-  bindings.
+  frustum-stack volume and lateral area, the arbitrary-angle circle point
+  over a scan of its whole domain, the degree conversion, the aiming and
+  inward rotations, the axis directions, the twisted ring azimuths, the
+  centres of every printed latitude, a rotated body and the centre
+  separations, and the refusal paths of the bindings.
 - **Benchmark**: `benchmarks/geometry_tessellation.py` per the ecosystem
   benchmark standard, tessellating three bodies on the axis, placing a ring
   of twelve rods off it and tessellating one five-sample profiled body, so
@@ -313,8 +339,9 @@ design records `docs/adr/0006-cad-kernels.md`,
 `docs/adr/0008-cad-placement-kernel.md`,
 `docs/adr/0009-cad-body-evidence-in-the-library.md` and
 `docs/adr/0011-cad-axial-profile-primitive.md`,
-`docs/adr/0012-bodies-that-close-on-the-axis.md` and
-`docs/adr/0015-bodies-without-curvature.md`; kernels
+`docs/adr/0012-bodies-that-close-on-the-axis.md`,
+`docs/adr/0015-bodies-without-curvature.md` and
+`docs/adr/0018-cad-aimed-placement.md`; kernels
 `cad_brep_solids`, `cad_step_export`, `cad_faceting`, `cad_volume_mesh`,
 `cad_profiles`, `cad_evidence` and `cad_placement` in
 `kernels-domain.json`). The group adapts two pinned third-party kernels
@@ -387,6 +414,18 @@ none of it is skipped there):
   the back-end integrates over the moved surface, so the measured volumes
   of identical placed bodies are NOT required to be equal to one another
   — only to agree with the analytic form within the declared tolerance.
+- **Aimed placement** (`placement.py`, ADR 0018): a body placed with the
+  tier-G1 aiming rotation carries the analytic closed forms unchanged;
+  over the thirty placements of a printed node set its measured volume
+  and area depart from those forms by at most `4.0e-16` relative,
+  measured; the frame the back-end builds from the rotation departs from
+  the rotation by at most `1.1102230246251565e-16` in any component,
+  which is the assertion that says both tiers are placed in one frame;
+  the box of a placed cylinder has its midpoint at `R - L/2` from the
+  centre of the sphere rather than `R + L/2`, which is what aiming it
+  inward means; and a scaling, a reflection, a non-finite entry, a
+  non-finite centre, an empty name, mismatched sequences and repeated
+  names are all refused.
 - **Axial profiles** (`profiles.py`): the revolved solid and the revolved
   tube agree with the exact frustum-stack closed forms — volume and area,
   end discs and annuli included — within the declared `1e-9` relative

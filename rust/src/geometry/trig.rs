@@ -352,3 +352,63 @@ mod arbitrary_angle_tests {
         assert!(radians_from_degrees(0.0) == 0.0);
     }
 }
+
+/// Largest departure from the unit circle a supplied pair may carry.
+pub const UNIT_POINT_TOLERANCE: f64 = 1.0e-12;
+
+/// Rejection of a pair that is not a point of the unit circle.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct CirclePointError {
+    /// The rejected pair.
+    pub point: [f64; 2],
+}
+
+impl fmt::Display for CirclePointError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "point: must lie on the unit circle within {UNIT_POINT_TOLERANCE}, got [{}, {}]",
+            self.point[0], self.point[1]
+        )
+    }
+}
+
+impl std::error::Error for CirclePointError {}
+
+/// Validates a `(cos, sin)` pair as a point of the unit circle.
+///
+/// # Errors
+///
+/// Returns [`CirclePointError`] when a component is not finite or the pair
+/// departs from the unit circle by more than [`UNIT_POINT_TOLERANCE`].
+pub fn require_circle_point(point: [f64; 2]) -> Result<[f64; 2], CirclePointError> {
+    let [cosine_value, sine_value] = point;
+    if !cosine_value.is_finite() || !sine_value.is_finite() {
+        return Err(CirclePointError { point });
+    }
+    let departure = (cosine_value * cosine_value + sine_value * sine_value - 1.0).abs();
+    if departure > UNIT_POINT_TOLERANCE {
+        return Err(CirclePointError { point });
+    }
+    Ok(point)
+}
+
+/// The point half a turn away, by two sign changes.
+///
+/// # Errors
+///
+/// Returns [`CirclePointError`] when the pair is not on the unit circle.
+pub fn opposite_point(point: [f64; 2]) -> Result<[f64; 2], CirclePointError> {
+    let [cosine_value, sine_value] = require_circle_point(point)?;
+    Ok([0.0 - cosine_value, 0.0 - sine_value])
+}
+
+/// The point of the supplementary angle, by one sign change.
+///
+/// # Errors
+///
+/// Returns [`CirclePointError`] when the pair is not on the unit circle.
+pub fn supplementary_point(point: [f64; 2]) -> Result<[f64; 2], CirclePointError> {
+    let [cosine_value, sine_value] = require_circle_point(point)?;
+    Ok([0.0 - cosine_value, sine_value])
+}

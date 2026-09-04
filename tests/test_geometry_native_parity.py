@@ -15,23 +15,31 @@ float64 bit pattern, never by tolerance. All inputs are synthetic.
 
 from __future__ import annotations
 
+import itertools
 import math
 
 import pytest
 
 from geometry_fixtures import bits, sample_bodies, stream_bits
 from scpn_reactor_kernels.geometry import (
+    aim_rotation,
     annular_tube,
+    axis_direction,
+    centre_separation_m,
     circle_points,
     closed_profiled_solid,
     cylinder_solid,
+    inward_aim,
     profile_lateral_area_m2,
     profile_volume_m3,
     profiled_solid,
     profiled_tube,
     rectangular_prism,
+    ring_azimuths,
     ring_offsets,
     ring_separation_m,
+    rotate,
+    sphere_ring_offsets,
     translate,
     unit_circle,
 )
@@ -54,6 +62,90 @@ def test_unit_circle_is_bit_exact(segments: int) -> None:
     """The flat cos/sin stream agrees bit for bit."""
     floor = [component for point in unit_circle(segments) for component in point]
     assert stream_bits(floor) == stream_bits(native.unit_circle(segments))
+
+
+PRINTED_RINGS = ((5, 20.1), (10, 59.0), (10, 121.0), (5, 159.9))
+
+
+def _polar(degrees: float) -> tuple[float, float]:
+    """Return the circle point of a printed latitude in degrees."""
+    return circle_point(radians_from_degrees(degrees))
+
+
+def test_the_aiming_rotation_is_bit_exact() -> None:
+    """Every entry of the matrix agrees, for outward and inward aims alike."""
+    for count, degrees in PRINTED_RINGS:
+        polar = _polar(degrees)
+        for azimuth in ring_azimuths(count, (1.0, 0.0)):
+            for floor_call, native_call in (
+                (aim_rotation, native.aim_rotation),
+                (inward_aim, native.inward_aim),
+            ):
+                floor = [entry for row in floor_call(polar, azimuth) for entry in row]
+                assert stream_bits(floor) == stream_bits(
+                    native_call(list(polar), list(azimuth))
+                )
+
+
+def test_the_axis_direction_is_bit_exact() -> None:
+    """The direction and the matrix column come from the same products."""
+    for count, degrees in PRINTED_RINGS:
+        polar = _polar(degrees)
+        for azimuth in ring_azimuths(count, (1.0, 0.0)):
+            floor = list(axis_direction(polar, azimuth))
+            assert stream_bits(floor) == stream_bits(
+                native.axis_direction(list(polar), list(azimuth))
+            )
+
+
+@pytest.mark.parametrize("count", [3, 5, 10, 12])
+def test_the_twisted_ring_azimuths_are_bit_exact(count: int) -> None:
+    """Both the identity twist and a real one agree bit for bit."""
+    for offset in ((1.0, 0.0), circle_point(radians_from_degrees(36.0))):
+        floor = [
+            component for point in ring_azimuths(count, offset) for component in point
+        ]
+        assert stream_bits(floor) == stream_bits(
+            native.ring_azimuths(count, list(offset))
+        )
+
+
+@pytest.mark.parametrize(("count", "degrees"), PRINTED_RINGS)
+def test_the_sphere_ring_centres_are_bit_exact(count: int, degrees: float) -> None:
+    """Every centre of every printed latitude agrees bit for bit."""
+    polar = _polar(degrees)
+    floor = [
+        component
+        for centre in sphere_ring_offsets(count, 1.5, polar, (1.0, 0.0))
+        for component in centre
+    ]
+    assert stream_bits(floor) == stream_bits(
+        native.sphere_ring_offsets(count, 1.5, list(polar), [1.0, 0.0])
+    )
+
+
+@pytest.mark.parametrize("segments", [8, 32])
+def test_a_rotated_body_is_bit_exact(segments: int) -> None:
+    """The rotated vertex stream of a real body agrees coordinate by coordinate."""
+    vertices, _ = cylinder_solid(0.05, 0.0, 0.30, segments)
+    polar = _polar(20.1)
+    azimuth = ring_azimuths(5, (1.0, 0.0))[1]
+    rotation = inward_aim(polar, azimuth)
+    floor = [c for v in rotate(vertices, rotation) for c in v]
+    flat_rotation = [entry for row in rotation for entry in row]
+    assert stream_bits(floor) == stream_bits(
+        native.rotate([c for v in vertices for c in v], flat_rotation)
+    )
+
+
+def test_the_centre_separation_is_bit_exact() -> None:
+    """The distance agrees to the bit, not to a tolerance."""
+    polar = _polar(59.0)
+    centres = sphere_ring_offsets(10, 1.5, polar, (1.0, 0.0))
+    for first, second in itertools.pairwise(centres):
+        assert bits(centre_separation_m(first, second)) == bits(
+            native.centre_separation(list(first), list(second))
+        )
 
 
 def test_the_arbitrary_angle_circle_point_is_bit_exact() -> None:

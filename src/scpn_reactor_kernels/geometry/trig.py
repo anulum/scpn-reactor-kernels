@@ -470,3 +470,99 @@ def cosine(angle_rad: float) -> float:
         If the angle leaves the declared domain.
     """
     return circle_point(angle_rad)[0]
+
+
+#: A point of the unit circle as the pair ``(cos, sin)``. Both entry
+#: points of this module return it, and the placement kernels take it
+#: rather than an angle, so an angle that can be reached exactly is never
+#: formed and reduced needlessly.
+CirclePoint = tuple[float, float]
+
+#: Largest departure from the unit circle a supplied pair may carry.
+#: Measured: pairs produced by :func:`circle_point` and
+#: :func:`circle_points` depart by at most ``4.4e-16``, so this admits
+#: every pair this library makes with room to spare while still refusing
+#: a pair that was never on the circle.
+UNIT_POINT_TOLERANCE: Final = 1.0e-12
+
+
+def require_circle_point(name: str, point: CirclePoint) -> CirclePoint:
+    """Validate a ``(cos, sin)`` pair as a point of the unit circle.
+
+    Parameters
+    ----------
+    name
+        Name of the argument, for the refusal message.
+    point
+        The pair to validate.
+
+    Returns
+    -------
+    tuple of (float, float)
+        The validated pair.
+
+    Raises
+    ------
+    GeometryError
+        If either component is non-finite, or the pair departs from the
+        unit circle by more than :data:`UNIT_POINT_TOLERANCE`.
+    """
+    cosine_value, sine_value = point
+    if not (math.isfinite(cosine_value) and math.isfinite(sine_value)):
+        raise GeometryError(f"{name}: components must be finite, got {point!r}")
+    departure = abs(cosine_value * cosine_value + sine_value * sine_value - 1.0)
+    if departure > UNIT_POINT_TOLERANCE:
+        raise GeometryError(
+            f"{name}: must lie on the unit circle within "
+            f"{UNIT_POINT_TOLERANCE!r}, got {point!r} departing by {departure!r}"
+        )
+    return point
+
+
+def opposite_point(point: CirclePoint) -> CirclePoint:
+    """Return the point half a turn away, by two sign changes.
+
+    Parameters
+    ----------
+    point
+        A point of the unit circle.
+
+    Returns
+    -------
+    tuple of (float, float)
+        ``(-cos, -sin)``, which is ``(cos, sin)`` of the angle plus half a
+        turn. Exact: no arithmetic beyond the two sign changes, so an
+        azimuth reversed this way keeps every bit of the original.
+
+    Raises
+    ------
+    GeometryError
+        If the pair is not a point of the unit circle.
+    """
+    cosine_value, sine_value = require_circle_point("point", point)
+    return 0.0 - cosine_value, 0.0 - sine_value
+
+
+def supplementary_point(point: CirclePoint) -> CirclePoint:
+    """Return the point of the supplementary angle, by one sign change.
+
+    Parameters
+    ----------
+    point
+        A point of the unit circle.
+
+    Returns
+    -------
+    tuple of (float, float)
+        ``(-cos, sin)``, which is ``(cos, sin)`` of half a turn minus the
+        angle. A polar angle reflected through the equator is exactly
+        this, which is why a body aimed back at the centre of a sphere
+        needs no second reduction.
+
+    Raises
+    ------
+    GeometryError
+        If the pair is not a point of the unit circle.
+    """
+    cosine_value, sine_value = require_circle_point("point", point)
+    return 0.0 - cosine_value, sine_value
