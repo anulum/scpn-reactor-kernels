@@ -14,7 +14,10 @@ explicitly, full provenance in the artefact. The operations are, on one
 synthetic two-body assembly (a solid cylinder and an annular tube):
 building the B-rep bodies and the assembly manifest, exporting the
 normalised STEP bytes, faceting both bodies into closed meshes, and
-meshing the STEP into tetrahedra; each sample times one operation and the
+meshing the STEP into tetrahedra, placing a ring of twelve identical rods
+off the axis, and placing a latitude of ten identical rods on a sphere with
+each one turned to point at its centre; each sample times one operation and
+the
 cost is reported per operation. The backends are the pinned third-party
 kernels (``cadquery_ocp`` for the first three, ``gmsh`` for the last);
 there is no Python-floor row because these kernels have no bit-exact
@@ -51,6 +54,15 @@ ANGULAR_DEFLECTION_RAD: Final = 0.1
 CHARACTERISTIC_LENGTH_M: Final = 0.02
 RING_COUNT: Final = 12
 RING_RADIUS_M: Final = 0.1
+#: One latitude of bodies on a sphere, each aimed at its centre, so the
+#: pass also measures the aimed placement of ADR 0018: count, sphere
+#: radius and polar angle in degrees. The angle is deliberately not a
+#: rational multiple of a turn.
+SPHERE_ARRAY_COUNT: Final = 10
+SPHERE_ARRAY_RADIUS_M: Final = 1.5
+SPHERE_ARRAY_POLAR_DEG: Final = 59.0
+#: The identity twist of a ring, as a circle point.
+NO_TWIST: Final = (1.0, 0.0)
 EVIDENCE_SEGMENTS: Final = 64
 #: Polar steps of the spherical bodies. Sixteen is the count the
 #: library's own sphere tests use, so the benchmark measures the same body.
@@ -101,14 +113,20 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
         profiled_solid_brep,
         ring_brep_bodies,
         sphere_brep,
+        sphere_ring_brep_bodies,
         spherical_shell_brep,
         step_bytes,
     )
     from scpn_reactor_kernels.geometry import (
         TriangleMesh,
         annular_tube,
+        circle_point,
         cylinder_solid,
+        inward_aim,
+        radians_from_degrees,
+        ring_azimuths,
         ring_offsets,
+        sphere_ring_offsets,
     )
 
     def build() -> float:
@@ -200,12 +218,29 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
         bodies = ring_brep_bodies(rod, rod_names, centres)
         return sum(body.volume_m3 for body in bodies)
 
+    polar = circle_point(radians_from_degrees(SPHERE_ARRAY_POLAR_DEG))
+    aimed_names = tuple(f"aimed_{index:02d}" for index in range(SPHERE_ARRAY_COUNT))
+    aimed_centres = sphere_ring_offsets(
+        SPHERE_ARRAY_COUNT, SPHERE_ARRAY_RADIUS_M, polar, NO_TWIST
+    )
+    aimed_rotations = tuple(
+        inward_aim(polar, azimuth)
+        for azimuth in ring_azimuths(SPHERE_ARRAY_COUNT, NO_TWIST)
+    )
+
+    def place_aimed_latitude() -> float:
+        bodies = sphere_ring_brep_bodies(
+            rod, aimed_names, aimed_centres, aimed_rotations
+        )
+        return sum(body.volume_m3 for body in bodies)
+
     return [
         ("brep_build_and_manifest", "cadquery_ocp", build),
         ("step_export_normalised", "cadquery_ocp", export),
         ("facet_two_bodies", "cadquery_ocp", facet),
         ("gmsh_volume_mesh", "gmsh", volume_mesh),
         ("place_ring_of_bodies", "cadquery_ocp", place_ring),
+        ("place_aimed_latitude", "cadquery_ocp", place_aimed_latitude),
         ("assembly_body_evidence", "cadquery_ocp", evidence),
         ("revolve_axial_profile", "cadquery_ocp", revolve_profile),
         ("revolve_closed_profile", "cadquery_ocp", revolve_closed_profile),

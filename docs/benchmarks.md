@@ -135,11 +135,20 @@ the default.
 ## CAD kernels
 
 Artefact: `benchmarks/results/cad.local.json` (schema `scpn-reactor-kernels.cad-benchmark.v1`,
-generated 2026-09-04T06:01:03.277682+00:00, at parent commit `9ea9eaee41a4` with
-the working tree of the landing commit). Host: 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz,
+generated 2026-09-04T17:02:38.047803+00:00 at commit `a2b500a167ef`).
+Host: 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz,
 Linux-7.0.0-30-generic-x86_64-with-glibc2.39, Python 3.12.3; back-ends cadquery 2.8.0,
-OCP 7.9.3.1, gmsh 4.15.2; load average at start
-7.84 (other work was running on the host); cores not isolated. Parameters:
+OCP 7.9.3.1, gmsh 4.15.2; **load average at start 65.92**; cores not
+isolated.
+
+**Read the load average before the numbers.** Other seats' work was
+saturating the shared host. The `facet_two_bodies` row shows what that
+does: 29.5 ms at P50 against 2471.6 ms at P95, a spread of eighty-four to
+one that is contention and nothing else. Treat every row here as a record
+that the operation ran and returned, not as its cost. A run on a quiet
+host is still owed.
+
+Parameters:
 2 warm-up runs, 10 timed runs per operation; linear deflection
 0.0001 m, angular deflection 0.1 rad, characteristic
 length 0.02 m. One synthetic two-body assembly (solid cylinder and
@@ -150,36 +159,41 @@ their tier-G1 meshes at 64 segments; the two revolution rows build one
 five-sample body whose radius varies along the axis, and one seven-sample
 body that closes on the axis at both poles; the two spherical rows build a
 sixteen-ring sphere of radius 0.1 m and the shell between it and a
-0.06 m cavity.
-
-The three profile revolutions sit inside each other's spread — 6.64, 6.08
-and 8.41 ms at P50 against P95 values of 9.52, 10.55 and 13.43 — so this
-run does not separate them, and no claim is made that any path is the
-cheaper. The **shell** is the one row that does separate: 13.90 ms at P50
-against the sphere's 8.41, with the two spreads not overlapping. It
-revolves two profiles where the sphere revolves one, which is the shape of
-the difference, though this run does not establish that as its cause.
+0.06 m cavity; and the aimed row places 10 identical rods on a latitude of
+a 1.5 m sphere at a polar angle of 59 degrees, each turned to point at its
+centre.
 
 There is no Python-floor row: these kernels adapt pinned third-party code
-and carry no bit-exact floor (ADR 0006). The whole table is a fresh run of
-the landing working tree; the earlier run measured eight operations rather
-than ten, and its numbers are not comparable with these.
+and carry no bit-exact floor (ADR 0006). The table is a fresh run of the
+landing working tree; the earlier run measured ten operations rather than
+eleven and was taken at a load average of 7.84, so its numbers are not
+comparable with these on either count.
 
 | Operation | Backend | P50 ms | P95 ms | mean ms | operations/s | status |
 |---|---|---|---|---|---|---|
-| `brep_build_and_manifest` | `cadquery_ocp` | 9.31 | 13.23 | 9.98 | 107.4 | measured |
-| `step_export_normalised` | `cadquery_ocp` | 3.52 | 4.92 | 3.64 | 284.4 | measured |
-| `facet_two_bodies` | `cadquery_ocp` | 36.08 | 166.85 | 49.67 | 27.7 | measured |
-| `gmsh_volume_mesh` | `gmsh` | 293.18 | 402.05 | 304.96 | 3.4 | measured |
-| `place_ring_of_bodies` | `cadquery_ocp` | 2.01 | 2.42 | 2.00 | 498.0 | measured |
-| `assembly_body_evidence` | `cadquery_ocp` | 2.09 | 3.23 | 2.20 | 477.7 | measured |
-| `revolve_axial_profile` | `cadquery_ocp` | 6.64 | 9.52 | 7.20 | 150.7 | measured |
-| `revolve_closed_profile` | `cadquery_ocp` | 6.08 | 10.55 | 7.03 | 164.4 | measured |
-| `revolve_sphere` | `cadquery_ocp` | 8.41 | 13.43 | 9.54 | 118.9 | measured |
-| `revolve_spherical_shell` | `cadquery_ocp` | 13.90 | 18.76 | 14.72 | 71.9 | measured |
+| `brep_build_and_manifest` | `cadquery_ocp` | 6.91 | 13.68 | 8.16 | 144.7 | measured |
+| `step_export_normalised` | `cadquery_ocp` | 5.33 | 18.02 | 6.99 | 187.7 | measured |
+| `facet_two_bodies` | `cadquery_ocp` | 29.48 | 2471.64 | 274.46 | 33.9 | measured |
+| `gmsh_volume_mesh` | `gmsh` | 325.34 | 400.54 | 324.81 | 3.1 | measured |
+| `place_ring_of_bodies` | `cadquery_ocp` | 1.58 | 1.97 | 1.64 | 632.5 | measured |
+| `place_aimed_latitude` | `cadquery_ocp` | 2.08 | 6.56 | 3.01 | 480.2 | measured |
+| `assembly_body_evidence` | `cadquery_ocp` | 2.08 | 3.42 | 2.31 | 480.5 | measured |
+| `revolve_axial_profile` | `cadquery_ocp` | 4.08 | 6.39 | 4.71 | 245.1 | measured |
+| `revolve_closed_profile` | `cadquery_ocp` | 4.82 | 8.53 | 5.81 | 207.7 | measured |
+| `revolve_sphere` | `cadquery_ocp` | 16.55 | 26.72 | 17.45 | 60.4 | measured |
+| `revolve_spherical_shell` | `cadquery_ocp` | 25.57 | 31.93 | 26.07 | 39.1 | measured |
 
-The placement row is twelve rigid translations and twelve back-end volume
-measures, so about 0.16 ms per placed body. The evidence row is dominated
+The two placement rows are the only pair in this run whose comparison is
+worth anything, because they differ by one thing and ran seconds apart:
+twelve rigid **translations** at 1.58 ms against ten general rigid
+**motions** at 2.08 ms, which is 0.132 against 0.208 ms per placed body.
+Aiming a body therefore costs the back-end about half as much again as
+sliding it, on this host under this load. Both rows include the back-end
+volume measure of every placed body.
+
+No claim is made about any other row of this table, and none should be
+read into the differences between the revolution rows: at a load average
+of 66 the spreads do not separate anything. The evidence row is dominated
 by the back-end measures it asks for, not by the arithmetic of the bounds;
 the faceting and the reference meshes are built outside the timed region,
 because a device model builds them once and checks them once.
