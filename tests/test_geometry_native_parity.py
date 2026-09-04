@@ -15,12 +15,15 @@ float64 bit pattern, never by tolerance. All inputs are synthetic.
 
 from __future__ import annotations
 
+import math
+
 import pytest
 
 from geometry_fixtures import bits, sample_bodies, stream_bits
 from scpn_reactor_kernels.geometry import (
     annular_tube,
     circle_points,
+    closed_profiled_solid,
     cylinder_solid,
     profile_lateral_area_m2,
     profile_volume_m3,
@@ -140,6 +143,19 @@ WAIST = (
 )
 WAIST_OUTER = tuple((z, radius + 0.004) for z, radius in WAIST)
 
+#: A compact-toroid separatrix, closed on the axis at both poles, and a
+#: cone, closed at one. Both are shapes the open profile cannot express.
+SEPARATRIX = (
+    (-0.15, 0.0),
+    (-0.1125, 0.02 * math.sqrt(1.0 - 0.75**2)),
+    (-0.075, 0.02 * math.sqrt(1.0 - 0.5**2)),
+    (0.0, 0.02),
+    (0.075, 0.02 * math.sqrt(1.0 - 0.5**2)),
+    (0.1125, 0.02 * math.sqrt(1.0 - 0.75**2)),
+    (0.15, 0.0),
+)
+CONE = ((0.0, 0.0), (1.0, 0.5))
+
 
 @pytest.mark.parametrize("segments", [8, 32, 64])
 def test_profiled_solid_is_bit_exact(segments: int) -> None:
@@ -149,6 +165,29 @@ def test_profiled_solid_is_bit_exact(segments: int) -> None:
     got_vertices, got_faces = native.tessellate_profiled_solid(flat, segments)
     assert stream_bits([c for v in vertices for c in v]) == stream_bits(got_vertices)
     assert [i for f in faces for i in f] == got_faces
+
+
+@pytest.mark.parametrize("segments", [8, 32, 64])
+@pytest.mark.parametrize(("profile", "label"), [(SEPARATRIX, "poles"), (CONE, "cone")])
+def test_closed_profiled_solid_is_bit_exact(
+    profile: tuple[tuple[float, float], ...], label: str, segments: int
+) -> None:
+    """A body that closes on the axis agrees bit for bit, either way up."""
+    vertices, faces = closed_profiled_solid(profile, segments)
+    flat = [value for sample in profile for value in sample]
+    got_vertices, got_faces = native.tessellate_closed_profiled_solid(flat, segments)
+    assert stream_bits([c for v in vertices for c in v]) == stream_bits(got_vertices)
+    assert [i for f in faces for i in f] == got_faces
+    assert label in {"poles", "cone"}
+
+
+def test_closed_profile_closed_forms_are_bit_exact() -> None:
+    """The same sums serve a closed profile, and agree bit for bit."""
+    flat = [value for sample in SEPARATRIX for value in sample]
+    assert bits(profile_volume_m3(SEPARATRIX)) == bits(native.profile_volume(flat))
+    assert bits(profile_lateral_area_m2(SEPARATRIX)) == bits(
+        native.profile_lateral_area(flat)
+    )
 
 
 @pytest.mark.parametrize("segments", [8, 32])

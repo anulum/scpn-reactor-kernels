@@ -63,6 +63,12 @@ from scpn_reactor_kernels.validation import require_finite, require_positive
 #: Fewest samples a profile may carry: two, which is a frustum.
 MIN_PROFILE_SAMPLES: Final = 2
 
+#: Fewest samples a closed profile may carry: two, which is a cone. A
+#: profile closed at BOTH poles needs three, because it must still carry
+#: one ring of positive radius between them.
+MIN_CLOSED_PROFILE_SAMPLES: Final = 2
+MIN_BIPOLAR_PROFILE_SAMPLES: Final = 3
+
 #: One ``(z, radius)`` sample of an axial profile.
 ProfileSample = tuple[float, float]
 #: An ordered axial radius profile.
@@ -113,6 +119,118 @@ def require_profile(name: str, profile: Profile) -> Profile:
             )
         previous_z = height
     return profile
+
+
+def require_closed_profile(name: str, profile: Profile) -> Profile:
+    """Return an axial profile that closes on the axis at one or both ends.
+
+    An open profile (:func:`require_profile`) keeps a strictly positive
+    radius at every sample, so it can express a barrel, a frustum or a
+    flux tube but never a body that comes to a point. Several real parts
+    do come to a point: a cone, and — the case this contract was written
+    for — the separatrix of a compact toroid, a closed surface whose
+    radius falls to zero at both poles.
+
+    Parameters
+    ----------
+    name
+        Field name reported in the rejection message.
+    profile
+        Candidate ``(z, radius)`` samples.
+
+    Returns
+    -------
+    Profile
+        The validated profile, unchanged.
+
+    Raises
+    ------
+    GeometryError
+        If the profile carries too few samples, if any value is
+        non-finite, if any radius is negative, if an interior radius is
+        not strictly positive, if neither end radius is exactly zero (an
+        open profile belongs to :func:`require_profile`), if both ends
+        are zero and there is no ring of positive radius between them, or
+        if the heights do not strictly increase. The rejection names the
+        sample index so a caller can find the offending row.
+    """
+    if len(profile) < MIN_CLOSED_PROFILE_SAMPLES:
+        raise GeometryError(
+            f"{name}: must carry at least {MIN_CLOSED_PROFILE_SAMPLES} samples, got "
+            f"{len(profile)!r}"
+        )
+    previous_z: float | None = None
+    last = len(profile) - 1
+    for index, sample in enumerate(profile):
+        if len(sample) != 2:
+            raise GeometryError(
+                f"{name}[{index}]: must be a (z, radius) pair, got {sample!r}"
+            )
+        height, radius = sample
+        require_finite(f"{name}[{index}].z", height, GeometryError)
+        require_finite(f"{name}[{index}].radius", radius, GeometryError)
+        if index in (0, last):
+            if radius < 0.0:
+                raise GeometryError(
+                    f"{name}[{index}].radius: a pole radius must not be negative, "
+                    f"got {radius!r}"
+                )
+        else:
+            require_positive(f"{name}[{index}].radius", radius, GeometryError)
+        if previous_z is not None and not height > previous_z:
+            raise GeometryError(
+                f"{name}[{index}].z: must exceed the previous sample, got "
+                f"{height!r} after {previous_z!r}"
+            )
+        previous_z = height
+    low_radius, high_radius = profile[0][1], profile[last][1]
+    if low_radius != 0.0 and high_radius != 0.0:
+        raise GeometryError(
+            f"{name}: at least one end radius must be exactly zero; a profile "
+            "positive at both ends is an open profile"
+        )
+    if (
+        low_radius == 0.0
+        and high_radius == 0.0
+        and len(profile) < MIN_BIPOLAR_PROFILE_SAMPLES
+    ):
+        raise GeometryError(
+            f"{name}: a profile closed at both poles must carry at least "
+            f"{MIN_BIPOLAR_PROFILE_SAMPLES} samples, got {len(profile)!r}"
+        )
+    return profile
+
+
+def require_revolution_profile(name: str, profile: Profile) -> Profile:
+    """Return a profile validated as whichever kind it is.
+
+    The closed forms below are the same algebra for an open profile and a
+    closed one: a frustum whose end radius is zero is a cone, and both the
+    volume and the lateral-area sums reduce to the cone formulae on their
+    own. So they accept either kind, and this is where that is decided —
+    a profile with a zero end radius is validated as closed, any other as
+    open.
+
+    Parameters
+    ----------
+    name
+        Field name reported in the rejection message.
+    profile
+        Candidate ``(z, radius)`` samples.
+
+    Returns
+    -------
+    Profile
+        The validated profile, unchanged.
+
+    Raises
+    ------
+    GeometryError
+        Whatever the contract it was dispatched to raises.
+    """
+    if profile and (profile[0][1] == 0.0 or profile[-1][1] == 0.0):
+        return require_closed_profile(name, profile)
+    return require_profile(name, profile)
 
 
 def require_aligned_profiles(
@@ -225,6 +343,89 @@ def profiled_solid(
     return tuple(vertices), tuple(faces)
 
 
+def closed_profiled_solid(
+    profile: Profile, segments: int
+) -> tuple[tuple[Vertex, ...], tuple[Face, ...]]:
+    """Tessellate a solid of revolution that closes on the axis at a pole.
+
+    A pole is a single apex vertex, not a ring of coincident ones: a ring
+    of zero radius would put ``segments`` identical points on the axis and
+    every face touching it would have zero area, which is not a mesh a
+    closed-surface contract can accept.
+
+    The faces are exactly the faces the open primitive would emit with the
+    degenerate ones removed. Collapsing the lower ring of a band to one
+    vertex leaves ``(apex, upper + following, upper + index)`` of the two
+    quad triangles, and collapsing the upper ring leaves
+    ``(lower + index, lower + following, apex)``; the survivors are the
+    fans below, in the same order and with the same outward orientation.
+    An end of positive radius keeps its disc, so a cone standing on its
+    tip is closed by one fan and one disc.
+
+    Parameters
+    ----------
+    profile
+        Ordered ``(z, radius)`` samples validated by
+        :func:`require_closed_profile`: strictly increasing in ``z``, at
+        least one end radius exactly zero, every interior radius strictly
+        positive.
+    segments
+        Circumferential segments; at least 8 and a multiple of 8.
+
+    Returns
+    -------
+    (vertices, faces)
+        One apex vertex per pole and one ring of ``segments`` vertices per
+        remaining sample, in profile order, followed by a disc centre for
+        each end of positive radius. The faces are the side bands in
+        profile order, the apex fans in their place among them, then the
+        discs of the positive ends.
+
+    Raises
+    ------
+    GeometryError
+        If the profile or the segment count is invalid.
+    """
+    require_closed_profile("profile", profile)
+    circle = unit_circle(segments)
+    count = len(circle)
+    vertices: list[Vertex] = []
+    bases: list[int] = []
+    for height, radius in profile:
+        bases.append(len(vertices))
+        if radius == 0.0:
+            vertices.append((0.0, 0.0, height))
+        else:
+            vertices.extend(_ring(radius, height, circle))
+    faces: list[Face] = []
+    for band, ((_, low_radius), (_, high_radius)) in enumerate(pairwise(profile)):
+        lower, upper = bases[band], bases[band + 1]
+        if low_radius == 0.0:
+            for index in range(count):
+                following = (index + 1) % count
+                faces.append((lower, upper + following, upper + index))
+        elif high_radius == 0.0:
+            for index in range(count):
+                following = (index + 1) % count
+                faces.append((lower + index, lower + following, upper))
+        else:
+            faces.extend(_side_faces(lower, upper, count))
+    if profile[0][1] != 0.0:
+        centre = len(vertices)
+        vertices.append((0.0, 0.0, profile[0][0]))
+        for index in range(count):
+            following = (index + 1) % count
+            faces.append((centre, following, index))
+    if profile[-1][1] != 0.0:
+        centre = len(vertices)
+        vertices.append((0.0, 0.0, profile[-1][0]))
+        last_ring = bases[-1]
+        for index in range(count):
+            following = (index + 1) % count
+            faces.append((centre, last_ring + index, last_ring + following))
+    return tuple(vertices), tuple(faces)
+
+
 def profiled_tube(
     inner_profile: Profile, outer_profile: Profile, segments: int
 ) -> tuple[tuple[Vertex, ...], tuple[Face, ...]]:
@@ -307,14 +508,16 @@ def profile_volume_m3(profile: Profile) -> float:
         ``sum (pi / 3) (r_i^2 + r_i r_{i+1} + r_{i+1}^2) (z_{i+1} - z_i)``
         — the closed form of a stack of conical frusta, which is exactly
         what a linear profile is. Not an approximation of the tessellated
-        body: the tessellation approximates this.
+        body: the tessellation approximates this. A closed profile needs
+        no separate formula: an end radius of zero turns that end's
+        frustum term into the cone volume on its own.
 
     Raises
     ------
     GeometryError
         If the profile is invalid.
     """
-    require_profile("profile", profile)
+    require_revolution_profile("profile", profile)
     total = 0.0
     for (low_z, low_radius), (high_z, high_radius) in pairwise(profile):
         total += (
@@ -343,14 +546,16 @@ def profile_lateral_area_m2(profile: Profile) -> float:
         ``sum pi (r_i + r_{i+1}) l_i`` with the slant
         ``l_i = sqrt((r_{i+1} - r_i)^2 + (z_{i+1} - z_i)^2)``; the end
         discs are not included, so a caller composes the closed area as
-        it needs it.
+        it needs it. A closed profile needs no separate formula either: an
+        end radius of zero turns that end's term into the cone lateral
+        area, and a pole has no disc to add.
 
     Raises
     ------
     GeometryError
         If the profile is invalid.
     """
-    require_profile("profile", profile)
+    require_revolution_profile("profile", profile)
     total = 0.0
     for (low_z, low_radius), (high_z, high_radius) in pairwise(profile):
         delta_radius = high_radius - low_radius

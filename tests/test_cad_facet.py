@@ -95,6 +95,29 @@ def test_weld_merges_exact_duplicates_only() -> None:
     assert faces == ((0, 1, 2), (2, 1, 0))
 
 
+def test_weld_drops_the_triangles_it_collapses_and_only_those() -> None:
+    """A triangle welding turns into a sliver is removed; the rest stay.
+
+    Two of the three input points share a coordinate, so the triangle
+    spanning them collapses to a repeated index once they are welded. The
+    mesh contract admits no repeated index, and the collapsed triangle has
+    zero area, so it never reaches the contract. The triangle that does
+    not collapse is untouched, which is why a body with no point on the
+    axis loses nothing.
+    """
+
+    class Point:
+        def __init__(self, x: float, y: float, z: float) -> None:
+            self.x, self.y, self.z = x, y, z
+
+    stream, faces = weld(
+        [Point(0, 0, 0), Point(1, 0, 0), Point(0, 1, 0), Point(1, 0, 0)],
+        [(0, 1, 2), (1, 3, 2), (0, 1, 3)],
+    )
+    assert stream == ((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0))
+    assert faces == ((0, 1, 2),)
+
+
 @pytest.mark.parametrize("value", [0.0, -1.0, math.nan])
 def test_invalid_deflections_are_refused(value: float) -> None:
     """Both deflections are strictly positive."""

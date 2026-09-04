@@ -171,6 +171,18 @@ mod python {
         Ok((flatten_vertices(&t.vertices), flatten_faces(&t.faces)))
     }
 
+    /// Closed profiled solid tessellation as flat vertex and face streams.
+    #[pyfunction]
+    fn tessellate_closed_profiled_solid(
+        profile: Vec<f64>,
+        segments: usize,
+    ) -> PyResult<(Vec<f64>, Vec<u32>)> {
+        let samples = unflatten_profile(&profile)?;
+        let t = crate::geometry::profiles::closed_profiled_solid(&samples, segments)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok((flatten_vertices(&t.vertices), flatten_faces(&t.faces)))
+    }
+
     /// Profiled tube tessellation as flat vertex and face streams.
     #[pyfunction]
     fn tessellate_profiled_tube(
@@ -323,6 +335,7 @@ mod python {
         m.add_function(wrap_pyfunction!(tessellate_cylinder, m)?)?;
         m.add_function(wrap_pyfunction!(tessellate_annular_tube, m)?)?;
         m.add_function(wrap_pyfunction!(tessellate_profiled_solid, m)?)?;
+        m.add_function(wrap_pyfunction!(tessellate_closed_profiled_solid, m)?)?;
         m.add_function(wrap_pyfunction!(tessellate_profiled_tube, m)?)?;
         m.add_function(wrap_pyfunction!(profile_volume, m)?)?;
         m.add_function(wrap_pyfunction!(profile_lateral_area, m)?)?;

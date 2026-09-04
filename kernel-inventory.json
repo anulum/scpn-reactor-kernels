@@ -89,7 +89,8 @@
       "native_parity": true,
       "sources": [
         "Surface of revolution through a sampled axial radius profile, linear between samples (elementary; the rings are those of geometry_unit_circle and the vertex and face order is that of geometry_primitives)",
-        "Closed forms of the conical frustum: volume (pi / 3) (r1^2 + r1 r2 + r2^2) h and lateral area pi (r1 + r2) sqrt((r2 - r1)^2 + h^2) (elementary; no external source)"
+        "Closed forms of the conical frustum: volume (pi / 3) (r1^2 + r1 r2 + r2^2) h and lateral area pi (r1 + r2) sqrt((r2 - r1)^2 + h^2) (elementary; no external source)",
+        "Solid of revolution whose profile closes on the axis at one or both poles: a pole is one apex vertex and the faces are those of the open primitive with the degenerate ones removed; the frustum closed forms reduce to the cone forms at a pole and are reused unchanged (ADR 0012)"
       ]
     },
     {
@@ -159,7 +160,8 @@
       "native_parity": false,
       "sources": [
         "Open CASCADE Technology 7.9: BRepMesh_IncrementalMesh (linear and angular deflection) through CadQuery Shape.tessellate; vertex welding by exact coordinate equality into the geometry_mesh_contract kernel",
-        "Inscribed-chord volume deficit bound 2 d / r and the inscribed regular polygon area ratio (n / 2 pi) sin(2 pi / n) (elementary; no external source)"
+        "Inscribed-chord volume deficit bound 2 d / r and the inscribed regular polygon area ratio (n / 2 pi) sin(2 pi / n) (elementary; no external source)",
+        "A triangle that vertex welding collapses to a repeated index has zero area and is dropped before the mesh contract; its two non-degenerate directed edges are each other's reverse, so no other face's pairing changes (ADR 0012)"
       ]
     },
     {
@@ -182,7 +184,8 @@
       "module": "src/scpn_reactor_kernels/cad/profiles.py",
       "native_parity": false,
       "sources": [
-        "Open CASCADE Technology 7.9 through CadQuery 2.8: revolution of a closed polyline about the axis (Workplane.polyline, Workplane.revolve); the profile contract and the closed forms are those of the tier-G1 geometry_profiles kernel"
+        "Open CASCADE Technology 7.9 through CadQuery 2.8: revolution of a closed polyline about the axis (Workplane.polyline, Workplane.revolve); the profile contract and the closed forms are those of the tier-G1 geometry_profiles kernel",
+        "Revolution of a profile that closes on the axis: no axis return point is appended at an end already on it, and the analytic references are the tier-G1 closed forms, a pole contributing no disc (ADR 0012)"
       ]
     },
     {
@@ -220,6 +223,6 @@
   "schema_version": "1.0.0",
   "source": {
     "manifest_path": "kernels-domain.json",
-    "manifest_sha256": "2e1d713e6bac301618b3df1936780640f8f5db27a9968147a02396c45d9616cb"
+    "manifest_sha256": "8e6d469c1ad980f5b499b56ed64515939c7176a2b0097de474cf82fe7f1f9e2f"
   }
 }

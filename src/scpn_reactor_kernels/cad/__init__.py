@@ -45,6 +45,7 @@ from scpn_reactor_kernels.cad.placement import (
 )
 from scpn_reactor_kernels.cad.profiles import (
     FULL_TURN_DEGREES,
+    closed_profiled_solid_brep,
     profiled_solid_brep,
     profiled_tube_brep,
 )
@@ -95,6 +96,7 @@ __all__ = [
     "assembly_evidence",
     "backend_versions",
     "body_evidence",
+    "closed_profiled_solid_brep",
     "cylinder_solid_brep",
     "deflection_volume_bound",
     "facet_assembly",

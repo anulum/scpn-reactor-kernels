@@ -39,15 +39,20 @@ from scpn_reactor_kernels.geometry.placement import (
 )
 from scpn_reactor_kernels.geometry.primitives import annular_tube, cylinder_solid
 from scpn_reactor_kernels.geometry.profiles import (
+    MIN_BIPOLAR_PROFILE_SAMPLES,
+    MIN_CLOSED_PROFILE_SAMPLES,
     MIN_PROFILE_SAMPLES,
     Profile,
     ProfileSample,
+    closed_profiled_solid,
     profile_lateral_area_m2,
     profile_volume_m3,
     profiled_solid,
     profiled_tube,
     require_aligned_profiles,
+    require_closed_profile,
     require_profile,
+    require_revolution_profile,
 )
 from scpn_reactor_kernels.geometry.trig import (
     MIN_CIRCLE_POINTS,
@@ -64,7 +69,9 @@ from scpn_reactor_kernels.geometry.trig import (
 __all__ = [
     "GLTF_GENERATOR",
     "MESH_BYTES_LAYOUT",
+    "MIN_BIPOLAR_PROFILE_SAMPLES",
     "MIN_CIRCLE_POINTS",
+    "MIN_CLOSED_PROFILE_SAMPLES",
     "MIN_PROFILE_SAMPLES",
     "MIN_SEGMENTS",
     "SEGMENT_MULTIPLE",
@@ -76,6 +83,7 @@ __all__ = [
     "Vertex",
     "annular_tube",
     "circle_points",
+    "closed_profiled_solid",
     "cosine_polynomial",
     "cylinder_solid",
     "face_normal_and_area",
@@ -86,7 +94,9 @@ __all__ = [
     "profiled_tube",
     "require_aligned_profiles",
     "require_circle_points",
+    "require_closed_profile",
     "require_profile",
+    "require_revolution_profile",
     "require_segments",
     "ring_offsets",
     "ring_separation_m",

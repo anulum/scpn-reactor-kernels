@@ -71,7 +71,8 @@ JSON integrity, defensive ignore rules).
 Evidence record of the `geometry` kernel group (`computational_prototype`;
 design records: `docs/adr/0002-geometry-kernels.md`,
 `docs/adr/0007-geometry-placement-kernel.md` and
-`docs/adr/0010-axial-profile-primitive.md`; kernels
+`docs/adr/0010-axial-profile-primitive.md` and
+`docs/adr/0012-bodies-that-close-on-the-axis.md`; kernels
 `geometry_unit_circle`, `geometry_mesh_contract`, `geometry_primitives`,
 `geometry_exports`, `geometry_placement`, `geometry_profiles` in
 `kernels-domain.json`).
@@ -130,6 +131,26 @@ What is exercised, all under the 100 % statement-and-branch coverage gate
   lengths, samples at different heights, an outer radius that does not
   exceed its inner radius, and an inadmissible segment count; every message
   names the offending sample index.
+- **Bodies that close on the axis** (`profiles.py`:
+  `closed_profiled_solid`, ADR 0012): a profile whose first or last radius
+  is exactly zero builds a body that comes to a point, which the open
+  contract cannot express. A pole is one apex vertex and not a ring — the
+  test counts the vertices on the axis to prove it — and the body
+  satisfies the same closed-mesh contract with the declared vertex and
+  face counts. The tessellated volume is the exact one times the
+  inscribed-polygon ratio of the segment count, to `1e-12` relative at 8,
+  64 and 512 segments; the comparison is stated as a **ratio** rather than
+  as a deficit because both deficit forms cancel five digits at 512
+  segments and would report a disagreement that is arithmetic rather than
+  geometry. No new closed form was added and none is needed: a cone's
+  volume from the general frustum sum equals `pi r^2 h / 3` bit for bit,
+  and its lateral area equals `pi r l` bit for bit. A cone is admitted
+  either way up, and the two orientations give the same volume exactly.
+  The native mirror agrees bit for bit on a separatrix and on a cone at 8,
+  32 and 64 segments. Refusals: a profile positive at both ends (that is
+  an open profile), two poles with no ring between them, a negative pole
+  radius, a non-positive interior radius, and everything the open contract
+  refuses; every message names the offending sample index.
 - **Exports** (`export.py`): binary STL (header, triangle count, unit
   normals, float32 vertices, zero attributes, exact byte length) and glTF
   2.0 binary of any body list (magic, version, chunk types and alignment,
@@ -244,7 +265,8 @@ Evidence record of the `cad` kernel group (`computational_prototype`;
 design records `docs/adr/0006-cad-kernels.md`,
 `docs/adr/0008-cad-placement-kernel.md`,
 `docs/adr/0009-cad-body-evidence-in-the-library.md` and
-`docs/adr/0011-cad-axial-profile-primitive.md`; kernels
+`docs/adr/0011-cad-axial-profile-primitive.md` and
+`docs/adr/0012-bodies-that-close-on-the-axis.md`; kernels
 `cad_brep_solids`, `cad_step_export`, `cad_faceting`, `cad_volume_mesh`,
 `cad_profiles`, `cad_evidence` and `cad_placement` in
 `kernels-domain.json`). The group adapts two pinned third-party kernels
@@ -331,6 +353,29 @@ none of it is skipped there):
   measures; and the profile contract is the tier-G1 contract, reused
   rather than restated, so every rejection carries the geometry group's
   wording and sample index under the CAD error type.
+- **Bodies that close on the axis** (`profiles.py`:
+  `closed_profiled_solid_brep`, ADR 0012): a revolved separatrix and a
+  revolved cone agree with the same two closed forms within the declared
+  tolerance, with no new formula on either side — a pole contributes no
+  disc, so the cone's area carries exactly one disc term and the
+  separatrix's none. Faceting the closed body agrees with its tier-G1
+  twin, which is the same two-tiers-one-body test the open profile
+  carries. The contract is again the tier-G1 contract under the CAD error
+  type.
+- **Welding at a pole** (`facet.py`, ADR 0012): faceting a body that comes
+  to a point exposed a defect no previously buildable body could show. The
+  mesher emits several distinct parametric vertices at the apex; they weld
+  to one index by exact coordinate equality, and a triangle spanning two
+  of them collapses to a repeated index, which the mesh contract refuses.
+  `weld` now drops a triangle it has collapsed. **The mesh contract is
+  unchanged and was not relaxed**: the dropped triangle has zero area, and
+  its two non-degenerate directed edges are each other's reverse and
+  cancel within the face itself, so every other face's edge pairing is
+  exactly as it was and a genuine duplicate or orientation fault still
+  fails. A test builds the collapse deliberately and asserts that the
+  triangle which does not collapse survives untouched; every existing
+  faceting test passes unchanged, which is the evidence that no body built
+  before this record loses a face.
 - **Body evidence** (`evidence.py`): the checked record of one body
   carries every measured value next to the bound it is under, and refuses
   at construction — each of the four bounds (both measure tolerances, the

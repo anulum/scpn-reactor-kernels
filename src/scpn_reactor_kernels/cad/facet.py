@@ -120,7 +120,24 @@ def weld(
     -------
     (vertices, faces)
         The welded vertex stream (first occurrence order) and re-indexed
-        faces.
+        faces, with any triangle that welding collapsed removed.
+
+    Notes
+    -----
+    Welding can collapse a triangle. Where a surface comes to a point on
+    the axis, the mesher emits several distinct parametric vertices at the
+    same coordinate, and a triangle spanning two of them becomes
+    ``(a, b, b)`` once they are welded into one index. Such a triangle has
+    zero area and contributes nothing to the volume or the area, and it is
+    dropped rather than handed to the mesh contract, which admits no
+    repeated index.
+
+    Dropping it cannot hide a defect. Its directed edges are ``(a, b)``,
+    ``(b, b)`` and ``(b, a)``: the first and the last are each other's
+    reverse and cancel within the face itself, so removing the face leaves
+    every other face's edge pairing exactly as it was. If a genuine
+    duplicate or orientation fault remains, the contract still fails on
+    it.
     """
     lookup: dict[Vertex, int] = {}
     stream: list[Vertex] = []
@@ -133,7 +150,11 @@ def weld(
             lookup[key] = index
             stream.append(key)
         remap.append(index)
-    faces = tuple((remap[a], remap[b], remap[c]) for a, b, c in triangles)
+    faces = tuple(
+        face
+        for a, b, c in triangles
+        if len(set(face := (remap[a], remap[b], remap[c]))) == 3
+    )
     return tuple(stream), faces
 
 

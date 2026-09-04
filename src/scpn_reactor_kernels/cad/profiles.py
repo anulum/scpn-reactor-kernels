@@ -37,6 +37,7 @@ from scpn_reactor_kernels.geometry.profiles import (
     profile_lateral_area_m2,
     profile_volume_m3,
     require_aligned_profiles,
+    require_closed_profile,
     require_profile,
 )
 
@@ -67,6 +68,33 @@ def _validated(name: str, profile: Profile) -> Profile:
     """
     try:
         return require_profile(name, profile)
+    except GeometryError as exc:
+        raise CadError(str(exc)) from exc
+
+
+def _validated_closed(name: str, profile: Profile) -> Profile:
+    """Return a closed profile validated under the CAD error type.
+
+    Parameters
+    ----------
+    name
+        Field name reported in the rejection message.
+    profile
+        Candidate samples.
+
+    Returns
+    -------
+    Profile
+        The validated profile.
+
+    Raises
+    ------
+    CadError
+        Carrying the geometry group's message, so a caller sees one
+        contract stated once.
+    """
+    try:
+        return require_closed_profile(name, profile)
     except GeometryError as exc:
         raise CadError(str(exc)) from exc
 
@@ -133,6 +161,66 @@ def profiled_solid_brep(
     points = [(radius, height) for height, radius in samples]
     points.append((0.0, samples[-1][0]))
     points.append((0.0, samples[0][0]))
+    return BrepBody(
+        name=name,
+        role=role,
+        material_identifier=material_identifier,
+        shape=_revolved(points),
+        analytic_volume_m3=profile_volume_m3(samples),
+        analytic_surface_area_m2=profile_lateral_area_m2(samples)
+        + _disc_area(samples[0][1])
+        + _disc_area(samples[-1][1]),
+    )
+
+
+def closed_profiled_solid_brep(
+    profile: Profile,
+    name: str,
+    role: str,
+    material_identifier: str,
+) -> BrepBody:
+    """Build a B-rep solid of revolution that closes on the axis at a pole.
+
+    The generating polyline is the profile itself. Where an end already
+    sits on the axis there is nothing to return along, so no axis point is
+    appended there: appending one would repeat a vertex and leave the
+    polyline with a zero-length segment. An end of positive radius keeps
+    its return point and therefore its disc.
+
+    The analytic references need no special case. The frustum-stack volume
+    reduces to the cone volume at a pole on its own, and a pole's disc has
+    zero radius and therefore zero area, so the same two sums serve both
+    kinds of body.
+
+    Parameters
+    ----------
+    profile
+        Ordered ``(z, radius)`` samples; strictly increasing in ``z``, at
+        least one end radius exactly zero, every interior radius strictly
+        positive.
+    name, role, material_identifier
+        Body identity.
+
+    Returns
+    -------
+    BrepBody
+        The solid with the exact frustum-stack volume and the exact area
+        (lateral sum plus the disc of each end that has one) as its
+        analytic references.
+
+    Raises
+    ------
+    CadError
+        If the profile is invalid;
+        :class:`~scpn_reactor_kernels.errors.CadUnavailableError` if the
+        back-end is absent.
+    """
+    samples = _validated_closed("profile", profile)
+    points = [(radius, height) for height, radius in samples]
+    if samples[-1][1] != 0.0:
+        points.append((0.0, samples[-1][0]))
+    if samples[0][1] != 0.0:
+        points.append((0.0, samples[0][0]))
     return BrepBody(
         name=name,
         role=role,

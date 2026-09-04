@@ -77,6 +77,85 @@ pub fn profiled_solid(
     Ok(Tessellation { vertices, faces })
 }
 
+/// Solid of revolution that closes on the axis at one or both poles.
+///
+/// A pole is a single apex vertex, never a ring of coincident ones: a ring
+/// of zero radius would put `n` identical points on the axis and give every
+/// face touching it zero area.
+///
+/// The faces are the faces [`profiled_solid`] would emit with the
+/// degenerate ones removed. Collapsing a band's lower ring to one vertex
+/// leaves `(apex, upper + j, upper + i)` of the two quad triangles, and
+/// collapsing its upper ring leaves `(lower + i, lower + j, apex)`; those
+/// are the fans below, in the same order and with the same outward
+/// orientation. An end of positive radius keeps its disc.
+///
+/// The caller validates the profile, exactly as it does for
+/// [`profiled_solid`]: this kernel assumes finite samples strictly
+/// increasing in `z`, at least one end radius exactly zero, and every
+/// interior radius strictly positive, which is what the Python floor's
+/// `require_closed_profile` guarantees.
+///
+/// # Errors
+///
+/// Returns [`SegmentsError`] when the segment count is inadmissible.
+pub fn closed_profiled_solid(
+    profile: &[[f64; 2]],
+    segments: usize,
+) -> Result<Tessellation, SegmentsError> {
+    let circle = unit_circle(segments)?;
+    let count = circle.len();
+    let samples = profile.len();
+    let mut vertices: Vec<[f64; 3]> = Vec::new();
+    let mut bases: Vec<usize> = Vec::with_capacity(samples);
+    for &[z, radius] in profile {
+        bases.push(vertices.len());
+        if radius == 0.0 {
+            vertices.push([0.0, 0.0, z]);
+        } else {
+            ring(radius, z, &circle, &mut vertices);
+        }
+    }
+    let mut faces: Vec<[u32; 3]> = Vec::new();
+    for band in 0..samples - 1 {
+        let low_radius = profile[band][1];
+        let high_radius = profile[band + 1][1];
+        let lower = bases[band];
+        let upper = bases[band + 1];
+        if low_radius == 0.0 {
+            for i in 0..count {
+                let j = (i + 1) % count;
+                faces.push([index(lower), index(upper + j), index(upper + i)]);
+            }
+        } else if high_radius == 0.0 {
+            for i in 0..count {
+                let j = (i + 1) % count;
+                faces.push([index(lower + i), index(lower + j), index(upper)]);
+            }
+        } else {
+            side_faces(lower, upper, count, &mut faces);
+        }
+    }
+    if profile[0][1] != 0.0 {
+        let centre = index(vertices.len());
+        vertices.push([0.0, 0.0, profile[0][0]]);
+        for i in 0..count {
+            let j = (i + 1) % count;
+            faces.push([centre, index(j), index(i)]);
+        }
+    }
+    if profile[samples - 1][1] != 0.0 {
+        let centre = index(vertices.len());
+        vertices.push([0.0, 0.0, profile[samples - 1][0]]);
+        let last_ring = bases[samples - 1];
+        for i in 0..count {
+            let j = (i + 1) % count;
+            faces.push([centre, index(last_ring + i), index(last_ring + j)]);
+        }
+    }
+    Ok(Tessellation { vertices, faces })
+}
+
 /// Closed tube of revolution between two aligned axial profiles.
 ///
 /// Produces `2 samples n` vertices (the outer rings in profile order, then

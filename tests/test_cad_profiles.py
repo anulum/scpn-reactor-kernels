@@ -20,6 +20,7 @@ from scpn_reactor_kernels.cad import (
     BrepAssembly,
     BrepBody,
     annular_tube_brep,
+    closed_profiled_solid_brep,
     cylinder_solid_brep,
     facet_body,
     profiled_solid_brep,
@@ -28,6 +29,8 @@ from scpn_reactor_kernels.cad import (
 from scpn_reactor_kernels.errors import CadError
 from scpn_reactor_kernels.geometry import (
     TriangleMesh,
+    closed_profiled_solid,
+    profile_lateral_area_m2,
     profile_volume_m3,
     profiled_solid,
 )
@@ -172,3 +175,101 @@ def test_the_profile_contract_is_the_geometry_contract() -> None:
         )
     with pytest.raises(CadError, match="inner_profile: must carry at least"):
         profiled_tube_brep((), ((0.0, 2.0), (1.0, 3.0)), "b", "r", "m")
+
+
+#: A compact-toroid separatrix, closed on the axis at both poles.
+SEPARATRIX = (
+    (-0.15, 0.0),
+    (-0.1125, 0.02 * math.sqrt(1.0 - 0.75**2)),
+    (-0.075, 0.02 * math.sqrt(1.0 - 0.5**2)),
+    (0.0, 0.02),
+    (0.075, 0.02 * math.sqrt(1.0 - 0.5**2)),
+    (0.1125, 0.02 * math.sqrt(1.0 - 0.75**2)),
+    (0.15, 0.0),
+)
+
+#: A cone standing on its tip: one pole, one disc.
+CONE = ((0.0, 0.0), (1.0, 0.5))
+
+#: The same cone the other way up: the disc at the bottom, the pole on top.
+INVERTED_CONE = ((0.0, 0.5), (1.0, 0.0))
+
+
+def test_the_revolved_separatrix_agrees_with_the_same_closed_forms() -> None:
+    """A body closed at both poles needs no new closed form.
+
+    The frustum-stack volume reduces to the cone volume at each pole, and
+    a pole carries no disc, so the references are the same two sums the
+    open body uses.
+    """
+    body = closed_profiled_solid_brep(SEPARATRIX, "separatrix", "plasma", "plasma")
+    assert body.analytic_volume_m3 == profile_volume_m3(SEPARATRIX)
+    assert body.analytic_surface_area_m2 == profile_lateral_area_m2(SEPARATRIX)
+    assert body.volume_relative_error() <= MEASURE_TOLERANCE
+    assert body.surface_area_relative_error() <= MEASURE_TOLERANCE
+    low, high = body.bounding_box_m()
+    assert math.isclose(low[2], SEPARATRIX[0][0], abs_tol=1.0e-12)
+    assert math.isclose(high[2], SEPARATRIX[-1][0], abs_tol=1.0e-12)
+    assert math.isclose(high[0], 0.02, abs_tol=1.0e-12)
+
+
+def test_the_revolved_cone_keeps_the_disc_of_its_positive_end() -> None:
+    """One pole and one disc: the area carries exactly one disc term."""
+    body = closed_profiled_solid_brep(CONE, "cone", "structure", "steel")
+    assert body.analytic_volume_m3 == math.pi * 0.5 * 0.5 * 1.0 / 3.0
+    assert body.analytic_surface_area_m2 == (
+        profile_lateral_area_m2(CONE) + math.pi * 0.5 * 0.5
+    )
+    assert body.volume_relative_error() <= MEASURE_TOLERANCE
+    assert body.surface_area_relative_error() <= MEASURE_TOLERANCE
+
+
+def test_the_faceted_separatrix_tracks_its_tessellated_twin() -> None:
+    """The B-rep and the tier-G1 mesh of the same profile agree."""
+    body = closed_profiled_solid_brep(SEPARATRIX, "separatrix", "plasma", "plasma")
+    vertices, faces = closed_profiled_solid(SEPARATRIX, 64)
+    reference = TriangleMesh(
+        name="separatrix",
+        role="plasma",
+        material_identifier="plasma",
+        vertices=vertices,
+        faces=faces,
+    )
+    faceted = facet_body(body, 1.0e-4, 0.1)
+    assert faceted.signed_volume_m3() > 0.0
+    assert abs(faceted.signed_volume_m3() - body.analytic_volume_m3) < 2.0e-3 * (
+        body.analytic_volume_m3
+    )
+    assert reference.signed_volume_m3() < body.analytic_volume_m3
+
+
+def test_the_closed_profile_contract_is_the_geometry_contract() -> None:
+    """The CAD twin refuses exactly what the geometry contract refuses."""
+    with pytest.raises(CadError, match="at least one end radius"):
+        closed_profiled_solid_brep(
+            ((0.0, 0.1), (1.0, 0.2)), "body", "structure", "steel"
+        )
+    with pytest.raises(CadError, match=r"profile\[1\]\.radius"):
+        closed_profiled_solid_brep(
+            ((0.0, 0.0), (1.0, 0.0), (2.0, 0.1)), "body", "structure", "steel"
+        )
+
+
+def test_the_revolved_cone_is_the_same_solid_either_way_up() -> None:
+    """Which end carries the pole is not a special case.
+
+    The generating polyline returns along the axis only at the end that
+    has a disc, so the two orientations exercise different branches and
+    must still describe the same solid.
+    """
+    upright = closed_profiled_solid_brep(CONE, "cone", "structure", "steel")
+    inverted = closed_profiled_solid_brep(
+        INVERTED_CONE, "inverted_cone", "structure", "steel"
+    )
+    assert inverted.analytic_volume_m3 == upright.analytic_volume_m3
+    assert inverted.analytic_surface_area_m2 == upright.analytic_surface_area_m2
+    assert inverted.volume_relative_error() <= MEASURE_TOLERANCE
+    assert inverted.surface_area_relative_error() <= MEASURE_TOLERANCE
+    low, high = inverted.bounding_box_m()
+    assert math.isclose(low[2], 0.0, abs_tol=1.0e-12)
+    assert math.isclose(high[2], 1.0, abs_tol=1.0e-12)
