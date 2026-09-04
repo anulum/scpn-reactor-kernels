@@ -18,11 +18,21 @@ engineering claim.
 ## Geometry tessellation
 
 Artefact: `benchmarks/results/geometry_tessellation.local.json`
-(schema `scpn-reactor-kernels.geometry-tessellation-benchmark.v1`, generated 2026-09-04T06:00:20.458618+00:00, at parent commit
-`9ea9eaee41a4` with the working tree of the landing commit).
+(schema `scpn-reactor-kernels.geometry-tessellation-benchmark.v1`, generated
+2026-09-04T16:51:02.216499+00:00 at commit `4cf9211f7520`).
 Host: 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz, Linux-7.0.0-30-generic-x86_64-with-glibc2.39, Python 3.12.3;
-load average at start 8.19 (other work was running on the host); cores not
-isolated (shared workstation, so treat the numbers as indicative).
+**load average at start 81.29**; cores not isolated (shared workstation).
+
+**Read the load average before the numbers.** Other seats' work was
+saturating the host when this ran, and the artefact says so. The native
+row's P50 is 4.6 times the previous run's for kernel work that did not
+change, and the floor row's P99 is fifteen times its own P50 — both are
+contention, not the kernels. What this run does establish is that the two
+backends completed the enlarged pass and returned the **identical
+checksum and the identical face count**, which is a correctness statement
+and stands regardless of the load. Nothing here should be read as a
+performance comparison, with the previous run or with anything else; a
+run on a quiet host is still owed.
 Operation: tessellation of three synthetic bodies on the axis (two solid
 cylinders and one annular tube), a ring of twelve identical rods placed off
 the axis through the placement kernel, one five-sample body whose radius
@@ -32,39 +42,45 @@ at sixteen polar steps — the two profile bodies reach different paths of
 the same kernel, and only the second builds an apex fan — each with its
 exact frustum-stack volume (589824 faces at 4096 segments), followed by
 the signed volume and surface area of
-every body; 3 warm-up passes, 20 timed passes; time per generated face.
+every body, one rectangular prism, and **one latitude of ten identical
+bodies on a 1.5 m sphere at a polar angle of 59 degrees, each turned to
+point at the centre** — the only part of the pass that reaches the
+arbitrary-angle circle point and the aiming rotation, and the reason the
+polar angle is deliberately not a rational multiple of a turn (753676
+faces at 4096 segments); 3 warm-up passes, 20 timed passes; time per
+generated face.
 The Python floor row includes the `TriangleMesh` validation (closure and
 orientation checks) that every public build performs; the native row
 measures the kernels through their bindings (tessellation, ring offsets,
-translation, profiles, volume, area) without that validation, so the ratio
-compares a validated build against the raw kernel cost. The pass is larger
-than the run of 2026-09-04T01:33 by the **spherical shell**, so the two are
-**not comparable row by row**: this pass generates 589824 faces against
-that run's 344064, and a per-face figure over a different body mix is a
-different measurement. On a shared workstation under a load average of
-8.19 no cause is attributed to any difference either way. It is a fresh
-measurement of the landing tree, not a regression statement.
+translation, profiles, volume, area, aiming and rotation) without that
+validation, so the ratio compares a validated build against the raw kernel
+cost. The pass is larger than the run of 2026-09-04T06:00 by the
+**rectangular prism** and the **aimed latitude**, so the two are **not
+comparable row by row**: this pass generates 753676 faces against that
+run's 589824, and a per-face figure over a different body mix is a
+different measurement in any case.
 
-**Note added 2026-09-04 (ADR 0015).** The numbers below are the recorded
-artefact of the run named above and are **not** refreshed here: they
-measured the body set as it stood at that commit, and rewriting them
-outside the environment that produced them would replace evidence with an
-estimate. Since that run the pass has gained a **rectangular prism**, so
-the next regeneration will not be comparable to it row by row. The prism
-contributes a constant twelve faces at every segment count — it is the
-body exactly rather than an inscribed approximation, so nothing about it
-scales — and its share of a pass therefore falls as the count rises. It
-is timed on both backends regardless, because a path that is never timed
-is a path whose cost is unknown.
+The rectangular prism contributes a constant twelve faces at every segment
+count — it is the body exactly rather than an inscribed approximation, so
+nothing about it scales — and its share of a pass therefore falls as the
+count rises. It is timed on both backends regardless, because a path that
+is never timed is a path whose cost is unknown.
 
 | Backend | P50 µs/face | P95 µs/face | P99 µs/face | mean µs/face | throughput faces/s | status |
 |---|---|---|---|---|---|---|
-| `python_floor` (public API, always available) | 6.392 | 7.158 | 7.195 | 6.380 | 156455 | measured |
-| `rust_native` (optional build: `rust/`, maturin) | 0.202 | 0.242 | 0.244 | 0.200 | 4952006 | measured |
+| `python_floor` (public API, always available) | 7.809 | 17.536 | 116.548 | 14.130 | 128058 | measured |
+| `rust_native` (optional build: `rust/`, maturin) | 0.923 | 2.583 | 2.796 | 1.126 | 1083357 | measured |
 
-P50 speed-up of the native kernels over the validated Python floor:
-31.7×. The fast row requires the optional native module and is never
-the default.
+P50 ratio of the two rows in this run: 8.5×. **That ratio is a property of
+the host at load 81.29, not of the kernels**, and it should not be quoted.
+The fast row requires the optional native module and is never the default.
+
+For reference, the previous run of 2026-09-04T06:00 at commit
+`9ea9eaee41a4`, over a **smaller** body set (589824 faces, no prism and no
+aimed latitude) and at a load average of 8.19, recorded 6.392 / 7.158 /
+7.195 / 6.380 µs per face on the floor and 0.202 / 0.242 / 0.244 / 0.200
+on the native row. Those numbers measured a different pass on a quieter
+host and are kept here only so the difference in conditions is visible.
 
 ## Transcendental kernels
 

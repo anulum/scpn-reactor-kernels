@@ -54,12 +54,18 @@ sys.path.insert(0, str(ROOT / "src"))
 from scpn_reactor_kernels.geometry import (  # noqa: E402
     TriangleMesh,
     annular_tube,
+    circle_point,
     closed_profiled_solid,
     cylinder_solid,
+    inward_aim,
     profile_volume_m3,
     profiled_solid,
+    radians_from_degrees,
     rectangular_prism,
+    ring_azimuths,
     ring_offsets,
+    rotate,
+    sphere_ring_offsets,
     spherical_shell,
     translate,
 )
@@ -101,6 +107,86 @@ SEPARATRIX: Final = (
 #: A spherical shell, the body the profile kernels cannot express. Inner
 #: and outer radii, centre height and polar steps.
 SHELL = (0.6, 1.0, 0.0, 16)
+#: One latitude of identical bodies on a sphere, each turned to point at its
+#: centre, so the pass also measures the arbitrary-angle circle point and the
+#: aiming rotation, which no other body in the set reaches: (count, sphere
+#: radius, polar angle in degrees, body radius, z_low, z_high). The polar
+#: angle is deliberately not a rational multiple of a turn.
+SPHERE_ARRAY: Final = (10, 1.5, 59.0, 0.05, 0.0, 0.30)
+#: The identity twist of a ring, as a circle point.
+NO_TWIST: Final = (1.0, 0.0)
+
+
+def floor_aimed_array(segments: int) -> tuple[float, int]:
+    """Build one latitude of bodies on a sphere, each aimed at its centre.
+
+    Parameters
+    ----------
+    segments
+        Circumferential segments per body.
+
+    Returns
+    -------
+    (float, int)
+        Checksum of the measures and the number of generated faces. This
+        is the only part of the pass that reaches the arbitrary-angle
+        circle point and the aiming rotation.
+    """
+    count, sphere_radius, polar_degrees, body_radius, low, high = SPHERE_ARRAY
+    polar = circle_point(radians_from_degrees(polar_degrees))
+    vertices, indices = cylinder_solid(body_radius, low, high, segments)
+    centres = sphere_ring_offsets(count, sphere_radius, polar, NO_TWIST)
+    azimuths = ring_azimuths(count, NO_TWIST)
+    total = 0.0
+    faces = 0
+    for index, (centre, azimuth) in enumerate(zip(centres, azimuths, strict=True)):
+        mesh = TriangleMesh(
+            name=f"aimed_{index:02d}",
+            role="synthetic",
+            material_identifier="synthetic",
+            vertices=translate(rotate(vertices, inward_aim(polar, azimuth)), *centre),
+            faces=indices,
+        )
+        total += mesh.signed_volume_m3() + mesh.surface_area_m2()
+        faces += mesh.face_count
+    return total, faces
+
+
+def native_aimed_array(native: Any, segments: int) -> tuple[float, int]:
+    """Build the same latitude through the native bindings.
+
+    Parameters
+    ----------
+    native
+        The imported native module.
+    segments
+        Circumferential segments per body.
+
+    Returns
+    -------
+    (float, int)
+        Checksum of the measures and the number of generated faces.
+    """
+    count, sphere_radius, polar_degrees, body_radius, low, high = SPHERE_ARRAY
+    polar = native.circle_point(native.radians_from_degrees(polar_degrees))
+    vertices, indices = native.tessellate_cylinder(body_radius, low, high, segments)
+    flat_centres = native.sphere_ring_offsets(
+        count, sphere_radius, polar, list(NO_TWIST)
+    )
+    flat_azimuths = native.ring_azimuths(count, list(NO_TWIST))
+    total = 0.0
+    for index in range(count):
+        azimuth = flat_azimuths[2 * index : 2 * index + 2]
+        centre = flat_centres[3 * index : 3 * index + 3]
+        placed = native.translate(
+            native.rotate(vertices, native.inward_aim(polar, azimuth)),
+            centre[0],
+            centre[1],
+            centre[2],
+        )
+        total += native.mesh_volume(placed, indices)
+        total += native.mesh_area(placed, indices)
+    return total, count * (len(indices) // 3)
 
 
 def floor_pass(segments: int) -> tuple[float, int]:
@@ -190,7 +276,8 @@ def floor_pass(segments: int) -> tuple[float, int]:
     )
     total += prism.signed_volume_m3() + prism.surface_area_m2()
     faces += prism.face_count
-    return total, faces
+    aimed_total, aimed_faces_count = floor_aimed_array(segments)
+    return total + aimed_total, faces + aimed_faces_count
 
 
 def native_pass_factory() -> Callable[[int], tuple[float, int]] | None:
@@ -260,7 +347,8 @@ def native_pass_factory() -> Callable[[int], tuple[float, int]] | None:
         total += native.mesh_volume(prism_vertices, prism_faces)
         total += native.mesh_area(prism_vertices, prism_faces)
         faces += len(prism_faces) // 3
-        return total, faces
+        aimed_total, aimed_faces = native_aimed_array(native, segments)
+        return total + aimed_total, faces + aimed_faces
 
     return native_pass
 
