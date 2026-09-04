@@ -57,6 +57,10 @@ from scpn_reactor_kernels.cad.solids import (
     require_extent,
     require_radius,
 )
+from scpn_reactor_kernels.cad.spheres import (
+    sphere_brep,
+    spherical_shell_brep,
+)
 from scpn_reactor_kernels.cad.step import (
     STEP_FILE_NAME,
     STEP_FIXED_TIMESTAMP,
@@ -110,6 +114,8 @@ __all__ = [
     "require_extent",
     "require_radius",
     "ring_brep_bodies",
+    "sphere_brep",
+    "spherical_shell_brep",
     "step_bytes",
     "step_sha256",
     "tetrahedron_volume",

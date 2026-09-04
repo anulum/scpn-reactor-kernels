@@ -54,6 +54,13 @@ from scpn_reactor_kernels.geometry.profiles import (
     require_profile,
     require_revolution_profile,
 )
+from scpn_reactor_kernels.geometry.spheres import (
+    MIN_SPHERE_RINGS,
+    require_rings,
+    sphere_profile,
+    sphere_solid,
+    spherical_shell,
+)
 from scpn_reactor_kernels.geometry.trig import (
     MIN_CIRCLE_POINTS,
     MIN_SEGMENTS,
@@ -74,6 +81,7 @@ __all__ = [
     "MIN_CLOSED_PROFILE_SAMPLES",
     "MIN_PROFILE_SAMPLES",
     "MIN_SEGMENTS",
+    "MIN_SPHERE_RINGS",
     "SEGMENT_MULTIPLE",
     "STL_HEADER",
     "Face",
@@ -97,10 +105,14 @@ __all__ = [
     "require_closed_profile",
     "require_profile",
     "require_revolution_profile",
+    "require_rings",
     "require_segments",
     "ring_offsets",
     "ring_separation_m",
     "sine_polynomial",
+    "sphere_profile",
+    "sphere_solid",
+    "spherical_shell",
     "stl_bytes",
     "translate",
     "unit_circle",

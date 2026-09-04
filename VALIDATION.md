@@ -193,6 +193,34 @@ Bounded claims — what is NOT claimed:
   benchmark measures tessellation cost, not physics.
 - Maturity stays `computational_prototype`.
 
+### Spherical bodies
+
+Design record: `docs/adr/0013-spherical-bodies.md`.
+
+- The sphere profile sampled uniformly in **polar angle**, taken from the
+  first half turn of `circle_points` on twice the ring count. Both poles
+  land on exactly `centre ± radius` with a radius of exactly zero and the
+  equator on exactly the centre with the sphere's own radius, all asserted
+  as equalities rather than tolerances because the angles come from the
+  deterministic circle kernel rather than from an approximation.
+- The reason that sampling was chosen over uniform sampling in height,
+  asserted rather than stated: the volume deficit falls as the square of
+  the ring count, the ratio between successive doublings measured at
+  3.990, 3.998, 3.999 and 4.000.
+- Heights strictly increasing at every ring count from two to 1024.
+- The documented vertex and face counts, and the mesh volume equal to the
+  profile volume times the inscribed-polygon ratio at every ring count —
+  which is what shows the polar and circumferential resolutions are
+  independent.
+- The spherical shell as two closed surfaces with the inner one reversed:
+  exactly twice a sphere's vertices and faces, a volume equal to the
+  difference of the two spheres and an area equal to their sum. The volume
+  is asserted within a relative tolerance, measured at 213 units in the
+  last place at eight rings and 357 at thirty-two.
+- Fail-closed refusal of a ring count below two, of a non-finite centre,
+  and of radii that do not nest, each naming its field.
+
+
 ## Numerics kernels
 
 Evidence record of the `numerics` kernel group (`computational_prototype`;
@@ -413,3 +441,23 @@ Bounded claims — what is NOT claimed:
   results of any simulation.
 - No body describes any device; no engineering, neutronic or structural
   quantity is carried. Maturity stays `computational_prototype`.
+
+### B-rep spherical bodies
+
+Design record: `docs/adr/0014-cad-spherical-bodies.md`.
+
+- The sphere as its profile revolved, with no disc at either pole, and its
+  analytic references equal to the frustum stack of that profile.
+- **The shell's polyline touches the axis along two segments**, where the
+  cavity's poles sit inside the outer body, and there is no way to bound
+  the region without them. The back-end accepts it and the revolved volume
+  equals the difference of the two frustum stacks exactly: relative error
+  zero at sixteen rings and of order 1e-16 at sixty-four, against a
+  declared tolerance of 1e-9.
+- A vanishing cavity approaching the solid sphere, with the gap falling as
+  the cube of the cavity radius — asserted to a part in a billion, which
+  is what a sphere's volume does and a mistaken construction would not.
+- Both builders refusing by the caller's own field names. The first draft
+  of the shell let the profile builder report both radii as `radius_m`,
+  so the two tiers refused the same input differently; a test asserts the
+  names and the builder now validates them itself.

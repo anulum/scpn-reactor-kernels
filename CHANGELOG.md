@@ -14,6 +14,37 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Added
 
+- Spherical bodies `geometry_spheres`
+  (`src/scpn_reactor_kernels/geometry/spheres.py`, ADR 0013): the sphere's
+  axial profile, sampled uniformly in polar angle from the first half turn of
+  `circle_points` on twice the ring count, so the poles land on exactly
+  `centre ± radius` with a radius of exactly zero and every coordinate is
+  bit-identical to the native kernel; the named composition that revolves it;
+  and the spherical shell, which is not a tube between aligned profiles and
+  could not be built as one. The angular sampling was chosen by measurement:
+  its volume deficit falls as the square of the ring count, the ratio between
+  successive doublings running 3.990, 3.998, 3.999, 4.000. No ideal-sphere
+  closed forms are exposed — these bodies are inscribed polyhedra, and the
+  library already gives the exact volume of the body actually built.
+- B-rep spherical bodies `cad_spheres`
+  (`src/scpn_reactor_kernels/cad/spheres.py`, ADR 0014): the tier-G2 twins.
+  The shell's generating polyline touches the axis along two segments, where
+  the cavity's poles sit inside the outer body, and there is no way to bound
+  the region without them; the back-end was measured to revolve it exactly,
+  the volume equalling the difference of the two frustum stacks with a
+  relative error of zero at sixteen rings.
+
+### Changed
+
+- The revolve helper of `cad.profiles` is shared with `cad.spheres` and lost
+  its leading underscore for that reason. It is still not part of the
+  package's public surface.
+- Both benchmarks gained the new bodies and were rerun; the recorded results
+  and the tables in `docs/benchmarks.md` are refreshed rather than carried
+  over. The tessellation pass is larger than the previous run by the shell,
+  so the two are not comparable row by row, and the record says so.
+
+
 - CAD axial profile kernel `cad_profiles`
   (`src/scpn_reactor_kernels/cad/profiles.py`, ADR 0011): the tier-G2 twin of
   `geometry_profiles`, revolving the closed polyline through the profile's

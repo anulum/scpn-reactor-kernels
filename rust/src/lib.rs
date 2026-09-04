@@ -183,6 +183,28 @@ mod python {
         Ok((flatten_vertices(&t.vertices), flatten_faces(&t.faces)))
     }
 
+    /// Sphere axial profile as a flat `(z, radius)` stream.
+    #[pyfunction]
+    fn sphere_profile(radius_m: f64, centre_z_m: f64, rings: usize) -> PyResult<Vec<f64>> {
+        let profile = crate::geometry::spheres::sphere_profile(radius_m, centre_z_m, rings)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok(profile.iter().flat_map(|s| s.iter().copied()).collect())
+    }
+
+    /// Spherical shell tessellation as flat vertex and face streams.
+    #[pyfunction]
+    fn tessellate_spherical_shell(
+        outer_profile: Vec<f64>,
+        inner_profile: Vec<f64>,
+        segments: usize,
+    ) -> PyResult<(Vec<f64>, Vec<u32>)> {
+        let outer = unflatten_profile(&outer_profile)?;
+        let inner = unflatten_profile(&inner_profile)?;
+        let t = crate::geometry::spheres::spherical_shell(&outer, &inner, segments)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok((flatten_vertices(&t.vertices), flatten_faces(&t.faces)))
+    }
+
     /// Profiled tube tessellation as flat vertex and face streams.
     #[pyfunction]
     fn tessellate_profiled_tube(
@@ -337,6 +359,8 @@ mod python {
         m.add_function(wrap_pyfunction!(tessellate_profiled_solid, m)?)?;
         m.add_function(wrap_pyfunction!(tessellate_closed_profiled_solid, m)?)?;
         m.add_function(wrap_pyfunction!(tessellate_profiled_tube, m)?)?;
+        m.add_function(wrap_pyfunction!(sphere_profile, m)?)?;
+        m.add_function(wrap_pyfunction!(tessellate_spherical_shell, m)?)?;
         m.add_function(wrap_pyfunction!(profile_volume, m)?)?;
         m.add_function(wrap_pyfunction!(profile_lateral_area, m)?)?;
         m.add_function(wrap_pyfunction!(mesh_volume, m)?)?;

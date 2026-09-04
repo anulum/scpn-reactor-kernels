@@ -52,6 +52,9 @@ CHARACTERISTIC_LENGTH_M: Final = 0.02
 RING_COUNT: Final = 12
 RING_RADIUS_M: Final = 0.1
 EVIDENCE_SEGMENTS: Final = 64
+#: Polar steps of the spherical bodies. Sixteen is the count the
+#: library's own sphere tests use, so the benchmark measures the same body.
+SPHERE_RINGS: Final = 16
 #: One five-sample narrow-wide-narrow profile for the revolution row.
 WAIST: Final = (
     (0.0, 0.0225),
@@ -97,6 +100,8 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
         gmsh_volume_mesh,
         profiled_solid_brep,
         ring_brep_bodies,
+        sphere_brep,
+        spherical_shell_brep,
         step_bytes,
     )
     from scpn_reactor_kernels.geometry import (
@@ -177,6 +182,16 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
         )
         return body.volume_m3
 
+    def revolve_sphere() -> float:
+        body = sphere_brep(0.1, 0.0, SPHERE_RINGS, "sphere", "synthetic", "synthetic")
+        return body.volume_m3
+
+    def revolve_spherical_shell() -> float:
+        body = spherical_shell_brep(
+            0.06, 0.1, 0.0, SPHERE_RINGS, "shell", "synthetic", "synthetic"
+        )
+        return body.volume_m3
+
     rod = cylinder_solid_brep(0.006, 0.0, 0.16, "rod", "electrode", "conductor")
     rod_names = tuple(f"rod_{index:02d}" for index in range(RING_COUNT))
     centres = ring_offsets(RING_COUNT, RING_RADIUS_M)
@@ -194,6 +209,8 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
         ("assembly_body_evidence", "cadquery_ocp", evidence),
         ("revolve_axial_profile", "cadquery_ocp", revolve_profile),
         ("revolve_closed_profile", "cadquery_ocp", revolve_closed_profile),
+        ("revolve_sphere", "cadquery_ocp", revolve_sphere),
+        ("revolve_spherical_shell", "cadquery_ocp", revolve_spherical_shell),
     ]
 
 

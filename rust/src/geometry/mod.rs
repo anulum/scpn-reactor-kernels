@@ -17,4 +17,5 @@ pub mod mesh;
 pub mod placement;
 pub mod primitives;
 pub mod profiles;
+pub mod spheres;
 pub mod trig;

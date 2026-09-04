@@ -104,8 +104,12 @@ def _disc_area(radius: float) -> float:
     return 3.141592653589793 * radius * radius
 
 
-def _revolved(points: list[tuple[float, float]]) -> Any:
+def revolved(points: list[tuple[float, float]]) -> Any:
     """Revolve a closed polyline in the ``xz`` plane about the ``z`` axis.
+
+    Shared with :mod:`scpn_reactor_kernels.cad.spheres`, which needs a
+    polyline no profile can express. It carries no leading underscore for
+    that reason and is still not part of the package's public surface.
 
     Parameters
     ----------
@@ -165,7 +169,7 @@ def profiled_solid_brep(
         name=name,
         role=role,
         material_identifier=material_identifier,
-        shape=_revolved(points),
+        shape=revolved(points),
         analytic_volume_m3=profile_volume_m3(samples),
         analytic_surface_area_m2=profile_lateral_area_m2(samples)
         + _disc_area(samples[0][1])
@@ -225,7 +229,7 @@ def closed_profiled_solid_brep(
         name=name,
         role=role,
         material_identifier=material_identifier,
-        shape=_revolved(points),
+        shape=revolved(points),
         analytic_volume_m3=profile_volume_m3(samples),
         analytic_surface_area_m2=profile_lateral_area_m2(samples)
         + _disc_area(samples[0][1])
@@ -279,7 +283,7 @@ def profiled_tube_brep(
         name=name,
         role=role,
         material_identifier=material_identifier,
-        shape=_revolved(points),
+        shape=revolved(points),
         analytic_volume_m3=profile_volume_m3(outer) - profile_volume_m3(inner),
         analytic_surface_area_m2=profile_lateral_area_m2(outer)
         + profile_lateral_area_m2(inner)

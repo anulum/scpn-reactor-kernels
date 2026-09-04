@@ -34,6 +34,11 @@ from scpn_reactor_kernels.geometry import (
     translate,
     unit_circle,
 )
+from scpn_reactor_kernels.geometry.spheres import (
+    sphere_profile,
+    sphere_solid,
+    spherical_shell,
+)
 
 native = pytest.importorskip("scpn_reactor_kernels_native")
 
@@ -221,3 +226,43 @@ def test_native_profile_refusals_mirror_the_floor() -> None:
         native.tessellate_profiled_solid([0.0, 1.0, 2.0], 8)
     with pytest.raises(ValueError, match="even number of values"):
         native.profile_volume([0.0, 1.0, 2.0])
+
+
+@pytest.mark.parametrize("rings", [2, 3, 8, 64, 512])
+@pytest.mark.parametrize(("radius", "centre"), [(1.0, 0.0), (0.0375, -2.25)])
+def test_sphere_profile_is_bit_exact(radius: float, centre: float, rings: int) -> None:
+    """The polar sampling agrees bit for bit, poles and equator included.
+
+    Both sides read the same vendored polynomial trigonometry at the same
+    indices of the same circle, so this is an equality on the bits and not
+    a tolerance on the values.
+    """
+    floor = [
+        value for sample in sphere_profile(radius, centre, rings) for value in sample
+    ]
+    assert stream_bits(floor) == stream_bits(
+        native.sphere_profile(radius, centre, rings)
+    )
+
+
+@pytest.mark.parametrize("segments", [8, 64])
+@pytest.mark.parametrize("rings", [2, 16])
+def test_sphere_solid_is_bit_exact(rings: int, segments: int) -> None:
+    """A sphere is its profile revolved, so parity follows from both kernels."""
+    vertices, faces = sphere_solid(1.0, 0.0, segments, rings)
+    flat = [value for sample in sphere_profile(1.0, 0.0, rings) for value in sample]
+    got_vertices, got_faces = native.tessellate_closed_profiled_solid(flat, segments)
+    assert stream_bits([c for v in vertices for c in v]) == stream_bits(got_vertices)
+    assert [i for f in faces for i in f] == got_faces
+
+
+@pytest.mark.parametrize("segments", [8, 64])
+@pytest.mark.parametrize("rings", [2, 16])
+def test_spherical_shell_is_bit_exact(rings: int, segments: int) -> None:
+    """Both surfaces, the index offset and the reversed winding all agree."""
+    vertices, faces = spherical_shell(0.6, 1.0, 0.0, segments, rings)
+    outer = [v for s in sphere_profile(1.0, 0.0, rings) for v in s]
+    inner = [v for s in sphere_profile(0.6, 0.0, rings) for v in s]
+    got_vertices, got_faces = native.tessellate_spherical_shell(outer, inner, segments)
+    assert stream_bits([c for v in vertices for c in v]) == stream_bits(got_vertices)
+    assert [i for f in faces for i in f] == got_faces

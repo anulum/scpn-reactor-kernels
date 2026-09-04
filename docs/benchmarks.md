@@ -18,39 +18,40 @@ engineering claim.
 ## Geometry tessellation
 
 Artefact: `benchmarks/results/geometry_tessellation.local.json`
-(schema `scpn-reactor-kernels.geometry-tessellation-benchmark.v1`, generated 2026-09-04T01:33:18.282858+00:00, at commit
-`171df047bc10` with the working tree of the landing commit).
+(schema `scpn-reactor-kernels.geometry-tessellation-benchmark.v1`, generated 2026-09-04T06:00:20.458618+00:00, at parent commit
+`9ea9eaee41a4` with the working tree of the landing commit).
 Host: 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz, Linux-7.0.0-30-generic-x86_64-with-glibc2.39, Python 3.12.3;
-load average at start 8.46 (other work was running on the host); cores not
+load average at start 8.19 (other work was running on the host); cores not
 isolated (shared workstation, so treat the numbers as indicative).
 Operation: tessellation of three synthetic bodies on the axis (two solid
 cylinders and one annular tube), a ring of twelve identical rods placed off
 the axis through the placement kernel, one five-sample body whose radius
-varies along the axis, and one seven-sample body that closes on the axis at
-both poles — the two profile bodies reach different paths of the same
-kernel, and only the second builds an apex fan — each with its exact
-frustum-stack volume (344064 faces at
-4096 segments), followed by the signed volume and surface area of
+varies along the axis, one seven-sample body that closes on the axis at
+both poles, and a spherical shell of a 1.0 m sphere around a 0.6 m cavity
+at sixteen polar steps — the two profile bodies reach different paths of
+the same kernel, and only the second builds an apex fan — each with its
+exact frustum-stack volume (589824 faces at 4096 segments), followed by
+the signed volume and surface area of
 every body; 3 warm-up passes, 20 timed passes; time per generated face.
 The Python floor row includes the `TriangleMesh` validation (closure and
 orientation checks) that every public build performs; the native row
 measures the kernels through their bindings (tessellation, ring offsets,
 translation, profiles, volume, area) without that validation, so the ratio
 compares a validated build against the raw kernel cost. The pass is larger
-than the run of 2026-09-03T12:48 by the body that closes on the axis, so
-the two are **not comparable row by row**: both per-face figures are higher
-than that run's and no cause has been established for the difference, which
-on a shared workstation under a load average of 8.46 is not a measurement
-this record can attribute. It is a fresh measurement of the landing tree,
-not a regression statement.
+than the run of 2026-09-04T01:33 by the **spherical shell**, so the two are
+**not comparable row by row**: this pass generates 589824 faces against
+that run's 344064, and a per-face figure over a different body mix is a
+different measurement. On a shared workstation under a load average of
+8.19 no cause is attributed to any difference either way. It is a fresh
+measurement of the landing tree, not a regression statement.
 
 | Backend | P50 µs/face | P95 µs/face | P99 µs/face | mean µs/face | throughput faces/s | status |
 |---|---|---|---|---|---|---|
-| `python_floor` (public API, always available) | 6.309 | 6.511 | 6.835 | 6.198 | 158497 | measured |
-| `rust_native` (optional build: `rust/`, maturin) | 0.193 | 0.240 | 0.246 | 0.193 | 5191169 | measured |
+| `python_floor` (public API, always available) | 6.392 | 7.158 | 7.195 | 6.380 | 156455 | measured |
+| `rust_native` (optional build: `rust/`, maturin) | 0.202 | 0.242 | 0.244 | 0.200 | 4952006 | measured |
 
 P50 speed-up of the native kernels over the validated Python floor:
-32.8×. The fast row requires the optional native module and is never
+31.7×. The fast row requires the optional native module and is never
 the default.
 
 ## Transcendental kernels
@@ -106,11 +107,11 @@ the default.
 ## CAD kernels
 
 Artefact: `benchmarks/results/cad.local.json` (schema `scpn-reactor-kernels.cad-benchmark.v1`,
-generated 2026-09-04T01:35:53.297414+00:00, at parent commit `e0bd96f95d20` with
+generated 2026-09-04T06:01:03.277682+00:00, at parent commit `9ea9eaee41a4` with
 the working tree of the landing commit). Host: 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz,
 Linux-7.0.0-30-generic-x86_64-with-glibc2.39, Python 3.12.3; back-ends cadquery 2.8.0,
 OCP 7.9.3.1, gmsh 4.15.2; load average at start
-7.44 (other work was running on the host); cores not isolated. Parameters:
+7.84 (other work was running on the host); cores not isolated. Parameters:
 2 warm-up runs, 10 timed runs per operation; linear deflection
 0.0001 m, angular deflection 0.1 rad, characteristic
 length 0.02 m. One synthetic two-body assembly (solid cylinder and
@@ -119,28 +120,35 @@ radius 0.006 m on a circle of radius 0.1 m; the evidence row checks both
 bodies of the two-body assembly against their analytic forms and against
 their tier-G1 meshes at 64 segments; the two revolution rows build one
 five-sample body whose radius varies along the axis, and one seven-sample
-body that closes on the axis at both poles. A revolution costs about 1.4
-times an extrusion of a comparable body (6.23 ms against 4.58 ms, half the
-two-body build row), which is the price of a shape an extrusion cannot
-express. The two revolution rows sit inside each other's spread — 6.23 and
-5.67 ms at P50 against P95 values of 9.20 and 8.79 — so this run does not
-separate them, and no claim is made that either path is the cheaper. There
-is no Python-floor row: these kernels adapt pinned third-party code and
-carry no bit-exact floor (ADR 0006). The whole table is a fresh run of the
-landing working tree; the earlier run of 2026-09-03 measured seven
-operations rather than eight, and its numbers are not comparable with
-these.
+body that closes on the axis at both poles; the two spherical rows build a
+sixteen-ring sphere of radius 0.1 m and the shell between it and a
+0.06 m cavity.
+
+The three profile revolutions sit inside each other's spread — 6.64, 6.08
+and 8.41 ms at P50 against P95 values of 9.52, 10.55 and 13.43 — so this
+run does not separate them, and no claim is made that any path is the
+cheaper. The **shell** is the one row that does separate: 13.90 ms at P50
+against the sphere's 8.41, with the two spreads not overlapping. It
+revolves two profiles where the sphere revolves one, which is the shape of
+the difference, though this run does not establish that as its cause.
+
+There is no Python-floor row: these kernels adapt pinned third-party code
+and carry no bit-exact floor (ADR 0006). The whole table is a fresh run of
+the landing working tree; the earlier run measured eight operations rather
+than ten, and its numbers are not comparable with these.
 
 | Operation | Backend | P50 ms | P95 ms | mean ms | operations/s | status |
 |---|---|---|---|---|---|---|
-| `brep_build_and_manifest` | `cadquery_ocp` | 9.16 | 18.57 | 10.25 | 109.2 | measured |
-| `step_export_normalised` | `cadquery_ocp` | 3.53 | 6.14 | 3.94 | 283.3 | measured |
-| `facet_two_bodies` | `cadquery_ocp` | 25.98 | 97.40 | 31.84 | 38.5 | measured |
-| `gmsh_volume_mesh` | `gmsh` | 257.21 | 322.78 | 264.58 | 3.9 | measured |
-| `place_ring_of_bodies` | `cadquery_ocp` | 1.94 | 2.30 | 1.95 | 516.5 | measured |
-| `assembly_body_evidence` | `cadquery_ocp` | 1.63 | 2.86 | 1.75 | 614.1 | measured |
-| `revolve_axial_profile` | `cadquery_ocp` | 6.23 | 9.20 | 6.13 | 160.4 | measured |
-| `revolve_closed_profile` | `cadquery_ocp` | 5.67 | 8.79 | 6.17 | 176.3 | measured |
+| `brep_build_and_manifest` | `cadquery_ocp` | 9.31 | 13.23 | 9.98 | 107.4 | measured |
+| `step_export_normalised` | `cadquery_ocp` | 3.52 | 4.92 | 3.64 | 284.4 | measured |
+| `facet_two_bodies` | `cadquery_ocp` | 36.08 | 166.85 | 49.67 | 27.7 | measured |
+| `gmsh_volume_mesh` | `gmsh` | 293.18 | 402.05 | 304.96 | 3.4 | measured |
+| `place_ring_of_bodies` | `cadquery_ocp` | 2.01 | 2.42 | 2.00 | 498.0 | measured |
+| `assembly_body_evidence` | `cadquery_ocp` | 2.09 | 3.23 | 2.20 | 477.7 | measured |
+| `revolve_axial_profile` | `cadquery_ocp` | 6.64 | 9.52 | 7.20 | 150.7 | measured |
+| `revolve_closed_profile` | `cadquery_ocp` | 6.08 | 10.55 | 7.03 | 164.4 | measured |
+| `revolve_sphere` | `cadquery_ocp` | 8.41 | 13.43 | 9.54 | 118.9 | measured |
+| `revolve_spherical_shell` | `cadquery_ocp` | 13.90 | 18.76 | 14.72 | 71.9 | measured |
 
 The placement row is twelve rigid translations and twelve back-end volume
 measures, so about 0.16 ms per placed body. The evidence row is dominated

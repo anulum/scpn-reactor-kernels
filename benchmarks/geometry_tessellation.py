@@ -53,6 +53,7 @@ from scpn_reactor_kernels.geometry import (  # noqa: E402
     profile_volume_m3,
     profiled_solid,
     ring_offsets,
+    spherical_shell,
     translate,
 )
 
@@ -86,6 +87,10 @@ SEPARATRIX: Final = (
     (0.1125, 0.02 * math.sqrt(1.0 - 0.75**2)),
     (0.15, 0.0),
 )
+
+#: A spherical shell, the body the profile kernels cannot express. Inner
+#: and outer radii, centre height and polar steps.
+SHELL = (0.6, 1.0, 0.0, 16)
 
 
 def floor_pass(segments: int) -> tuple[float, int]:
@@ -152,6 +157,19 @@ def floor_pass(segments: int) -> tuple[float, int]:
     total += separatrix.signed_volume_m3() + separatrix.surface_area_m2()
     total += profile_volume_m3(SEPARATRIX)
     faces += separatrix.face_count
+    inner_radius, outer_radius, centre, rings = SHELL
+    shell_vertices, shell_faces = spherical_shell(
+        inner_radius, outer_radius, centre, segments, rings
+    )
+    shell = TriangleMesh(
+        name="shell",
+        role="synthetic",
+        material_identifier="synthetic",
+        vertices=shell_vertices,
+        faces=shell_faces,
+    )
+    total += shell.signed_volume_m3() + shell.surface_area_m2()
+    faces += shell.face_count
     return total, faces
 
 
@@ -209,6 +227,15 @@ def native_pass_factory() -> Callable[[int], tuple[float, int]] | None:
         total += native.mesh_area(pole_vertices, pole_faces)
         total += native.profile_volume(pole_flat)
         faces += len(pole_faces) // 3
+        inner_radius, outer_radius, centre, rings = SHELL
+        outer_flat = native.sphere_profile(outer_radius, centre, rings)
+        inner_flat = native.sphere_profile(inner_radius, centre, rings)
+        shell_vertices, shell_faces = native.tessellate_spherical_shell(
+            outer_flat, inner_flat, segments
+        )
+        total += native.mesh_volume(shell_vertices, shell_faces)
+        total += native.mesh_area(shell_vertices, shell_faces)
+        faces += len(shell_faces) // 3
         return total, faces
 
     return native_pass
