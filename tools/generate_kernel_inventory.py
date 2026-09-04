@@ -9,11 +9,12 @@
 """Generate the public kernel inventory from the kernel manifest.
 
 The inventory is the repository's truthful public statement of implemented
-kernels. It is derived, never hand-edited: the kernel list, the consumer
-pins and the evidence maturity are copied from ``kernels-domain.json`` and
-the manifest's SHA-256 is embedded so drift is detectable. ``--check``
-fails when the committed inventory differs byte-for-byte from a fresh
-generation; ``--write`` regenerates it.
+kernels. Kernel metadata is projected from ``kernels-domain.json``. Consumer
+rows are projected from explicit device-manifest paths when supplied; this is
+the authoritative cross-repository mode. Omitting those paths preserves the
+standalone repository check against the manifest's generated consumer mirror.
+``--check`` fails when the committed inventory differs byte-for-byte from a
+fresh generation; ``--write`` regenerates it.
 """
 
 from __future__ import annotations
@@ -27,15 +28,70 @@ from manifest_io import canonical_json_bytes, load_json_object, sha256_of_file
 
 INVENTORY_SCHEMA: Final = "scpn.kernel-inventory.v1"
 INVENTORY_SCHEMA_VERSION: Final = "1.0.0"
+CONSUMER_FIELDS: Final = frozenset(
+    {"project", "version", "source_commit", "inventory_sha256"}
+)
 
 
-def generate_inventory(manifest_path: Path) -> dict[str, Any]:
+def _consumer_from_manifest(manifest_path: Path) -> dict[str, Any]:
+    """Project one exact reverse-inventory row from a device manifest."""
+    manifest = load_json_object(manifest_path)
+    project = manifest.get("project")
+    pin = manifest.get("kernel_library")
+    if not isinstance(project, str) or not project:
+        raise ValueError(f"{manifest_path}: project must be a non-empty string")
+    if not isinstance(pin, dict):
+        raise ValueError(f"{manifest_path}: kernel_library must be an object")
+    required = {"version", "source_commit", "inventory_sha256"}
+    missing = sorted(required - set(pin))
+    if missing:
+        raise ValueError(f"{manifest_path}: kernel_library missing {missing!r}")
+    return {
+        "project": project,
+        "version": pin["version"],
+        "source_commit": pin["source_commit"],
+        "inventory_sha256": pin["inventory_sha256"],
+    }
+
+
+def _consumer_rows(
+    manifest: dict[str, Any], consumer_manifest_paths: list[Path]
+) -> list[dict[str, Any]]:
+    """Return sorted unique consumer rows from explicit or local inputs."""
+    if consumer_manifest_paths:
+        rows = [_consumer_from_manifest(path) for path in consumer_manifest_paths]
+    else:
+        value = manifest.get("consumers")
+        if not isinstance(value, list):
+            raise ValueError("manifest consumers field must be a list")
+        rows = []
+        for index, row in enumerate(value):
+            if not isinstance(row, dict) or set(row) != CONSUMER_FIELDS:
+                raise ValueError(
+                    f"manifest consumers[{index}] must contain exactly "
+                    f"{sorted(CONSUMER_FIELDS)!r}"
+                )
+            rows.append(dict(row))
+    projects = [row.get("project") for row in rows]
+    if any(not isinstance(project, str) or not project for project in projects):
+        raise ValueError("consumer projects must be non-empty strings")
+    if len(projects) != len(set(projects)):
+        raise ValueError("consumer projects must be unique")
+    return sorted(rows, key=lambda row: str(row["project"]))
+
+
+def generate_inventory(
+    manifest_path: Path, consumer_manifest_paths: list[Path] | None = None
+) -> dict[str, Any]:
     """Build the inventory object from one kernel manifest.
 
     Parameters
     ----------
     manifest_path
         Manifest file to project.
+    consumer_manifest_paths
+        Explicit authoritative device manifests. ``None`` uses the generated
+        consumer mirror already stored in the kernel manifest.
 
     Returns
     -------
@@ -62,7 +118,7 @@ def generate_inventory(manifest_path: Path) -> dict[str, Any]:
         "evidence_maturity": manifest.get("evidence_maturity"),
         "implemented_kernel_count": len(kernels),
         "kernels": kernels,
-        "consumers": manifest.get("consumers"),
+        "consumers": _consumer_rows(manifest, consumer_manifest_paths or []),
         "claims": manifest.get("claims"),
         "source": {
             "manifest_path": manifest_path.name,
@@ -88,12 +144,21 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=Path("kernels-domain.json"))
     parser.add_argument("--inventory", type=Path, default=Path("kernel-inventory.json"))
+    parser.add_argument(
+        "--consumer-manifest",
+        action="append",
+        type=Path,
+        default=[],
+        help="explicit authoritative device manifest (repeatable)",
+    )
     mode = parser.add_mutually_exclusive_group(required=True)
     mode.add_argument("--check", action="store_true")
     mode.add_argument("--write", action="store_true")
     args = parser.parse_args(argv)
     try:
-        generated = canonical_json_bytes(generate_inventory(args.manifest))
+        generated = canonical_json_bytes(
+            generate_inventory(args.manifest, args.consumer_manifest)
+        )
     except (OSError, ValueError) as exc:
         print(f"kernel-inventory: FAIL {exc}")
         return 1

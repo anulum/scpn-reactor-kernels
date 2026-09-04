@@ -51,18 +51,26 @@ def test_inventory_reports_exact_kernel_set() -> None:
     assert inventory["evidence_maturity"] == "computational_prototype"
     assert inventory["implemented_kernel_count"] == 17
     assert [k["identifier"] for k in inventory["kernels"]] == KERNEL_IDENTIFIERS
-    assert [c["project"] for c in inventory["consumers"]] == [
-        "SCPN-Z-PINCH-CORE",
-        "SCPN-MIRROR-CORE",
-        "SCPN-DENSE-PLASMA-FOCUS-CORE",
-        "SCPN-RFP-CORE",
-        "SCPN-SPHEROMAK-CORE",
-        "SCPN-THETA-PINCH-CORE",
-        "SCPN-FRC-CORE",
-        "SCPN-MIF-LINER-CORE",
-        "SCPN-MIF-MAGLIF-CORE",
-        "SCPN-MIF-PLASMA-JET-CORE",
-    ]
+    projects = [c["project"] for c in inventory["consumers"]]
+    assert len(projects) == 17
+    assert projects == sorted(projects)
+    levitated = next(
+        row
+        for row in inventory["consumers"]
+        if row["project"] == "SCPN-LEVITATED-DIPOLE-CORE"
+    )
+    assert levitated == {
+        "project": "SCPN-LEVITATED-DIPOLE-CORE",
+        "version": "0.1.0.dev0",
+        "source_commit": "4095aa8304974fd44d02c718d36eafc69b254944",
+        "inventory_sha256": (
+            "704bcca75675615fa87ff1c1debdf594f3dcdb9df17b19de48ef28046f95a303"
+        ),
+    }
+    assert all(
+        set(row) == {"project", "version", "source_commit", "inventory_sha256"}
+        for row in inventory["consumers"]
+    )
     assert inventory["claims"] == []
     assert inventory["source"]["manifest_sha256"] == sha256_of_file(MANIFEST)
 
@@ -136,3 +144,96 @@ def test_mode_flag_is_required() -> None:
     """Exactly one of ``--check`` or ``--write`` must be given."""
     with pytest.raises(SystemExit):
         main(["--manifest", str(MANIFEST)])
+
+
+def test_explicit_device_manifests_are_authoritative(tmp_path: Path) -> None:
+    """Explicit manifests replace, sort, and close the local consumer mirror."""
+    first = tmp_path / "first.json"
+    second = tmp_path / "second.json"
+    pin = {
+        "version": "1.2.3",
+        "source_commit": "1" * 40,
+        "inventory_sha256": "2" * 64,
+        "distribution": "scpn-reactor-kernels",
+        "kernels": ["geometry_unit_circle"],
+    }
+    first.write_text(
+        json.dumps({"project": "SCPN-Z-CORE", "kernel_library": pin}),
+        encoding="utf-8",
+    )
+    second.write_text(
+        json.dumps({"project": "SCPN-A-CORE", "kernel_library": pin}),
+        encoding="utf-8",
+    )
+    rows = generate_inventory(MANIFEST, [first, second])["consumers"]
+    assert [row["project"] for row in rows] == ["SCPN-A-CORE", "SCPN-Z-CORE"]
+    assert all(
+        set(row) == {"project", "version", "source_commit", "inventory_sha256"}
+        for row in rows
+    )
+
+
+@pytest.mark.parametrize(
+    ("payload", "fragment"),
+    [
+        ({"project": "", "kernel_library": {}}, "project"),
+        ({"project": "SCPN-X", "kernel_library": None}, "kernel_library"),
+        (
+            {"project": "SCPN-X", "kernel_library": {"version": "1.0.0"}},
+            "missing",
+        ),
+    ],
+)
+def test_malformed_explicit_consumer_fails(
+    tmp_path: Path, payload: dict[str, object], fragment: str
+) -> None:
+    """Incomplete device authority cannot enter the reverse inventory."""
+    device = tmp_path / "device.json"
+    device.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(ValueError, match=fragment):
+        generate_inventory(MANIFEST, [device])
+
+
+def test_duplicate_explicit_projects_fail(tmp_path: Path) -> None:
+    """Two manifests cannot claim one reverse-inventory project row."""
+    device = tmp_path / "device.json"
+    device.write_text(
+        json.dumps(
+            {
+                "project": "SCPN-X",
+                "kernel_library": {
+                    "version": "1.0.0",
+                    "source_commit": "1" * 40,
+                    "inventory_sha256": "2" * 64,
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="unique"):
+        generate_inventory(MANIFEST, [device, device])
+
+
+def test_invalid_local_consumer_mirror_fails(tmp_path: Path) -> None:
+    """Standalone generation rejects non-list and non-closed mirror rows."""
+    manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+    manifest["consumers"] = "bad"
+    path = tmp_path / "kernels-domain.json"
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="must be a list"):
+        generate_inventory(path)
+    manifest["consumers"] = [{"project": "SCPN-X"}]
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="contain exactly"):
+        generate_inventory(path)
+    manifest["consumers"] = [
+        {
+            "project": "",
+            "version": "1.0.0",
+            "source_commit": "1" * 40,
+            "inventory_sha256": "2" * 64,
+        }
+    ]
+    path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="non-empty strings"):
+        generate_inventory(path)

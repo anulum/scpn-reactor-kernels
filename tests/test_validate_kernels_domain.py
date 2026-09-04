@@ -110,10 +110,26 @@ def test_missing_manifest_is_one_finding(tmp_path: Path) -> None:
             {"consumers": [{"project": "", "version": "1", "extra": 1}]},
             "unknown fields",
         ),
+        ({"project": "OTHER"}, "project: must be"),
+        (
+            {
+                "library": {
+                    **load_json_object(MANIFEST)["library"],
+                    "distribution": "other",
+                }
+            },
+            "library.distribution: must be",
+        ),
+        ({"owned_domains": ["other"]}, "shared-kernel umbrella"),
         (
             {
                 "consumers": [
-                    {"project": "X", "version": "1.0.0", "inventory_sha256": "zz"}
+                    {
+                        "project": "X",
+                        "version": "1.0.0",
+                        "source_commit": "1" * 40,
+                        "inventory_sha256": "zz",
+                    }
                 ]
             },
             "inventory_sha256: must be 64",
@@ -140,11 +156,77 @@ def test_valid_consumer_pin_is_accepted(tmp_path: Path) -> None:
             {
                 "project": "SCPN-Z-PINCH-CORE",
                 "version": "0.1.0.dev0",
+                "source_commit": "1" * 40,
                 "inventory_sha256": "0" * 64,
             }
         ]
     )
     assert validate_manifest(write_manifest_with_pointers(tmp_path, manifest)) == []
+
+
+@pytest.mark.parametrize(
+    ("row", "fragment"),
+    [
+        (
+            {
+                "project": "SCPN-X",
+                "version": "1.0.0",
+                "source_commit": "1" * 40,
+                "inventory_sha256": "2" * 64,
+                "extra": True,
+            },
+            "unknown fields",
+        ),
+        (
+            {
+                "project": "SCPN-X",
+                "version": "not-a-version",
+                "source_commit": "1" * 40,
+                "inventory_sha256": "2" * 64,
+            },
+            "version: invalid",
+        ),
+        (
+            {
+                "project": "SCPN-X",
+                "version": "1.0.0",
+                "source_commit": "short",
+                "inventory_sha256": "2" * 64,
+            },
+            "source_commit",
+        ),
+        (
+            {
+                "project": "SCPN-X",
+                "version": "1.0.0",
+                "inventory_sha256": "2" * 64,
+            },
+            "missing fields",
+        ),
+    ],
+)
+def test_consumer_row_contract_defects(
+    tmp_path: Path, row: dict[str, Any], fragment: str
+) -> None:
+    """Reverse rows enforce their exact closed immutable-pin contract."""
+    findings = validate_manifest(
+        write_manifest_with_pointers(tmp_path, mutated(consumers=[row]))
+    )
+    assert any(fragment in finding for finding in findings), findings
+
+
+def test_consumer_rows_must_be_sorted_and_unique(tmp_path: Path) -> None:
+    """Reverse consumer identity is deterministic and one-row-per-project."""
+    row = {
+        "project": "SCPN-Z",
+        "version": "1.0.0",
+        "source_commit": "1" * 40,
+        "inventory_sha256": "2" * 64,
+    }
+    findings = validate_manifest(
+        write_manifest_with_pointers(tmp_path, mutated(consumers=[row, row]))
+    )
+    assert any("unique and sorted" in finding for finding in findings)
 
 
 def test_architecture_only_with_empty_kernels_is_valid(tmp_path: Path) -> None:

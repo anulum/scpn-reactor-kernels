@@ -46,6 +46,17 @@ EVIDENCE_STATES: Final = (
 HEX_DIGEST: Final = re.compile(r"^[0-9a-f]{64}$")
 IDENTIFIER: Final = re.compile(r"^[a-z][a-z0-9_]*$")
 DISTRIBUTION: Final = re.compile(r"^[a-z][a-z0-9-]*$")
+COMMIT_OBJECT: Final = re.compile(r"^[0-9a-f]{40}$")
+PEP440_VERSION: Final = re.compile(
+    r"^(?:0|[1-9]\d*)(?:\.(?:0|[1-9]\d*)){2}"
+    r"(?:(?:a|b|rc)(?:0|[1-9]\d*))?"
+    r"(?:\.post(?:0|[1-9]\d*))?"
+    r"(?:\.dev(?:0|[1-9]\d*))?"
+    r"(?:\+[a-z0-9]+(?:[._-][a-z0-9]+)*)?$"
+)
+PROJECT: Final = "SCPN-REACTOR-KERNELS"
+KERNEL_LIBRARY_DISTRIBUTION: Final = "scpn-reactor-kernels"
+KERNEL_UMBRELLA_DOMAIN: Final = "shared_physics_geometry_and_numerics_kernels"
 LIBRARY_FIELDS: Final = {
     "distribution": DISTRIBUTION,
     "package": IDENTIFIER,
@@ -115,6 +126,10 @@ def _validate_library(manifest: dict[str, Any], findings: list[str]) -> None:
         value = _require_string(manifest, f"library.{field}", findings)
         if value is not None and pattern.fullmatch(value) is None:
             findings.append(f"library.{field}: invalid identifier {value!r}")
+    if library.get("distribution") != KERNEL_LIBRARY_DISTRIBUTION:
+        findings.append(
+            f"library.distribution: must be {KERNEL_LIBRARY_DISTRIBUTION!r}"
+        )
 
 
 def _validate_boundary_invariants(
@@ -137,6 +152,8 @@ def _validate_boundary_invariants(
     owned = manifest.get("owned_domains")
     if not isinstance(owned, list) or not owned:
         findings.append("owned_domains: must be a non-empty list")
+    elif KERNEL_UMBRELLA_DOMAIN not in owned:
+        findings.append("owned_domains: must include the shared-kernel umbrella domain")
     protection = manifest.get("machine_protection")
     if not isinstance(protection, dict):
         findings.append("machine_protection: missing required object")
@@ -277,19 +294,39 @@ def _validate_consumers(manifest: dict[str, Any], findings: list[str]) -> None:
         if not isinstance(entry, dict):
             findings.append(f"consumers[{index}]: must be an object")
             continue
-        unknown = sorted(set(entry) - {"project", "version", "inventory_sha256"})
+        fields = {"project", "version", "source_commit", "inventory_sha256"}
+        missing = sorted(fields - set(entry))
+        if missing:
+            findings.append(f"consumers[{index}]: missing fields {missing!r}")
+        unknown = sorted(set(entry) - fields)
         if unknown:
             findings.append(f"consumers[{index}]: unknown fields {unknown!r}")
-        for key in ("project", "version"):
-            value = entry.get(key)
-            if not isinstance(value, str) or not value:
-                findings.append(f"consumers[{index}].{key}: must be a non-empty string")
+        project = entry.get("project")
+        if not isinstance(project, str) or not project:
+            findings.append(f"consumers[{index}].project: must be a non-empty string")
+        version = entry.get("version")
+        if not isinstance(version, str) or PEP440_VERSION.fullmatch(version) is None:
+            findings.append(
+                f"consumers[{index}].version: invalid governed PEP 440 version"
+            )
+        commit = entry.get("source_commit")
+        if not isinstance(commit, str) or COMMIT_OBJECT.fullmatch(commit) is None:
+            findings.append(
+                f"consumers[{index}].source_commit: must be a 40-hex commit object"
+            )
         digest = entry.get("inventory_sha256")
         if not isinstance(digest, str) or HEX_DIGEST.fullmatch(digest) is None:
             findings.append(
                 f"consumers[{index}].inventory_sha256: must be 64 lowercase "
                 "hexadecimal characters"
             )
+    projects = [
+        entry.get("project")
+        for entry in consumers
+        if isinstance(entry, dict) and isinstance(entry.get("project"), str)
+    ]
+    if len(projects) != len(set(projects)) or projects != sorted(projects):
+        findings.append("consumers: projects must be unique and sorted")
 
 
 def validate_manifest(manifest_path: Path) -> list[str]:
@@ -314,7 +351,9 @@ def validate_manifest(manifest_path: Path) -> list[str]:
         findings.append(f"schema: must be {SCHEMA!r}")
     if manifest.get("schema_version") != SCHEMA_VERSION:
         findings.append(f"schema_version: must be {SCHEMA_VERSION!r}")
-    _require_string(manifest, "project", findings)
+    project = _require_string(manifest, "project", findings)
+    if project is not None and project != PROJECT:
+        findings.append(f"project: must be {PROJECT!r}")
     _require_string(manifest, "research_group.display_name", findings)
     group = _require_string(manifest, "research_group.coordination_identity", findings)
     if group is not None and group != GROUP_IDENTITY:
