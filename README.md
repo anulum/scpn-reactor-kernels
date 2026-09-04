@@ -185,16 +185,20 @@ The inventory is derived from the kernel manifest
 `scpn.reactor-kernels-domain.v1`) and drift-checked, so a pin identifies
 the exact set of implemented kernels and their evidence pointers. A kernel
 whose numerical output changes for any input is a breaking change of that
-kernel and bumps the major version. The `consumers` list of the manifest is
-updated when a consumer lands its pin; because that update changes the
-inventory, a consumer's digest always names the inventory at the commit it
-pins, never the inventory that lists it. Consumers so far: SCPN-Z-PINCH-CORE
-(geometry kernels; ADR 0004), SCPN-MIRROR-CORE and
-SCPN-DENSE-PLASMA-FOCUS-CORE (numerics kernel, with their native crates
-depending on this repository's Rust crate at the same commit), and
-SCPN-RFP-CORE and SCPN-SPHEROMAK-CORE (Bessel kernel, pinned at the
-commit that introduced it, native crates likewise; the spheromak also
-consumes the unit-circle kernel for its axial phases).
+kernel and bumps the major version. The `consumers` list of the manifest
+gains an entry when a consumer first lands a pin; because that entry
+changes the inventory, a consumer's digest always names the inventory at
+the commit it pinned, never the inventory that lists it. The list is a
+registration history and is never rewritten: a consumer that re-pins does
+not amend its entry, so an entry says where a consumer started, not where
+it sits today. The pin in force is read from the consumer's own manifest
+(ADR 0004). Consumers so far: SCPN-Z-PINCH-CORE (geometry kernels;
+ADR 0004), SCPN-MIRROR-CORE and SCPN-DENSE-PLASMA-FOCUS-CORE (numerics
+kernel, with their native crates depending on this repository's Rust
+crate at the same commit), SCPN-RFP-CORE and SCPN-SPHEROMAK-CORE (Bessel
+kernel, pinned at the commit that introduced it, native crates likewise;
+the spheromak also consumes the unit-circle kernel for its axial phases),
+and SCPN-THETA-PINCH-CORE (geometry and CAD kernels).
 
 ## Scope
 

@@ -61,6 +61,28 @@ SCPN-SPHEROMAK-CORE is the fifth consumer, pinning the same commit for
 stations come from the unit circle, so no platform trigonometric function
 enters the device); the table carries five entries.
 
+## Addendum (2026-09-04) — the sixth consumer, and what the digest column is
+
+SCPN-THETA-PINCH-CORE has consumed the geometry kernels since its tier-G1
+landing on 2026-09-03 and was never recorded here. It is entered now as
+the sixth consumer, with the inventory digest at the commit it first
+pinned, which is the same state the first three consumers pinned.
+
+Entering it late made the meaning of the digest column worth stating
+outright, because two readings were open and only one matches what the
+table has done. No entry has ever been rewritten: every consumer has
+re-pinned at least once since it was recorded, and every row still
+carries the digest of the inventory at that consumer's **first** pin.
+The column is therefore a registration history, not a live statement of
+what each consumer pins today; the live pin is read from the consumer's
+own manifest, which is the identity item 2 above already names as exact.
+A consumer that re-pins does not amend its row here, and a reader must
+not treat a row as current.
+
+Recorded on the day the six consuming repositories were consolidated onto
+one library commit. That consolidation moved every consumer's own
+manifest and touched no row of this table.
+
 ## Consequences
 
 The library now has a consumer whose numerics depend on it; a change of
