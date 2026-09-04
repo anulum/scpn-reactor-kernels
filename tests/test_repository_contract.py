@@ -249,6 +249,13 @@ def test_manifest_declares_the_library_truth() -> None:
                 "9c43405ec5a184b813171f29ac0fc1a44eb0860777de9b08e65cd4a7554abb57"
             ),
         },
+        {
+            "project": "SCPN-MIF-PLASMA-JET-CORE",
+            "version": "0.1.0.dev0",
+            "inventory_sha256": (
+                "2bcbfd2adb3873ed38508bebefc3b5175fae9548fb372c9efa7cb845157ff7ac"
+            ),
+        },
     ]
 
 
