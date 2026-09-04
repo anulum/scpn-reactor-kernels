@@ -215,6 +215,23 @@ def test_consumer_row_contract_defects(
     assert any(fragment in finding for finding in findings), findings
 
 
+@pytest.mark.parametrize("project", [None, 7, False, [], {}])
+def test_consumer_project_rejects_non_string_without_sorting_it(
+    tmp_path: Path, project: object
+) -> None:
+    """Malformed project identities yield findings rather than sorting errors."""
+    row = {
+        "project": project,
+        "version": "1.0.0",
+        "source_commit": "1" * 40,
+        "inventory_sha256": "2" * 64,
+    }
+    findings = validate_manifest(
+        write_manifest_with_pointers(tmp_path, mutated(consumers=[row]))
+    )
+    assert findings == ["consumers[0].project: must be a non-empty string"]
+
+
 def test_consumer_rows_must_be_sorted_and_unique(tmp_path: Path) -> None:
     """Reverse consumer identity is deterministic and one-row-per-project."""
     row = {

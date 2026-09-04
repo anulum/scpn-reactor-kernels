@@ -290,6 +290,7 @@ def _validate_consumers(manifest: dict[str, Any], findings: list[str]) -> None:
     if not isinstance(consumers, list):
         findings.append("consumers: must be a list")
         return
+    projects: list[str] = []
     for index, entry in enumerate(consumers):
         if not isinstance(entry, dict):
             findings.append(f"consumers[{index}]: must be an object")
@@ -304,6 +305,8 @@ def _validate_consumers(manifest: dict[str, Any], findings: list[str]) -> None:
         project = entry.get("project")
         if not isinstance(project, str) or not project:
             findings.append(f"consumers[{index}].project: must be a non-empty string")
+        if isinstance(project, str):
+            projects.append(project)
         version = entry.get("version")
         if not isinstance(version, str) or PEP440_VERSION.fullmatch(version) is None:
             findings.append(
@@ -320,11 +323,6 @@ def _validate_consumers(manifest: dict[str, Any], findings: list[str]) -> None:
                 f"consumers[{index}].inventory_sha256: must be 64 lowercase "
                 "hexadecimal characters"
             )
-    projects = [
-        entry.get("project")
-        for entry in consumers
-        if isinstance(entry, dict) and isinstance(entry.get("project"), str)
-    ]
     if len(projects) != len(set(projects)) or projects != sorted(projects):
         findings.append("consumers: projects must be unique and sorted")
 
