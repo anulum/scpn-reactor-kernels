@@ -228,6 +228,13 @@ def test_manifest_declares_the_library_truth() -> None:
                 "b065c46b9f54d478d94be5cfeb61e1300b4ddae47e57f3992a985adfb2cb5dbf"
             ),
         },
+        {
+            "project": "SCPN-FRC-CORE",
+            "version": "0.1.0.dev0",
+            "inventory_sha256": (
+                "c1db6afb2dc0f196500514bcc53305c2bc69878e6e5d61730c76e3afcdc418f6"
+            ),
+        },
     ]
 
 

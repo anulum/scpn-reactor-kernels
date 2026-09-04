@@ -102,6 +102,40 @@ capability**.
    genuine duplicate edge or orientation fault still fails the contract. A
    body with no point on the axis loses no face, which the test asserts.
 
+## Addendum (2026-09-04) — a back-end limit the first consumer found
+
+Building an FRC separatrix at tier G2 surfaced a limit of the CAD
+revolution that no test in this repository had reached: **the revolved
+volume stops matching the exact frustum sum when two adjacent profile
+radii come close together.** Measured on one shape at 17 samples, the
+agreement is exact to 2e-16 where the radii are well separated and
+degrades to between 5e-5 and 3e-4 as they crowd; a deliberately
+flat-topped polyline reproduces it with nothing device-like about it.
+
+Three things are worth stating plainly.
+
+It is **not** a property of the closed profile this record introduces. The
+open primitive of ADR 0011 gives the same numbers for the same shape
+lifted off the axis, so the limit has been there since that record and
+was simply never reached by a profile in this suite: the `WAIST` fixture
+has generous radius steps everywhere.
+
+It is **not** a property of the tier-G1 tessellation, which is exact for
+every one of those profiles. That is what locates it in the back-end
+rather than in the profile contract or the closed forms.
+
+It is **caught**. A consumer that composes bodies through
+`assembly_evidence` is refused a body whose measured volume misses its
+analytic form by more than `MEASURE_TOLERANCE`, naming the body and the
+bound. That is the guard working as designed, and it is how the limit was
+found. A consumer that calls `profiled_solid_brep` or
+`closed_profiled_solid_brep` directly and never checks the evidence is not
+protected, which is the reason this is written down here and in
+`VALIDATION.md` rather than left in a commit message.
+
+No bound is promised. The test pins the behaviour either side of the
+threshold so a back-end change cannot alter it silently.
+
 ## Consequences
 
 Additive throughout. `require_profile`, `profiled_solid`, `profiled_tube`

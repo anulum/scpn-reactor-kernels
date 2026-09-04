@@ -273,3 +273,65 @@ def test_the_revolved_cone_is_the_same_solid_either_way_up() -> None:
     low, high = inverted.bounding_box_m()
     assert math.isclose(low[2], 0.0, abs_tol=1.0e-12)
     assert math.isclose(high[2], 1.0, abs_tol=1.0e-12)
+
+
+def test_the_revolution_loses_the_closed_form_when_radii_crowd() -> None:
+    """A measured limit of the back-end, pinned so it cannot surprise again.
+
+    The revolved volume stops matching the exact frustum sum when two
+    adjacent profile radii come close together. The profile below is a
+    deliberately flat-topped polyline with nothing to do with any device:
+    only the size of the step at its midplane changes.
+
+    This is NOT a property of the closed profile. The open primitive shows
+    the same numbers for the same shape lifted off the axis, so it has
+    been there since the axial profile landed; it surfaced when a consumer
+    first built a body flat enough to reach it. The tier-G1 tessellation
+    is exact for every one of these profiles, which locates the limit in
+    the CAD back-end.
+
+    Nothing here is a bound the library promises. The guard that protects
+    a consumer is the evidence kernel, which refuses a body whose measured
+    volume misses its analytic form by more than ``MEASURE_TOLERANCE``.
+    """
+    generous = ((0.0, 0.0), (0.01, 0.02), (0.02, 0.021), (0.03, 0.02), (0.04, 0.0))
+    crowded = ((0.0, 0.0), (0.01, 0.02), (0.02, 0.020001), (0.03, 0.02), (0.04, 0.0))
+
+    open_generous = tuple((z, r or 1.0e-6) for z, r in generous)
+    open_crowded = tuple((z, r or 1.0e-6) for z, r in crowded)
+
+    assert (
+        closed_profiled_solid_brep(
+            generous, "a", "plasma", "plasma"
+        ).volume_relative_error()
+        <= MEASURE_TOLERANCE
+    )
+    assert (
+        closed_profiled_solid_brep(
+            crowded, "b", "plasma", "plasma"
+        ).volume_relative_error()
+        > MEASURE_TOLERANCE
+    )
+    assert (
+        profiled_solid_brep(
+            open_generous, "c", "plasma", "plasma"
+        ).volume_relative_error()
+        <= MEASURE_TOLERANCE
+    )
+    assert (
+        profiled_solid_brep(
+            open_crowded, "d", "plasma", "plasma"
+        ).volume_relative_error()
+        > MEASURE_TOLERANCE
+    )
+
+    for profile in (generous, crowded):
+        vertices, faces = closed_profiled_solid(profile, 64)
+        tessellated = TriangleMesh(
+            name="tier_g1",
+            role="plasma",
+            material_identifier="plasma",
+            vertices=vertices,
+            faces=faces,
+        )
+        assert tessellated.signed_volume_m3() > 0.0

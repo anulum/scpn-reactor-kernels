@@ -362,6 +362,18 @@ none of it is skipped there):
   twin, which is the same two-tiers-one-body test the open profile
   carries. The contract is again the tier-G1 contract under the CAD error
   type.
+- **A measured limit of the revolution** (`profiles.py`, ADR 0012
+  addendum): the revolved volume stops matching the exact frustum sum when
+  two adjacent profile radii come close together — exact to 2e-16 where
+  the radii are well separated, between 5e-5 and 3e-4 as they crowd, on a
+  deliberately flat-topped polyline. The limit is the CAD back-end's, not
+  the closed profile's: the open primitive shows the same numbers for the
+  same shape lifted off the axis, and the tier-G1 tessellation is exact
+  for every one of those profiles. A test pins the behaviour on both sides
+  of the threshold, for the open and the closed primitive, and asserts
+  that tier G1 builds them all. No bound is promised; what protects a
+  consumer is the evidence kernel, which refuses a body whose measured
+  volume misses its analytic form by more than the measure tolerance.
 - **Welding at a pole** (`facet.py`, ADR 0012): faceting a body that comes
   to a point exposed a defect no previously buildable body could show. The
   mesher emits several distinct parametric vertices at the apex; they weld
