@@ -69,7 +69,7 @@ from scpn_reactor_kernels.validation import (
     require_positive,
 )
 
-__version__: Final = "0.1.0.dev0"
+__version__: Final = "1.0.0.dev0"
 
 __all__ = [
     "BESSEL_J0_FIRST_ZERO",

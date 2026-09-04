@@ -12,7 +12,7 @@ build-backend = "maturin"
 
 [project]
 name = "scpn-reactor-kernels-native"
-version = "0.1.0"
+version = "1.0.0.dev0"
 description = "Optional native kernels of SCPN Reactor Kernels (bit-exact with the pure-Python floor)"
 requires-python = ">=3.12"
 license = "AGPL-3.0-or-later"

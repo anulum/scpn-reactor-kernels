@@ -109,6 +109,128 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Fixed
 
+- **A measure the format can hold is no longer thrown away by its own
+  intermediates.** The surface area squared each cross-product component
+  before taking a square root, so the sum of squares left the exponent
+  range long before the answer did. At a coordinate scale of `1e100` the
+  exact area is `2.37e200` — comfortably inside a double — and the whole
+  area came back as infinity. The same defect at the other end was worse
+  than a wrong number: far enough down, the squares fell to zero, the
+  norm with them, and a perfectly ordinary triangle was **refused as
+  degenerate** with the same message a genuinely collinear one gets.
+
+  Measured on the library's tetrahedron, the range that gave a correct
+  area ran from a scale of `9.543299509722758e-79` to
+  `8.798296151866603e+76`. It now runs from `1.77e-162` to
+  `6.163580613284844e+153`, and one unit in the last place beyond that
+  the area genuinely does not fit and is refused by name. **About 160
+  orders of magnitude of representable results were being discarded.**
+
+  The norm is now rescaled by the largest component, but **only where the
+  direct sum of squares would fail** — it is kept wherever it lands on a
+  finite normal double, which is every body a device has. Measured over
+  3660 face norms and five body areas of the library's own bodies,
+  **nothing that was already right moved by a single bit.** Rescaling by
+  a power of two instead would make the scaling exact and was measured
+  alongside at `9.94e-17` against `1.19e-16` worst relative error over
+  sixty vectors spanning the double range; it was not adopted, because
+  the native kernel's standard library has no `ldexp` and reimplementing
+  one is more surface for the two languages to disagree on than a sixth
+  of a rounding unit is worth.
+
+  Where the answer is itself subnormal a relative tolerance stops
+  meaning anything — an area of `3e-323` carries about three bits — so
+  the claim there is in units of the last place: within one ulp, and
+  measured at `0.50000000000010` ulp over sixty consecutive subnormal
+  scales.
+
+  **A measure that genuinely does not fit is now refused rather than
+  returned.** It reaches `summary_record` and from there a JSON document
+  with no way to write it. Note the failure mode: after the volume
+  repair above, an overflowing volume arrives as a **NaN** rather than an
+  infinity, because the compensated summation adds a positive and a
+  negative overflow — and a NaN satisfies every bound it is compared
+  against. Both are refused, naming the body and the measure.
+
+- **A mesh far from the origin no longer loses its volume.** The signed
+  volume was summed over products of absolute coordinates. The
+  divergence theorem is exactly translation-invariant in real arithmetic
+  and catastrophically is not in floating point: each term grows with the
+  square of the distance to the origin while the total does not, so a
+  body away from the origin was measured as a difference of large
+  numbers.
+
+  Measured on this library's own bodies, the previous form was wrong by
+  **3 % at an offset of 10 km**, by four orders of magnitude at
+  1000 km, and returned **exactly zero** for a unit tetrahedron moved to
+  `(-1e8, 1e8, -1e8)` — a body with no volume and no complaint. Against
+  the exact rational value of the same meshes its worst relative error
+  over the cases measured was `1.26e9`.
+
+  The sum is now taken about the mesh's own first vertex and accumulated
+  with a compensation, in an operation order that is part of the contract
+  because the parity tests compare bit patterns. Worst relative error
+  against the exact rational value, over four body families at five
+  offsets: **`5.8e-16`**. The first vertex is the origin rather than a
+  bounding-box midpoint because it needs no arithmetic of its own and the
+  native kernel reads the same bits; the midpoint was measured alongside
+  it at `4.22e-16`, which does not buy the extra surface for two
+  languages to diverge on.
+
+  How much a measure moves when the *geometry* is translated is a
+  separate quantity that no accumulation can improve, since translating a
+  mesh rounds every coordinate at the new magnitude. The measured fixtures are compared with
+  `3 * ulp(offset) / L` at the body's smallest feature `L`, and measured
+  at a tenth of that bound.
+
+  **This changes a kernel's output for valid inputs and is therefore a
+  breaking change of the mesh measure.** Every existing body's volume
+  moves in its last bits — measured between `6.5e-16` and `2.9e-14`
+  relative on a consuming family's five bodies — and the movement is
+  towards the exact value, being the size of the error the previous form
+  carried. Any consumer record that embeds a volume changes digest: both
+  device-state digests of the consuming family measured here move.
+  Consumers must regenerate their fixture digests when they move their
+  pin.
+
+- **A body's evidence can no longer certify itself.** Every bound in
+  `cad_evidence` was a bare comparison against a value the caller
+  supplied, and a bare comparison is not a check. Four records that
+  describe nothing were accepted: a relative error of `nan`, which
+  compares `False` against a bound and against its negation at once and
+  so satisfied both; a relative error of `-1.0`, which passes any *must
+  not exceed* test whatever the geometry did; a declared bound of `nan`,
+  which admitted a deficit of `1e100`; and a B-rep volume a hundred times
+  its analytic form standing beside a claimed error of exactly zero,
+  because the claim was never confronted with the measures it claims to
+  describe.
+
+  The record now proves each field finite before comparing it, proves
+  each measure a ratio is taken against strictly positive, proves each
+  magnitude not negative, and **recomputes all four derived quantities
+  from its own raw measures**; a supplied value must equal what its
+  measures give, and the bounds are then compared against the recomputed
+  values rather than the supplied ones. The equality is exact and no
+  allowance is granted, which is a measurement rather than a preference:
+  the recomputation uses the same expressions in the same arithmetic
+  order as the library computes them in, and on the curved and planar
+  bodies of this library it reproduces every supplied value bit for bit.
+  A recomputed ratio that overflows to infinity — possible from finite
+  measures with a positive denominator — is refused as well.
+
+  `body_evidence` now also checks that the B-rep body, its faceting and
+  the reference mesh **are the same body** before comparing any of their
+  measures. Measures do not carry identity, and the assembly form zips
+  four sequences in one fixed order, which is exactly where a body can be
+  paired with its neighbour's mesh and produce a small difference that
+  certifies nothing.
+
+  No valid record's values change; the change is a refusal where there
+  was none. Every consumer that already builds evidence through
+  `body_evidence` and `assembly_evidence` is unaffected, and a consumer
+  constructing `BodyEvidence` directly must now supply measures its
+  errors agree with.
+
 - The faceted-volume deviation is compared **in magnitude** rather than
   one-sidedly. A faceted volume arbitrarily *larger* than its analytic
   form previously passed without comment. No curved body's evidence
@@ -343,3 +465,19 @@ SCPN Reactor Kernels — CHANGELOG
   the platform `math` module, native kernels in `rust/` with scalar and
   stream bindings proven bit-exact by parity tests, and a
   standard-conformant benchmark with a committed local artefact.
+
+
+### Breaking development generation 1.0.0.dev0
+
+The Python floor and native distribution advance together; the Rust crate
+uses `1.0.0-dev.0`. Existing consumer pins and version records remain unchanged.
+The mesh volume contract changes valid results and digests; CAD evidence now
+rejects nonfinite and inconsistent records. Consumers need a reviewed pin
+migration with regenerated evidence.
+
+Power-of-two fallback scaling recovers representable areas and volumes even
+when cross products, determinant terms or twice the final area overflow.
+Public triangle measurements refuse nonfinite outputs; normal-range paths
+retain their arithmetic order. Subnormal area totals are accumulated at scale
+before the final rounding. The draft's half-range ceiling is superseded by
+final-quantity checks with rational and Decimal oracles.

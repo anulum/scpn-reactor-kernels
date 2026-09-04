@@ -62,9 +62,12 @@ python3 agentic-shared/scripts/repository_tier0_scaffold_audit.py \
   03_CODE/SCPN-REACTOR-SYSTEMS/repositories/SCPN-REACTOR-KERNELS --json
 ```
 
-proves the Tier-0 local-scaffold machine profile (required and forbidden
-paths, Git/remote boundary, workflow pins and permissions, badge non-claims,
-JSON integrity, defensive ignore rules).
+checks the pre-publication local-scaffold profile. This repository now has
+an authorised origin remote and ignored external source records, so that
+bootstrap profile is not a pass/fail gate for the published repository: its
+zero-remote and object-only external-JSON assumptions do not apply. Retain
+its diagnostic output and verify the applicable repository gates above;
+never remove the remote or rewrite source records to satisfy that profile.
 
 ## Geometry kernels
 
@@ -580,3 +583,259 @@ A defect this exposed, and fixed for every body:
   No curved body's evidence changes, because an inscribed faceting always
   undershoots; the change is a strict tightening, and it surfaced only
   because a prism's deviation is signed.
+
+## Evidence that cannot certify itself
+
+Evidence record of the fail-closed contract of `cad_evidence`
+(`computational_prototype`; kernel `cad_evidence` in
+`kernels-domain.json`; module
+`src/scpn_reactor_kernels/cad/evidence.py`).
+
+**Every bound in this kernel used to be a bare comparison against a
+number the caller handed in, and a bare comparison is not a check.** An
+independent probe of the public constructor accepted four records that
+describe nothing:
+
+| Record | Why it was admitted |
+|---|---|
+| `volume_relative_error = nan` | a NaN compares `False` against a bound and against its negation |
+| `volume_relative_error = -1.0` | a negative magnitude passes any *must not exceed* test |
+| `faceted_volume_deficit_bound = nan` beside a deficit of `1e100` | the bound itself was never checked |
+| analytic volume 1, B-rep volume 100, claimed error 0 | the claim was never confronted with the measures |
+
+All four are now refused at construction, each naming the field that
+refused it, and each is a regression test.
+
+What is exercised, under the same 100 % statement-and-branch gate — 80
+tests over 95 statements and 34 branches of the module:
+
+- Every one of the twelve numeric fields against `nan`, `+inf` and
+  `-inf`; every one of the six measures against zero and a negative
+  value; every one of the five magnitudes against a negative value; each
+  of the three identity fields against the empty string.
+- **Each bound at its exact value and at the representable neighbours
+  either side, constructed from raw measures rather than from an
+  injected error.** An analytic volume of `1e9` against a B-rep volume of
+  `1e9 + 1.0` gives a relative error of exactly `1e-9`, which is the
+  declared measure tolerance to the bit; one unit in the last place above
+  that volume is refused and one below is accepted.
+- A signed deficit on both sides, with a faceted volume that overshoots
+  accepted within the bound and refused beyond it.
+- A recomputed ratio that overflows to infinity from finite measures with
+  a positive denominator, which the supplied fields alone cannot catch.
+- Identity mismatches one component at a time, in the faceting and in the
+  reference mesh, and an assembly handed its reference meshes in the
+  wrong order.
+- Real curved and planar bodies, and an assembly that mixes them.
+
+Measured, rather than assumed:
+
+- **The recomputation is bit-exact through the public path, so the
+  consistency check needs no allowance and is granted none.** Over the
+  library's cylinder, tube and prism, all four derived quantities equal
+  the values the record's own measures give, bit for bit:
+
+  | Body | volume error | area error | deficit | mesh difference |
+  |---|---|---|---|---|
+  | cylinder | `0.0` | `0.0` | `1.986277073990545e-4` | `1.406979256978618e-3` |
+  | tube | `1.533832311662575e-16` | `0.0` | `9.23432639085042e-5` | `1.513263700469106e-3` |
+  | prism | `2.509727251123853e-16` | `1.1800839972631342e-16` | `-1.2548636255619264e-16` | `0.0` |
+
+  An allowance would have been room for a claimed error to drift from the
+  geometry it claims to describe, and nothing in the measurement asks for
+  one.
+- **The bounds are compared against the recomputed values, not the
+  supplied ones.** The practical consequence is that a bound can no
+  longer be tripped by overwriting an error field — a test must move a
+  measure — which is what the previous test module did and why it proved
+  less than it appeared to.
+
+The change refuses where there was no refusal; no valid record's values
+change. A consumer that builds evidence through `body_evidence` or
+`assembly_evidence` is unaffected, and one constructing `BodyEvidence`
+directly must supply measures its errors agree with.
+
+## A volume that survives being moved
+
+Evidence record of the translation stability of the mesh measure
+(`computational_prototype`; kernel `geometry_mesh_contract` in
+`kernels-domain.json`; modules
+`src/scpn_reactor_kernels/geometry/mesh.py` and
+`rust/src/geometry/mesh.rs`).
+
+**The divergence theorem is exactly translation-invariant in real
+arithmetic and catastrophically is not in floating point.** Summed over
+products of absolute coordinates, each term grows with the square of the
+distance to the origin while the total does not, so a body away from the
+origin was measured as a difference of large numbers. The previous form
+did exactly that.
+
+What it did, measured against the exact rational value of the same
+meshes:
+
+| Case | Previous relative error |
+|---|---|
+| unit tetrahedron at the origin | `5.55e-17` |
+| the same at `(1e8, 1e8, 1e8)` | `2.00e8` — returned `33333333.333333332` |
+| the same at `(-1e8, 1e8, -1e8)` | returned **exactly zero** |
+| cylinder at 10 km | `3.13e-2` — three per cent |
+| sphere at `1e8` m | `1.26e9` |
+
+The zero is the one to keep in mind. It is not a large error; it is a
+closed body reported as having no volume, silently, with the sign lost
+as well as the magnitude.
+
+The measure is now summed about the mesh's own first vertex and
+accumulated with a compensation that keeps the part of each term the
+running total was too large to hold. **The operation order is contract,
+not implementation detail**, because the parity tests compare float64 bit
+patterns between the two languages.
+
+What is exercised, under the same 100 % statement-and-branch gate — 36
+tests over 107 statements and 38 branches of the Python module, and four
+Rust tests:
+
+- The tetrahedron at eight offsets to `1e8` m, including mixed signs and
+  a single-axis move, recovering one sixth; and the stronger claim that
+  at exactly representable offsets the answer is **bit-identical** to the
+  unmoved one, not merely close.
+- Four body families — cylinder, annular tube, sphere and spherical
+  shell — at two segment counts and three offsets, each scored against
+  **the exact value of the divergence-theorem sum computed in rational
+  arithmetic**. That oracle is independent of both implementations, which
+  is the point: two backends agreeing is not evidence that either is
+  right.
+- A uniformly inward mesh keeping a negative volume a hundred thousand
+  kilometres from the origin.
+- Bit-exact Python-to-Rust parity on translated bodies at four offsets,
+  not only at the origin. A native kernel that reordered the compensation
+  would agree at the origin and differ here.
+- An empty vertex slice measuring zero in the native kernel rather than
+  indexing past the end, which is what the previous form did and which no
+  validated mesh can reach.
+
+Measured, rather than assumed:
+
+- **Worst relative error against the exact rational value: `5.8e-16`**,
+  over four body families at five offsets from the origin to `1e8` m.
+  The previous form's worst over the same set was `1.26e9`.
+- **The compensation is not decorative.** Dropping it while keeping the
+  local origin gives a worst error of `1.10e-14` — nineteen times worse
+  — and on the spherical shell alone, whose nineteen hundred faces cancel
+  between the outer surface and the cavity, `1.10e-14` against
+  `7.85e-17`. A test asserts the ratio, so the compensation cannot
+  quietly become a no-op.
+- **A bounding-box midpoint was measured as the alternative origin** and
+  is better by about a quarter in the worst case, `4.22e-16` against
+  `5.76e-16`. It was not adopted: it needs a reduction over every vertex
+  and a division reproduced bit-exactly in a second language, for a gain
+  two orders inside the coordinate resolution that already bounds the
+  answer.
+- **Translation drift is a different quantity and no summation improves
+  it.** Translating a mesh rounds every coordinate at the new magnitude,
+  so the body itself changes shape; the fixture drift is compared against
+  `3 * ulp(offset) / L` at the smallest feature `L`. Over four bodies at
+  offsets from 100 m to `1e8` m the measured drift never exceeded
+  **9.4 %** of that bound.
+
+Compatibility, before and after:
+
+| Consumer surface | Before | After |
+|---|---|---|
+| canonical mesh bytes and digest | vertices and faces only | unchanged |
+| body volume of a consuming family's five bodies | — | moves by `6.5e-16` to `2.9e-14` relative |
+| that family's two device-state record digests | — | both change |
+
+**This is a breaking change of the mesh measure**, because it alters a
+kernel's output for valid inputs. The movement is the size of the error
+the previous form carried and is towards the exact value. Consumers
+embed volumes in digested records and must regenerate their fixture
+digests when they move their pin; no consumer sees the change until then,
+because each pins this library at a commit.
+
+## Measures the format can hold, and measures it cannot
+
+Evidence record of the exponent-range behaviour of the mesh measures
+(`computational_prototype`; kernel `geometry_mesh_contract` in
+`kernels-domain.json`; modules
+`src/scpn_reactor_kernels/geometry/mesh.py` and
+`rust/src/geometry/mesh.rs`).
+
+**A norm computed as the square root of a sum of squares leaves the
+exponent range long before its own answer does.** Squaring costs half the
+range in each direction, so a body whose area is an ordinary double was
+measured as infinity at one end and, at the other, refused as a
+degenerate triangle.
+
+What the previous form did, with the boundaries bisected rather than
+estimated:
+
+| | Previous | Now |
+|---|---|---|
+| smallest scale with a correct area | `9.543299509722758e-79` | `1.77e-162` and below, correctly rounded |
+| largest scale with a correct area | `8.798296151866603e+76` | `6.163580613284844e+153` |
+| at a scale of `1e100` | area `inf`, exact `2.37e200` | correct |
+| far enough down | **triangle refused as degenerate** | measured |
+
+About 160 orders of magnitude of representable results were being
+discarded.
+
+The repair rescales the norm by the largest component **only where the
+direct sum of squares would fail** — it is kept wherever the sum lands on
+a finite normal double.
+
+What is exercised, under the same 100 % statement-and-branch gate — 55
+tests over 125 statements and 44 branches of the Python module, and eight
+Rust tests:
+
+- Areas at scales whose squares overflow (`1e77` to `1e153`) and whose
+  squares fall subnormal (`1e-100` to `1e-160`), each against the closed
+  form.
+- **That nothing which already worked has moved**, asserted bit for bit
+  against the previous expression at five ordinary scales, and measured
+  separately over 3660 face norms and five body areas of the library's
+  cylinder, tube, prism, sphere and shell: every one identical.
+- The largest measurable scale and **the very next representable double**,
+  which is refused by name.
+- The deep subnormal band, scored against the exact area of the vertices
+  actually handed in — not of the body they approximate, which at that
+  scale is a different thing.
+- A genuinely collinear triangle still refused, and its nearest
+  non-degenerate neighbour now measured instead of refused with the same
+  message.
+- A record refusing to serialise a measure it cannot hold.
+- Bit-exact Python-to-Rust parity at five scales spanning both branches,
+  and the stated split where the two differ.
+
+## Extreme-coordinate range and final-value checks
+
+Current range checks additionally exercise power-of-two scaling before cross
+products and determinants overflow. At tetrahedron scale `8e153` the surface
+area is approximately `1.5142562584220406e308`; at scale `8e102` the volume is
+approximately `8.533333333333333e307`. Both are finite despite overflowing
+unscaled intermediate values. A triangle with orthogonal edges `1.4e154`
+returns area `9.8e307` and unit normal `(0, 0, 1)`.
+
+The historical half-maximum area ceiling and refusal at volume scale `1e103`
+were intermediate arithmetic defects, not limits of the final quantities.
+Dedicated tests now compare those results with rational/Decimal oracles.
+For subnormal total areas, the scaled face sum is rounded back only once;
+normal-range calculations retain the original arithmetic order where finite.
+Python and Rust share bounded power-of-two multiplication steps. Truly
+unrepresentable public face areas raise GeometryError; mesh validation may
+therefore reject such faces before a summary is requested. The low-level Rust
+measure functions retain IEEE nonfinite results for unrepresentable measures.
+
+Scaling extends the tested dynamic range; it does not prove accuracy for all
+ill-conditioned or extremely anisotropic meshes. Test oracle tolerances apply
+to their recorded geometries, not a universal error bound.
+
+## Breaking development version
+
+Python floor and optional native distribution are `1.0.0.dev0`; the Rust crate
+is `1.0.0-dev.0`. This major development generation explicitly marks changed
+mesh measures and stricter CAD evidence/refusal contracts. Existing consumer
+manifest records retain their old versions and source commits: none has been
+silently migrated. Adopting consumers must regenerate measure-bearing digests,
+run native/analytic checks and obtain fresh receiver acceptance. This local
+version change is not a release or publication receipt.

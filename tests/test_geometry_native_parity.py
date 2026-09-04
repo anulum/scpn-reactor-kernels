@@ -21,6 +21,7 @@ import math
 import pytest
 
 from geometry_fixtures import bits, sample_bodies, stream_bits
+from scpn_reactor_kernels.errors import GeometryError
 from scpn_reactor_kernels.geometry import (
     aim_rotation,
     annular_tube,
@@ -43,6 +44,7 @@ from scpn_reactor_kernels.geometry import (
     translate,
     unit_circle,
 )
+from scpn_reactor_kernels.geometry.mesh import TriangleMesh
 from scpn_reactor_kernels.geometry.spheres import (
     sphere_profile,
     sphere_solid,
@@ -260,6 +262,95 @@ def test_measures_of_every_body_are_bit_exact() -> None:
         assert bits(native.mesh_area(vertices, faces)) == bits(mesh.surface_area_m2())
 
 
+@pytest.mark.parametrize("offset", [1.0e2, 1.0e4, 1.0e6, 1.0e8])
+def test_measures_of_translated_bodies_are_bit_exact(offset: float) -> None:
+    """The two languages agree bit for bit where the measure was repaired.
+
+    The volume is summed about the mesh's first vertex with a
+    compensation whose branch order is part of the contract; a native
+    kernel that reordered any of it would differ in the last bits here
+    even though it agreed at the origin, which is exactly the case a
+    parity test at the origin alone would miss.
+    """
+    for mesh in sample_bodies(64):
+        placed = tuple(
+            (vertex[0] + offset, vertex[1] + offset, vertex[2] + offset)
+            for vertex in mesh.vertices
+        )
+        moved = TriangleMesh(
+            name=mesh.name,
+            role=mesh.role,
+            material_identifier=mesh.material_identifier,
+            vertices=placed,
+            faces=mesh.faces,
+        )
+        vertices = [c for v in moved.vertices for c in v]
+        faces = [i for f in moved.faces for i in f]
+        assert bits(native.mesh_volume(vertices, faces)) == bits(
+            moved.signed_volume_m3()
+        )
+        assert bits(native.mesh_area(vertices, faces)) == bits(moved.surface_area_m2())
+
+
+@pytest.mark.parametrize("exponent", [-155, -100, 0, 100, 153])
+def test_areas_at_extreme_scales_are_bit_exact(exponent: int) -> None:
+    """The rescaled norm agrees bit for bit, at both ends of the range.
+
+    The rescaling only runs where the direct sum of squares would
+    overflow or fall subnormal, so a native kernel that took the branch
+    at a different threshold, or divided in a different order, would
+    agree everywhere ordinary and differ only here.
+    """
+    scale = 10.0**exponent
+    for mesh in sample_bodies(16):
+        placed = tuple(
+            (vertex[0] * scale, vertex[1] * scale, vertex[2] * scale)
+            for vertex in mesh.vertices
+        )
+        scaled = TriangleMesh(
+            name=mesh.name,
+            role=mesh.role,
+            material_identifier=mesh.material_identifier,
+            vertices=placed,
+            faces=mesh.faces,
+        )
+        vertices = [c for v in scaled.vertices for c in v]
+        faces = [i for f in scaled.faces for i in f]
+        assert bits(native.mesh_area(vertices, faces)) == bits(scaled.surface_area_m2())
+
+
+def test_the_floor_refuses_what_the_native_kernel_merely_returns() -> None:
+    """A stated split, not a gap: the floor validates, the kernel computes.
+
+    The native kernel returns the IEEE result of a measure the format
+    cannot hold, exactly as it assumes valid indices rather than
+    revalidating the mesh. The Python floor is the layer that refuses,
+    and it names the body and the measure.
+
+    The scale is chosen from measurement: these bodies are constructible
+    and measurable from ``1e-158`` to ``1e153``, and ``1e155`` is the
+    first decade where every one of them has an area the format cannot
+    hold while the mesh itself is still valid.
+    """
+    scale = 1.0e155
+    mesh = sample_bodies(16)[0]
+    placed = tuple(
+        (vertex[0] * scale, vertex[1] * scale, vertex[2] * scale)
+        for vertex in mesh.vertices
+    )
+    vertices = [c for v in placed for c in v]
+    faces = [i for f in mesh.faces for i in f]
+    assert not math.isfinite(native.mesh_area(vertices, faces))
+    with pytest.raises(GeometryError, match="not representable"):
+        TriangleMesh(
+            name=mesh.name,
+            role=mesh.role,
+            material_identifier=mesh.material_identifier,
+            vertices=placed,
+            faces=mesh.faces,
+        ).surface_area_m2()
+
+
 def test_native_refusals_mirror_the_floor() -> None:
     """Invalid segment counts and malformed streams raise ValueError."""
     with pytest.raises(ValueError, match="multiple of 8"):
@@ -439,3 +530,25 @@ def test_spherical_shell_is_bit_exact(rings: int, segments: int) -> None:
     got_vertices, got_faces = native.tessellate_spherical_shell(outer, inner, segments)
     assert stream_bits([c for v in vertices for c in v]) == stream_bits(got_vertices)
     assert [i for f in faces for i in f] == got_faces
+
+
+@pytest.mark.parametrize("scale", [8e102, 1e103, 8e153, 8.7e153, 1e-100])
+def test_extreme_mesh_fallback_parity(scale: float) -> None:
+    """Native scaling agrees with the public floor at intermediate overflows."""
+    vertices = (
+        (0.0, 0.0, 0.0),
+        (scale, 0.0, 0.0),
+        (0.0, scale, 0.0),
+        (0.0, 0.0, scale),
+    )
+    faces = ((0, 2, 1), (0, 1, 3), (0, 3, 2), (1, 2, 3))
+    mesh = TriangleMesh("scaled", "test_geometry", "declared", vertices, faces)
+    flat_vertices = [x for v in vertices for x in v]
+    flat_faces = [i for f in faces for i in f]
+    assert bits(native.mesh_area(flat_vertices, flat_faces)) == bits(
+        mesh.surface_area_m2()
+    )
+    if scale < 1e104:
+        assert bits(native.mesh_volume(flat_vertices, flat_faces)) == bits(
+            mesh.signed_volume_m3()
+        )

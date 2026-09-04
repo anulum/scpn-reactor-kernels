@@ -37,12 +37,30 @@ The evidence object refuses at construction. A bound that is violated
 raises :class:`~scpn_reactor_kernels.errors.CadError` naming the body and
 the bound, so a model cannot be built around a body that failed a check
 and a caller cannot forget to look. Nothing here describes a device.
+
+**A bound is only a check if a wrong answer can fail it, and a bare
+comparison is not one.** Every field is therefore proved to be a finite
+number before it is compared, because a NaN compares ``False`` in both
+directions and would satisfy a bound and its negation at once; every
+measure a ratio is taken against is proved strictly positive; every
+magnitude is proved not to be negative, because a negative one passes a
+``must not exceed`` test whatever the geometry did; and **every supplied
+error is recomputed from the record's own raw measures and must equal
+what they give**, so a claimed error of zero cannot stand next to a
+B-rep volume a hundred times its analytic form. The bounds are then
+compared against the recomputed values rather than the supplied ones,
+which means the record cannot certify itself: the caller's arithmetic is
+evidence, not authority. The identity of the three bodies compared is
+checked before any of their measures are, because measures do not carry
+identity and a mesh paired with the wrong body would produce a small
+difference and certify nothing.
 """
 
 from __future__ import annotations
 
+import math
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Final
 
 from scpn_reactor_kernels.cad.facet import (
     PLANAR_FACETING_TOLERANCE,
@@ -52,6 +70,201 @@ from scpn_reactor_kernels.cad.facet import (
 from scpn_reactor_kernels.cad.solids import MEASURE_TOLERANCE, BrepBody
 from scpn_reactor_kernels.errors import CadError
 from scpn_reactor_kernels.geometry.mesh import TriangleMesh
+
+IDENTITY_FIELDS: Final = ("name", "role", "material_identifier")
+"""Fields that must agree across the B-rep, faceted and reference bodies."""
+
+_MEASURE_FIELDS: Final = (
+    "analytic_volume_m3",
+    "brep_volume_m3",
+    "analytic_surface_area_m2",
+    "brep_surface_area_m2",
+    "faceted_volume_m3",
+    "reference_mesh_volume_m3",
+)
+_MAGNITUDE_FIELDS: Final = (
+    "volume_relative_error",
+    "surface_area_relative_error",
+    "faceted_volume_deficit_bound",
+    "mesh_volume_relative_difference",
+    "mesh_volume_difference_bound",
+)
+_SIGNED_FIELDS: Final = ("faceted_volume_relative_deficit",)
+
+
+def _require_finite(body_name: str, field_name: str, value: float) -> float:
+    """Return the value if it is a finite number, and refuse it otherwise.
+
+    Parameters
+    ----------
+    body_name
+        Name of the body the field belongs to, so the refusal says which.
+    field_name
+        Name of the field being checked.
+    value
+        The value.
+
+    Returns
+    -------
+    float
+        The value, unchanged.
+
+    Raises
+    ------
+    CadError
+        If the value is a NaN or an infinity.
+
+    Notes
+    -----
+    This is the check the rest of the module rests on. Every bound here
+    is a comparison, and a NaN compares ``False`` against everything, so
+    a single NaN reaching a bound would satisfy it in both directions and
+    the evidence would be admitted without a check ever having run.
+    """
+    if not math.isfinite(value):
+        raise CadError(f"{body_name}.{field_name}: must be finite, got {value!r}")
+    return value
+
+
+def _require_positive(body_name: str, field_name: str, value: float) -> float:
+    """Return the value if it is strictly positive, and refuse it otherwise.
+
+    Parameters
+    ----------
+    body_name
+        Name of the body the field belongs to.
+    field_name
+        Name of the field being checked.
+    value
+        The value.
+
+    Returns
+    -------
+    float
+        The value, unchanged.
+
+    Raises
+    ------
+    CadError
+        If the value is zero or negative.
+
+    Notes
+    -----
+    Applied to the measures a relative error is formed from. A zero
+    analytic measure makes every ratio a division by zero, and a negative
+    one silently flips the sign of every error taken against it. The
+    faceted and reference volumes are signed volumes of closed meshes, so
+    a negative value there is an inward-oriented mesh rather than a small
+    body.
+    """
+    if value <= 0.0:
+        raise CadError(
+            f"{body_name}.{field_name}: must be strictly positive, got {value!r}"
+        )
+    return value
+
+
+def _require_non_negative(body_name: str, field_name: str, value: float) -> float:
+    """Return the value if it is not negative, and refuse it otherwise.
+
+    Parameters
+    ----------
+    body_name
+        Name of the body the field belongs to.
+    field_name
+        Name of the field being checked.
+    value
+        The value.
+
+    Returns
+    -------
+    float
+        The value, unchanged.
+
+    Raises
+    ------
+    CadError
+        If the value is negative.
+
+    Notes
+    -----
+    Applied to the magnitudes: an absolute relative error and a declared
+    bound. A negative magnitude passes every ``must not exceed`` test
+    whatever the geometry did, which is how a supplied error of ``-1.0``
+    was formerly admitted.
+    """
+    if value < 0.0:
+        raise CadError(f"{body_name}.{field_name}: must not be negative, got {value!r}")
+    return value
+
+
+def _require_recomputed(
+    body_name: str, field_name: str, supplied: float, recomputed: float
+) -> None:
+    """Refuse a supplied error that its own measures do not produce.
+
+    Parameters
+    ----------
+    body_name
+        Name of the body the field belongs to.
+    field_name
+        Name of the field being checked.
+    supplied
+        The value the caller supplied.
+    recomputed
+        The value recomputed from the record's own raw measures.
+
+    Raises
+    ------
+    CadError
+        If the two differ at all.
+
+    Notes
+    -----
+    **Equality here is exact, and that is a measurement rather than a
+    preference.** The recomputation uses the same expressions in the same
+    arithmetic order as
+    :meth:`~scpn_reactor_kernels.cad.solids.BrepBody.volume_relative_error`
+    and :func:`body_evidence`, and operates on the record's own stored
+    measures, so on the real curved and planar bodies of this library it
+    reproduces every supplied value bit for bit. No allowance is needed,
+    and any allowance would be room for a claimed error to drift from the
+    geometry it claims to describe.
+    """
+    if supplied != recomputed:
+        raise CadError(
+            f"{body_name}.{field_name}: must equal the value its own measures "
+            f"give, {recomputed!r}, got {supplied!r}"
+        )
+
+
+def _require_within(
+    body_name: str, field_name: str, value: float, bound: float, description: str
+) -> None:
+    """Refuse a measured value that exceeds its declared bound.
+
+    Parameters
+    ----------
+    body_name
+        Name of the body the field belongs to.
+    field_name
+        Name of the field being checked.
+    value
+        The recomputed value, never the supplied one.
+    bound
+        The declared bound.
+    description
+        How the bound is named in the refusal.
+
+    Raises
+    ------
+    CadError
+        If the value exceeds the bound.
+    """
+    if value > bound:
+        raise CadError(
+            f"{body_name}.{field_name}: {value!r} exceeds {description}, {bound!r}"
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -95,7 +308,22 @@ class BodyEvidence:
     Raises
     ------
     CadError
-        If a declared bound is violated.
+        If an identity is empty, a numeric field is not finite, a measure
+        is not strictly positive, a magnitude is negative, a supplied
+        error is not the value its own measures give, or a recomputed
+        value exceeds its declared bound.
+
+    Notes
+    -----
+    ``analytic_volume_m3``, ``brep_volume_m3``,
+    ``analytic_surface_area_m2``, ``brep_surface_area_m2``,
+    ``faceted_volume_m3`` and ``reference_mesh_volume_m3`` are measures
+    and must be strictly positive; the last two are signed volumes of
+    closed meshes, so a negative value is an inward-oriented mesh rather
+    than a small body. The relative errors, the mesh difference and both
+    bounds are magnitudes and must not be negative. Only
+    ``faceted_volume_relative_deficit`` is signed, and it is checked in
+    magnitude.
     """
 
     name: str
@@ -115,38 +343,99 @@ class BodyEvidence:
     mesh_volume_difference_bound: float
 
     def __post_init__(self) -> None:
-        """Refuse evidence that violates a declared bound.
+        """Refuse evidence that is not a valid, self-consistent record.
+
+        The checks run in one order and it matters: a field is proved
+        finite before it is compared, proved to have the right sign
+        before it is divided by, proved to be the value its own measures
+        give before it is trusted, and only then compared against its
+        bound.
 
         Raises
         ------
         CadError
-            If a relative error exceeds the measure tolerance or a deficit
-            exceeds its declared bound.
+            If an identity is empty, a numeric field is not finite, a
+            measure is not strictly positive, a magnitude is negative, a
+            supplied error is not the one its own measures give, or a
+            recomputed value exceeds its declared bound.
         """
-        if self.volume_relative_error > MEASURE_TOLERANCE:
-            raise CadError(
-                f"{self.name}.volume_relative_error: must not exceed "
-                f"{MEASURE_TOLERANCE!r}, got {self.volume_relative_error!r}"
+        for field_name in IDENTITY_FIELDS:
+            if not getattr(self, field_name):
+                raise CadError(f"{field_name}: must be non-empty")
+        for field_name in (*_MEASURE_FIELDS, *_MAGNITUDE_FIELDS, *_SIGNED_FIELDS):
+            _require_finite(self.name, field_name, getattr(self, field_name))
+        for field_name in _MEASURE_FIELDS:
+            _require_positive(self.name, field_name, getattr(self, field_name))
+        for field_name in _MAGNITUDE_FIELDS:
+            _require_non_negative(self.name, field_name, getattr(self, field_name))
+        recomputed = self._recompute_from_measures()
+        for field_name, value in recomputed.items():
+            _require_recomputed(self.name, field_name, getattr(self, field_name), value)
+        _require_within(
+            self.name,
+            "volume_relative_error",
+            recomputed["volume_relative_error"],
+            MEASURE_TOLERANCE,
+            "the measure tolerance",
+        )
+        _require_within(
+            self.name,
+            "surface_area_relative_error",
+            recomputed["surface_area_relative_error"],
+            MEASURE_TOLERANCE,
+            "the measure tolerance",
+        )
+        _require_within(
+            self.name,
+            "faceted_volume_relative_deficit",
+            abs(recomputed["faceted_volume_relative_deficit"]),
+            self.faceted_volume_deficit_bound,
+            "its declared bound in magnitude",
+        )
+        _require_within(
+            self.name,
+            "mesh_volume_relative_difference",
+            recomputed["mesh_volume_relative_difference"],
+            self.mesh_volume_difference_bound,
+            "the polygon-deficit bound",
+        )
+
+    def _recompute_from_measures(self) -> dict[str, float]:
+        """Return the four derived quantities, taken from the measures.
+
+        Returns
+        -------
+        dict[str, float]
+            Each derived field name against the value the record's own
+            raw measures produce, in the arithmetic order the library
+            computes it in.
+
+        Raises
+        ------
+        CadError
+            If a recomputed ratio is not finite. Finite measures with a
+            positive denominator can still overflow, and a ratio that
+            does would satisfy every bound below it.
+        """
+        recomputed = {
+            "volume_relative_error": abs(self.brep_volume_m3 - self.analytic_volume_m3)
+            / self.analytic_volume_m3,
+            "surface_area_relative_error": abs(
+                self.brep_surface_area_m2 - self.analytic_surface_area_m2
             )
-        if self.surface_area_relative_error > MEASURE_TOLERANCE:
-            raise CadError(
-                f"{self.name}.surface_area_relative_error: must not exceed "
-                f"{MEASURE_TOLERANCE!r}, got {self.surface_area_relative_error!r}"
+            / self.analytic_surface_area_m2,
+            "faceted_volume_relative_deficit": (
+                self.analytic_volume_m3 - self.faceted_volume_m3
             )
-        if abs(self.faceted_volume_relative_deficit) > (
-            self.faceted_volume_deficit_bound
-        ):
-            raise CadError(
-                f"{self.name}.faceted_volume_relative_deficit: must not exceed "
-                f"the declared bound {self.faceted_volume_deficit_bound!r} in "
-                f"magnitude, got {self.faceted_volume_relative_deficit!r}"
+            / self.analytic_volume_m3,
+            "mesh_volume_relative_difference": abs(
+                self.faceted_volume_m3 - self.reference_mesh_volume_m3
             )
-        if self.mesh_volume_relative_difference > self.mesh_volume_difference_bound:
-            raise CadError(
-                f"{self.name}.mesh_volume_relative_difference: must not exceed "
-                f"the polygon-deficit bound {self.mesh_volume_difference_bound!r}, "
-                f"got {self.mesh_volume_relative_difference!r}"
-            )
+            / self.analytic_volume_m3,
+        }
+        for field_name, value in recomputed.items():
+            _require_finite(self.name, f"{field_name} recomputed", value)
+        return recomputed
 
     def to_record(self) -> dict[str, Any]:
         """Project the evidence to a JSON-serialisable record.
@@ -216,6 +505,49 @@ def facet_bounds(
     )
 
 
+def _require_matching_identity(
+    body: BrepBody, faceted: TriangleMesh, reference_mesh: TriangleMesh
+) -> None:
+    """Refuse three bodies that are not the same body.
+
+    Parameters
+    ----------
+    body
+        The B-rep body.
+    faceted
+        The faceted mesh said to be of that body.
+    reference_mesh
+        The tier-G1 mesh said to be of that body.
+
+    Raises
+    ------
+    CadError
+        If a name, role or material identifier disagrees.
+
+    Notes
+    -----
+    Every number below this check is a comparison of measures, and
+    measures do not carry identity: two bodies of a device can have equal
+    volumes and be different shapes in different places, so a reference
+    mesh handed in against the wrong body would produce a small
+    difference and an evidence record that certifies nothing. The
+    assembly form zips four sequences in one fixed order, which is
+    exactly where a body can be paired with its neighbour's mesh, so the
+    check belongs here rather than in the constructor: the constructor
+    sees one identity and cannot know it is the wrong one.
+    """
+    for other in (faceted, reference_mesh):
+        for field_name in IDENTITY_FIELDS:
+            expected = getattr(body, field_name)
+            found = getattr(other, field_name)
+            if expected != found:
+                raise CadError(
+                    f"{body.name}.{field_name}: the B-rep body and the mesh "
+                    f"compared against it must be the same body, got "
+                    f"{expected!r} and {found!r}"
+                )
+
+
 def body_evidence(
     body: BrepBody,
     smallest_radius_m: float | None,
@@ -255,9 +587,10 @@ def body_evidence(
     Raises
     ------
     CadError
-        If a declared bound is violated, or if an argument of a bound is
-        invalid.
+        If the three bodies are not the same body, if a declared bound is
+        violated, or if an argument of a bound is invalid.
     """
+    _require_matching_identity(body, faceted, reference_mesh)
     faceted_volume = faceted.signed_volume_m3()
     reference_volume = reference_mesh.signed_volume_m3()
     analytic_volume = body.analytic_volume_m3
