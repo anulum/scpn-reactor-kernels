@@ -27,6 +27,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import json
+import math
 import platform
 import shutil
 import statistics
@@ -59,6 +60,18 @@ WAIST: Final = (
     (1.46, 0.06),
     (1.96, 0.0225),
 )
+#: One body that closes on the axis at both poles, so the pass also
+#: measures the revolve path that appends no axis return point:
+#: ``r(z) = a sqrt(1 - |z / b|^2)`` at seven samples.
+SEPARATRIX: Final = (
+    (-0.15, 0.0),
+    (-0.1125, 0.02 * math.sqrt(1.0 - 0.75**2)),
+    (-0.075, 0.02 * math.sqrt(1.0 - 0.5**2)),
+    (0.0, 0.02),
+    (0.075, 0.02 * math.sqrt(1.0 - 0.5**2)),
+    (0.1125, 0.02 * math.sqrt(1.0 - 0.75**2)),
+    (0.15, 0.0),
+)
 
 
 def operations() -> list[tuple[str, str, Callable[[], float]]]:
@@ -78,6 +91,7 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
         BrepAssembly,
         annular_tube_brep,
         assembly_evidence,
+        closed_profiled_solid_brep,
         cylinder_solid_brep,
         facet_assembly,
         gmsh_volume_mesh,
@@ -157,6 +171,12 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
         body = profiled_solid_brep(WAIST, "waist", "synthetic", "synthetic")
         return body.volume_m3
 
+    def revolve_closed_profile() -> float:
+        body = closed_profiled_solid_brep(
+            SEPARATRIX, "separatrix", "synthetic", "synthetic"
+        )
+        return body.volume_m3
+
     rod = cylinder_solid_brep(0.006, 0.0, 0.16, "rod", "electrode", "conductor")
     rod_names = tuple(f"rod_{index:02d}" for index in range(RING_COUNT))
     centres = ring_offsets(RING_COUNT, RING_RADIUS_M)
@@ -173,6 +193,7 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
         ("place_ring_of_bodies", "cadquery_ocp", place_ring),
         ("assembly_body_evidence", "cadquery_ocp", evidence),
         ("revolve_axial_profile", "cadquery_ocp", revolve_profile),
+        ("revolve_closed_profile", "cadquery_ocp", revolve_closed_profile),
     ]
 
 
@@ -289,6 +310,7 @@ def main(argv: list[str] | None = None) -> int:
             ("place_ring_of_bodies", "cadquery_ocp"),
             ("assembly_body_evidence", "cadquery_ocp"),
             ("revolve_axial_profile", "cadquery_ocp"),
+            ("revolve_closed_profile", "cadquery_ocp"),
         ):
             results.append(
                 {
