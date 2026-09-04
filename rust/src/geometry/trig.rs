@@ -210,3 +210,145 @@ mod tests {
         );
     }
 }
+
+// The three words below are the shortest literals that round-trip to the
+// doubles the Python floor writes as 1.57079632673412561417e00,
+// 6.07710050630396597660e-11 and 2.02226624879595063154e-21; the parity
+// test compares the bit patterns rather than trusting the spelling.
+/// First word of the three-word split of `pi / 2` (22 trailing zero bits).
+pub const PIO2_A: f64 = 1.570_796_326_734_125_6_f64;
+/// Second word of the split (21 trailing zero bits).
+pub const PIO2_B: f64 = 6.077_100_506_303_966e-11;
+/// Third word of the split; what remains of `pi / 2` is below `1.1e-37`.
+pub const PIO2_C: f64 = 2.022_266_248_795_950_6e-21;
+/// `2 / pi`, the reciprocal used to find the quadrant index.
+pub const TWO_OVER_PI: f64 = 2.0 / std::f64::consts::PI;
+/// Degrees in half a turn.
+pub const DEGREES_PER_HALF_TURN: f64 = 180.0;
+/// Largest quadrant index whose products with the split stay exact.
+pub const MAX_QUADRANT_INDEX: i64 = 2_097_152;
+/// Largest angle magnitude the reduction accepts, in radians.
+pub const MAX_ANGLE_RAD: f64 = 2_097_152.0 * HALF_PI;
+
+/// Rejection of an angle outside the declared reduction domain.
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct AngleError {
+    /// The rejected angle, in radians.
+    pub angle_rad: f64,
+}
+
+impl fmt::Display for AngleError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            f,
+            "angle_rad: must be finite with magnitude at most {MAX_ANGLE_RAD}, got {}",
+            self.angle_rad
+        )
+    }
+}
+
+impl std::error::Error for AngleError {}
+
+/// Converts degrees to radians as one multiplication then one division.
+#[must_use]
+pub fn radians_from_degrees(degrees: f64) -> f64 {
+    (degrees * std::f64::consts::PI) / DEGREES_PER_HALF_TURN
+}
+
+/// Validates an angle against the declared reduction domain.
+///
+/// # Errors
+///
+/// Returns [`AngleError`] when the angle is not finite or its magnitude
+/// exceeds [`MAX_ANGLE_RAD`].
+pub fn require_reducible_angle(angle_rad: f64) -> Result<f64, AngleError> {
+    if !angle_rad.is_finite() || angle_rad.abs() > MAX_ANGLE_RAD {
+        return Err(AngleError { angle_rad });
+    }
+    Ok(angle_rad)
+}
+
+/// Reduces an angle to a quadrant index and a residue in `[-pi/4, pi/4]`.
+///
+/// # Errors
+///
+/// Returns [`AngleError`] when the angle leaves the declared domain.
+pub fn quadrant_reduction(angle_rad: f64) -> Result<(i64, f64), AngleError> {
+    require_reducible_angle(angle_rad)?;
+    let count = (angle_rad * TWO_OVER_PI + 0.5).floor();
+    let residue = ((angle_rad - count * PIO2_A) - count * PIO2_B) - count * PIO2_C;
+    #[allow(clippy::cast_possible_truncation)]
+    Ok((count as i64, residue))
+}
+
+/// `(cos, sin)` of an arbitrary angle, bit-exact with the Python floor.
+///
+/// # Errors
+///
+/// Returns [`AngleError`] when the angle leaves the declared domain.
+pub fn circle_point(angle_rad: f64) -> Result<[f64; 2], AngleError> {
+    let (index, residue) = quadrant_reduction(angle_rad)?;
+    let sine_value = sine_polynomial(residue);
+    let cosine_value = cosine_polynomial(residue);
+    Ok(match index.rem_euclid(4) {
+        0 => [cosine_value, sine_value],
+        1 => [0.0 - sine_value, cosine_value],
+        2 => [0.0 - cosine_value, 0.0 - sine_value],
+        _ => [sine_value, 0.0 - cosine_value],
+    })
+}
+
+/// Sine of an arbitrary angle.
+///
+/// # Errors
+///
+/// Returns [`AngleError`] when the angle leaves the declared domain.
+pub fn sine(angle_rad: f64) -> Result<f64, AngleError> {
+    Ok(circle_point(angle_rad)?[1])
+}
+
+/// Cosine of an arbitrary angle.
+///
+/// # Errors
+///
+/// Returns [`AngleError`] when the angle leaves the declared domain.
+pub fn cosine(angle_rad: f64) -> Result<f64, AngleError> {
+    Ok(circle_point(angle_rad)?[0])
+}
+
+#[cfg(test)]
+mod arbitrary_angle_tests {
+    use super::*;
+
+    #[test]
+    fn quadrant_axes_are_recovered() {
+        let quarter = HALF_PI;
+        assert!(cosine(0.0).unwrap() == 1.0);
+        assert!(sine(0.0).unwrap() == 0.0);
+        assert!(cosine(quarter).unwrap().abs() < 1.0e-16);
+        assert!((sine(quarter).unwrap() - 1.0).abs() < 1.0e-16);
+    }
+
+    #[test]
+    fn arbitrary_angles_match_libm() {
+        for k in -2000..=2000 {
+            let x = k as f64 * 0.031_25;
+            assert!((cosine(x).unwrap() - x.cos()).abs() <= 2.3e-16);
+            assert!((sine(x).unwrap() - x.sin()).abs() <= 2.3e-16);
+        }
+    }
+
+    #[test]
+    fn the_domain_is_refused_at_its_edge() {
+        assert!(circle_point(MAX_ANGLE_RAD).is_ok());
+        assert!(circle_point(f64::NAN).is_err());
+        assert!(sine(f64::INFINITY).is_err());
+        assert!(cosine(-2.0 * MAX_ANGLE_RAD).is_err());
+    }
+
+    #[test]
+    fn degrees_convert_in_a_fixed_order() {
+        assert!(radians_from_degrees(180.0) == std::f64::consts::PI);
+        assert!(radians_from_degrees(0.0) == 0.0);
+    }
+}

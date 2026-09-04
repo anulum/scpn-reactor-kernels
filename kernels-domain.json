@@ -88,7 +88,8 @@
       "module": "src/scpn_reactor_kernels/geometry/trig.py",
       "native_parity": true,
       "sources": [
-        "Taylor polynomials of sine and cosine in Horner form; exact octant and quadrant symmetry (elementary; no external source)"
+        "Taylor polynomials of sine and cosine in Horner form; exact octant and quadrant symmetry (elementary; no external source)",
+        "Arbitrary-angle sine and cosine on the same polynomials, reduced against a three-word split of pi/2 in a fixed operation order, with a declared domain and a measured residue bound (Cody-Waite argument reduction; elementary; no external source; ADR 0016)"
       ]
     },
     {

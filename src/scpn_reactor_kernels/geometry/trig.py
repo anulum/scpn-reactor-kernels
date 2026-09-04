@@ -19,8 +19,21 @@ exact octant and quadrant symmetry (sign changes and swaps only). The
 truncation error of both polynomials on ``[0, pi/4]`` is below one half
 unit in the last place of the result; the accumulated rounding error is
 a few units in the last place, bounded by the accuracy test against
-``math.sin`` and ``math.cos`` in the test suite. Nothing here describes a
-device; it is the numerical substrate of the geometry.
+``math.sin`` and ``math.cos`` in the test suite.
+
+Two entry points sit on those polynomials and the choice between them is
+not a matter of taste. :func:`circle_points` serves angles that are exact
+rational multiples of a turn — the segments of a tessellation, the members
+of a ring — and finds their quadrant by integer arithmetic on the count,
+so no angle is ever formed and no reduction is needed. :func:`circle_point`
+serves a single arbitrary angle, which a source prints as a latitude or a
+phase and which is not such a multiple; it reduces the angle against a
+three-word split of ``pi/2`` in a fixed operation order, the same
+Cody–Waite shape the exponential kernel uses for ``ln 2``. The domain of
+that reduction is declared and refused at its edge rather than wrapped.
+
+Nothing here describes a device; it is the numerical substrate of the
+geometry.
 """
 
 from __future__ import annotations
@@ -239,3 +252,221 @@ def unit_circle(segments: int) -> tuple[tuple[float, float], ...]:
     """
     require_segments(segments)
     return circle_points(segments)
+
+
+# Three-word split of ``pi/2``. The first two words carry trailing zero
+# mantissa bits (22 and 21 respectively), so ``n * PIO2_A`` and
+# ``n * PIO2_B`` are exact for every quadrant index the declared domain
+# admits; the third word carries the remainder, and what is left of
+# ``pi/2`` beyond all three is below ``1.1e-37``.
+PIO2_A: Final = 1.57079632673412561417e00
+PIO2_B: Final = 6.07710050630396597660e-11
+PIO2_C: Final = 2.02226624879595063154e-21
+
+#: ``2 / pi``, the reciprocal used to find the quadrant index.
+TWO_OVER_PI: Final = 2.0 / math.pi
+
+#: Degrees in half a turn; a printed angle is normally in degrees.
+DEGREES_PER_HALF_TURN: Final = 180.0
+
+#: Largest quadrant index whose products with the first two words of the
+#: split stay exact. Measured, not assumed: the first index at which
+#: ``n * PIO2_A`` becomes inexact is 5340355 and the first at which
+#: ``n * PIO2_B`` does is 4017387, both well above this power of two,
+#: which is the largest whose significand fits the exactness argument
+#: (21 significant bits against the 31 and 32 the two words need).
+MAX_QUADRANT_INDEX: Final = 2097152
+
+#: Largest angle magnitude the reduction accepts, in radians.
+MAX_ANGLE_RAD: Final = MAX_QUADRANT_INDEX * HALF_PI
+
+
+def radians_from_degrees(degrees: float) -> float:
+    """Convert an angle in degrees to radians in a fixed operation order.
+
+    Parameters
+    ----------
+    degrees
+        Angle in degrees; finite.
+
+    Returns
+    -------
+    float
+        ``(degrees * pi) / 180``, one multiplication then one division, so
+        the native kernel reproduces the result bit for bit. A source that
+        prints an angle prints it in degrees, and this is the one place
+        the conversion happens.
+
+    Raises
+    ------
+    GeometryError
+        If the angle is not finite.
+    """
+    if not math.isfinite(degrees):
+        raise GeometryError(f"degrees: must be finite, got {degrees!r}")
+    return (degrees * math.pi) / DEGREES_PER_HALF_TURN
+
+
+def require_reducible_angle(angle_rad: float) -> float:
+    """Validate an angle against the declared reduction domain.
+
+    Parameters
+    ----------
+    angle_rad
+        Angle in radians.
+
+    Returns
+    -------
+    float
+        The validated angle.
+
+    Raises
+    ------
+    GeometryError
+        If the angle is not finite or its magnitude exceeds
+        :data:`MAX_ANGLE_RAD`. The domain is refused, never wrapped: an
+        angle outside it is a caller's error, and silently reducing it
+        would hide the loss of meaning that the argument's own
+        representation carries at that magnitude.
+    """
+    if not math.isfinite(angle_rad):
+        raise GeometryError(f"angle_rad: must be finite, got {angle_rad!r}")
+    if abs(angle_rad) > MAX_ANGLE_RAD:
+        raise GeometryError(
+            f"angle_rad: magnitude must not exceed {MAX_ANGLE_RAD!r}, got {angle_rad!r}"
+        )
+    return angle_rad
+
+
+def quadrant_reduction(angle_rad: float) -> tuple[int, float]:
+    """Reduce an angle to a quadrant index and a residue in ``[-pi/4, pi/4]``.
+
+    Parameters
+    ----------
+    angle_rad
+        Angle in radians, inside the declared domain.
+
+    Returns
+    -------
+    tuple of (int, float)
+        The quadrant index ``n`` (the nearest integer to
+        ``angle_rad / (pi/2)``, ties upward) and the residue
+        ``angle_rad - n pi/2`` computed by subtracting the three words of
+        the split in a fixed order.
+
+    Raises
+    ------
+    GeometryError
+        If the angle leaves the declared domain.
+
+    Notes
+    -----
+    The index comes from ``floor(x * 2/pi + 1/2)``, the same shape the
+    exponential kernel uses for its own Cody–Waite reduction, so both are
+    a floor of one product and one addition and nothing about the result
+    depends on a language's rounding convention.
+
+    **The residue is not strictly bounded by ``pi/4``.** The quotient
+    that picks the index is formed with a rounded ``2/pi``, so near a
+    half-quadrant the index can be the neighbour of the nearest one and
+    the residue then passes ``pi/4`` by an amount that grows with the
+    angle. Scanned over the whole domain at the half-quadrant points, the
+    excess is at most ``1.2e-16`` times the magnitude of the angle —
+    ``3.9e-10`` at the top of the domain. The polynomials are evaluated
+    at that residue anyway and their agreement with the platform library
+    at the worst such point is one unit in the last place, measured, so
+    the overshoot costs nothing; stating it is better than a bound that
+    does not hold.
+    """
+    require_reducible_angle(angle_rad)
+    index = math.floor(angle_rad * TWO_OVER_PI + 0.5)
+    count = float(index)
+    residue = ((angle_rad - count * PIO2_A) - count * PIO2_B) - count * PIO2_C
+    return index, residue
+
+
+def circle_point(angle_rad: float) -> tuple[float, float]:
+    """Return ``(cos, sin)`` of an arbitrary angle, bit-exact across backends.
+
+    Parameters
+    ----------
+    angle_rad
+        Angle in radians, inside the declared domain.
+
+    Returns
+    -------
+    tuple of (float, float)
+        ``(cos(angle_rad), sin(angle_rad))``, from the same degree-15 and
+        degree-16 polynomials :func:`circle_points` uses, evaluated on the
+        residue of :func:`quadrant_reduction` and placed by the quadrant
+        index through sign changes and swaps only.
+
+    Raises
+    ------
+    GeometryError
+        If the angle leaves the declared domain.
+
+    Notes
+    -----
+    :func:`circle_points` stays the entry point for the equally spaced
+    points of a tessellation or a ring: its angles are exact rational
+    multiples of a turn, so it finds its quadrant by integer arithmetic
+    and never needs this reduction. This function is for the angles a
+    source prints — a latitude, a phase — which are not such multiples.
+    Accuracy against the platform ``math`` module is measured in the test
+    suite and stays within one unit in the last place across the domain;
+    bit-exactness with the native kernel is the guarantee.
+    """
+    index, residue = quadrant_reduction(angle_rad)
+    sine_value = sine_polynomial(residue)
+    cosine_value = cosine_polynomial(residue)
+    quadrant = index % 4
+    if quadrant == 0:
+        return cosine_value, sine_value
+    if quadrant == 1:
+        return 0.0 - sine_value, cosine_value
+    if quadrant == 2:
+        return 0.0 - cosine_value, 0.0 - sine_value
+    return sine_value, 0.0 - cosine_value
+
+
+def sine(angle_rad: float) -> float:
+    """Return the sine of an arbitrary angle.
+
+    Parameters
+    ----------
+    angle_rad
+        Angle in radians, inside the declared domain.
+
+    Returns
+    -------
+    float
+        ``sin(angle_rad)``, the second member of :func:`circle_point`.
+
+    Raises
+    ------
+    GeometryError
+        If the angle leaves the declared domain.
+    """
+    return circle_point(angle_rad)[1]
+
+
+def cosine(angle_rad: float) -> float:
+    """Return the cosine of an arbitrary angle.
+
+    Parameters
+    ----------
+    angle_rad
+        Angle in radians, inside the declared domain.
+
+    Returns
+    -------
+    float
+        ``cos(angle_rad)``, the first member of :func:`circle_point`.
+
+    Raises
+    ------
+    GeometryError
+        If the angle leaves the declared domain.
+    """
+    return circle_point(angle_rad)[0]

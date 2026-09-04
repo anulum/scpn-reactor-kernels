@@ -79,6 +79,32 @@ mod python {
         Ok(points.iter().flat_map(|p| p.iter().copied()).collect())
     }
 
+    /// `(cos, sin)` of one arbitrary angle as a two-value stream.
+    #[pyfunction]
+    fn circle_point(angle_rad: f64) -> PyResult<Vec<f64>> {
+        let point = crate::geometry::trig::circle_point(angle_rad)
+            .map_err(|e| PyValueError::new_err(e.to_string()))?;
+        Ok(point.to_vec())
+    }
+
+    /// `(cos, sin)` of every angle of a stream (the first refusal aborts).
+    #[pyfunction]
+    fn circle_point_stream(angles_rad: Vec<f64>) -> PyResult<Vec<f64>> {
+        let mut out: Vec<f64> = Vec::with_capacity(angles_rad.len() * 2);
+        for &angle in &angles_rad {
+            let point = crate::geometry::trig::circle_point(angle)
+                .map_err(|e| PyValueError::new_err(e.to_string()))?;
+            out.extend_from_slice(&point);
+        }
+        Ok(out)
+    }
+
+    /// Degrees to radians, one multiplication then one division.
+    #[pyfunction]
+    fn radians_from_degrees(degrees: f64) -> f64 {
+        crate::geometry::trig::radians_from_degrees(degrees)
+    }
+
     /// Ring centres of `count` bodies on a circle as a flat stream.
     #[pyfunction]
     fn ring_offsets(count: usize, radius_m: f64) -> PyResult<Vec<f64>> {
@@ -367,6 +393,9 @@ mod python {
     fn scpn_reactor_kernels_native(m: &Bound<'_, PyModule>) -> PyResult<()> {
         m.add_function(wrap_pyfunction!(unit_circle, m)?)?;
         m.add_function(wrap_pyfunction!(circle_points, m)?)?;
+        m.add_function(wrap_pyfunction!(circle_point, m)?)?;
+        m.add_function(wrap_pyfunction!(circle_point_stream, m)?)?;
+        m.add_function(wrap_pyfunction!(radians_from_degrees, m)?)?;
         m.add_function(wrap_pyfunction!(ring_offsets, m)?)?;
         m.add_function(wrap_pyfunction!(ring_separation, m)?)?;
         m.add_function(wrap_pyfunction!(translate, m)?)?;

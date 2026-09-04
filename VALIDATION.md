@@ -72,8 +72,9 @@ Evidence record of the `geometry` kernel group (`computational_prototype`;
 design records: `docs/adr/0002-geometry-kernels.md`,
 `docs/adr/0007-geometry-placement-kernel.md` and
 `docs/adr/0010-axial-profile-primitive.md`,
-`docs/adr/0012-bodies-that-close-on-the-axis.md` and
-`docs/adr/0015-bodies-without-curvature.md`; kernels
+`docs/adr/0012-bodies-that-close-on-the-axis.md`,
+`docs/adr/0015-bodies-without-curvature.md` and
+`docs/adr/0016-arbitrary-angle-trigonometry.md`; kernels
 `geometry_unit_circle`, `geometry_mesh_contract`, `geometry_primitives`,
 `geometry_exports`, `geometry_placement`, `geometry_profiles` in
 `kernels-domain.json`).
@@ -95,6 +96,23 @@ What is exercised, all under the 100 % statement-and-branch coverage gate
   quadrant is an exact sign/swap image of the first, that no negative zero
   is emitted, and that inadmissible counts (below 8 or not a multiple of 8
   for a tessellation, below 3 for a circle, booleans) are refused.
+- **Arbitrary-angle circle point** (`trig.py`, ADR 0016): the same two
+  polynomials, reached through a three-word Cody–Waite split of `pi/2` in
+  a fixed operation order, for the angles a source prints and
+  `circle_points` cannot reach. Tests prove the split sums to the double
+  `pi/2` and leaves a remainder below `1e-30` against `pi` to fifty
+  digits; that both reduction products are exact for every admissible
+  index and that the nearest indices which break either (5340355 and
+  4017387) lie outside the domain; that the domain accepts its edge and
+  refuses the next double on both signs; that every quadrant branch is
+  placed correctly; that a scan of 4001 angles across the whole domain
+  agrees with `math.cos`/`math.sin` within `2.220446049250313e-16`, one
+  unit in the last place of one; that `cos^2 + sin^2` holds; that the
+  residue overshoots `pi/4` by one unit in the last place at `pi/4`
+  itself and by `3.9e-10` at the worst point of the domain, where the
+  result is still accurate to one unit in the last place; and that the
+  count-based path keeps exact zeros and ones on the axes where this one
+  cannot, so the two are measured to be **not** interchangeable.
 - **Mesh contract** (`mesh.py`, `TriangleMesh`): closure and consistent
   orientation (every directed edge exactly once with its reverse), refusal
   of too few vertices or faces, non-finite coordinates, out-of-range or

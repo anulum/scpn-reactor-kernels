@@ -69,6 +69,7 @@ REQUIRED_PATHS = (
     "docs/adr/0005-numerics-bessel-kernels.md",
     "docs/adr/0006-cad-kernels.md",
     "docs/adr/0015-bodies-without-curvature.md",
+    "docs/adr/0016-arbitrary-angle-trigonometry.md",
     "docs/benchmarks.md",
     "kernel-inventory.json",
     "kernels-domain.json",

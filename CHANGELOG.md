@@ -14,6 +14,34 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Added
 
+- Sine and cosine of an angle a source prints (`geometry_unit_circle`,
+  ADR 0016). Every angle this library had needed was a rational multiple
+  of a turn, which `circle_points` reaches by integer arithmetic without
+  ever forming an angle. A filed source prints latitudes instead — one
+  device family's node set sits at 20.1, 43.4, 59.0, 80.1, 99.9, 121.0,
+  136.6 and 159.9 degrees — and none of those can be reached that way.
+
+  The new path reduces the angle against a three-word split of `pi/2` in
+  a fixed operation order and then evaluates **the same two polynomials**.
+  The domain is declared and refused at its edge: the quadrant index is
+  bounded at `2^21`, measured against the nearest indices at which either
+  reduction product stops being exact (5340355 and 4017387).
+
+  **The residue is not strictly bounded by `pi/4`, and the record says
+  so** rather than asserting a bound that does not hold. The quotient
+  picking the index is formed with a rounded `2/pi`, so the quarter turn
+  is passed by one unit in the last place at `pi/4` and by `3.9e-10` at
+  the top of the domain — where the result is still accurate to one unit
+  in the last place, measured.
+
+  `circle_points` stays the entry point for rings and tessellations, and
+  a test measures why the two are not interchangeable: for a
+  thirty-member ring only 4 of 30 points come out identical, and the
+  exact zeros and ones on the axes belong to the count-based path alone.
+
+  Native parity is bit-exact over a scan of the domain; agreement with
+  the platform library is `2.220446049250313e-16` at worst.
+
 - The rectangular prism (`geometry_primitives`, `cad_brep_solids`,
   ADR 0015): the first body in this library that is **not a solid of
   revolution**, and the first that is tessellated exactly rather than

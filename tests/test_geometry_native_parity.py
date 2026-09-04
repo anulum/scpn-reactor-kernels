@@ -40,6 +40,11 @@ from scpn_reactor_kernels.geometry.spheres import (
     sphere_solid,
     spherical_shell,
 )
+from scpn_reactor_kernels.geometry.trig import (
+    MAX_ANGLE_RAD,
+    circle_point,
+    radians_from_degrees,
+)
 
 native = pytest.importorskip("scpn_reactor_kernels_native")
 
@@ -49,6 +54,44 @@ def test_unit_circle_is_bit_exact(segments: int) -> None:
     """The flat cos/sin stream agrees bit for bit."""
     floor = [component for point in unit_circle(segments) for component in point]
     assert stream_bits(floor) == stream_bits(native.unit_circle(segments))
+
+
+def test_the_arbitrary_angle_circle_point_is_bit_exact() -> None:
+    """Every angle of a wide scan agrees bit for bit, not to a tolerance.
+
+    The scan carries the quarter turns, the printed latitudes of a node
+    set on a sphere, both edges of the declared domain and a sweep across
+    it, so all four quadrant branches and both signs are compared.
+    """
+    angles = [step * 0.03125 for step in range(-2001, 2002)]
+    angles += [radians_from_degrees(deg) for deg in (20.1, 43.4, 59.0, 159.9)]
+    angles += [
+        0.0,
+        math.pi / 2.0,
+        math.pi,
+        3.0 * math.pi / 2.0,
+        2.0 * math.pi,
+        MAX_ANGLE_RAD,
+        0.0 - MAX_ANGLE_RAD,
+        3290522.209527707,
+    ]
+    floor = [component for angle in angles for component in circle_point(angle)]
+    assert stream_bits(floor) == stream_bits(native.circle_point_stream(angles))
+
+
+@pytest.mark.parametrize("angle_rad", [0.0, 0.35081118059122317, -12.5, 1.0e5])
+def test_the_single_angle_binding_is_bit_exact(angle_rad: float) -> None:
+    """The scalar entry point agrees with the stream one and with the floor."""
+    floor = list(circle_point(angle_rad))
+    assert stream_bits(floor) == stream_bits(native.circle_point(angle_rad))
+
+
+@pytest.mark.parametrize("degrees", [0.0, 20.1, 180.0, -359.99, 1.0e5])
+def test_the_degree_conversion_is_bit_exact(degrees: float) -> None:
+    """One multiplication and one division, in the same order on both sides."""
+    assert bits(radians_from_degrees(degrees)) == bits(
+        native.radians_from_degrees(degrees)
+    )
 
 
 @pytest.mark.parametrize(
