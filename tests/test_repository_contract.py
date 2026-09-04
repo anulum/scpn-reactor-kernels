@@ -167,6 +167,7 @@ def test_manifest_declares_the_library_truth() -> None:
         "geometry_primitives",
         "geometry_exports",
         "geometry_profiles",
+        "geometry_spheres",
         "geometry_placement",
         "numerics_transcendental",
         "numerics_bessel",
@@ -175,6 +176,7 @@ def test_manifest_declares_the_library_truth() -> None:
         "cad_faceting",
         "cad_volume_mesh",
         "cad_profiles",
+        "cad_spheres",
         "cad_evidence",
         "cad_placement",
     ]
@@ -264,7 +266,7 @@ def test_inventory_embeds_current_manifest_digest() -> None:
     digest = sha256_of_file(REPO / "kernels-domain.json")
     inventory = load_json_object(REPO / "kernel-inventory.json")
     assert inventory["source"]["manifest_sha256"] == digest
-    assert inventory["implemented_kernel_count"] == 15
+    assert inventory["implemented_kernel_count"] == 17
 
 
 def test_no_agent_state_trees_exist() -> None:
