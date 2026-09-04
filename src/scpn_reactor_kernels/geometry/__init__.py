@@ -37,7 +37,11 @@ from scpn_reactor_kernels.geometry.placement import (
     ring_separation_m,
     translate,
 )
-from scpn_reactor_kernels.geometry.primitives import annular_tube, cylinder_solid
+from scpn_reactor_kernels.geometry.primitives import (
+    annular_tube,
+    cylinder_solid,
+    rectangular_prism,
+)
 from scpn_reactor_kernels.geometry.profiles import (
     MIN_BIPOLAR_PROFILE_SAMPLES,
     MIN_CLOSED_PROFILE_SAMPLES,
@@ -100,6 +104,7 @@ __all__ = [
     "profile_volume_m3",
     "profiled_solid",
     "profiled_tube",
+    "rectangular_prism",
     "require_aligned_profiles",
     "require_circle_points",
     "require_closed_profile",

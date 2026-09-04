@@ -19,6 +19,7 @@ from scpn_reactor_kernels.geometry import (
     TriangleMesh,
     annular_tube,
     cylinder_solid,
+    rectangular_prism,
     unit_circle,
 )
 
@@ -132,3 +133,103 @@ def test_invalid_segments_propagate() -> None:
         cylinder_solid(1.0, 0.0, 1.0, 12)
     with pytest.raises(GeometryError, match="at least"):
         annular_tube(0.5, 1.0, 0.0, 1.0, 4)
+
+
+#: Sides and extent of the prism these tests use. Deliberately unequal
+#: and deliberately off-centre in ``z``, so no test can pass by symmetry.
+PRISM_SIDES_M = (0.06, 0.09)
+PRISM_EXTENT_M = (-0.02, 0.14)
+
+
+def test_the_prism_is_the_body_and_not_an_approximation() -> None:
+    """Eight vertices, twelve triangles, and the exact analytic measures.
+
+    The round primitives converge on their body as the segment count
+    rises, and their volume sits below the analytic one until it does.
+    This one has nothing to converge: the mesh *is* the prism, so the
+    comparison is an equality rather than a bound.
+    """
+    width, depth = PRISM_SIDES_M
+    low, high = PRISM_EXTENT_M
+    height = high - low
+    mesh = as_mesh(*rectangular_prism(width, depth, low, high))
+    assert len(mesh.vertices) == 8
+    assert len(mesh.faces) == 12
+    assert mesh.signed_volume_m3() == pytest.approx(width * depth * height, rel=1.0e-15)
+    assert mesh.surface_area_m2() == pytest.approx(
+        2.0 * (width * depth + width * height + depth * height), rel=1.0e-15
+    )
+
+
+def test_the_prism_is_centred_on_the_axis_and_spans_its_extent() -> None:
+    """The body sits where the arguments say, in all three directions."""
+    width, depth = PRISM_SIDES_M
+    low, high = PRISM_EXTENT_M
+    mesh = as_mesh(*rectangular_prism(width, depth, low, high))
+    xs = [vertex[0] for vertex in mesh.vertices]
+    ys = [vertex[1] for vertex in mesh.vertices]
+    zs = [vertex[2] for vertex in mesh.vertices]
+    assert (min(xs), max(xs)) == (-width / 2.0, width / 2.0)
+    assert (min(ys), max(ys)) == (-depth / 2.0, depth / 2.0)
+    assert (min(zs), max(zs)) == (low, high)
+
+
+def test_the_prism_does_not_refine_because_there_is_nothing_to_refine() -> None:
+    """No segment count exists for this primitive, by construction.
+
+    The round primitives take one and change with it. This one takes
+    none: its signature has no such argument, and a caller sweeping a
+    resolution over it would be asking a question with no answer.
+    """
+    import inspect
+
+    assert "segments" not in inspect.signature(rectangular_prism).parameters
+    assert "segments" in inspect.signature(cylinder_solid).parameters
+
+
+def test_the_prism_scales_independently_in_all_three_directions() -> None:
+    """Each argument enters the volume exactly once."""
+    width, depth = PRISM_SIDES_M
+    low, high = PRISM_EXTENT_M
+    base = as_mesh(*rectangular_prism(width, depth, low, high)).signed_volume_m3()
+    wider = as_mesh(
+        *rectangular_prism(2.0 * width, depth, low, high)
+    ).signed_volume_m3()
+    deeper = as_mesh(
+        *rectangular_prism(width, 3.0 * depth, low, high)
+    ).signed_volume_m3()
+    taller = as_mesh(
+        *rectangular_prism(width, depth, low, low + 2.0 * (high - low))
+    ).signed_volume_m3()
+    assert wider == pytest.approx(2.0 * base, rel=1.0e-15)
+    assert deeper == pytest.approx(3.0 * base, rel=1.0e-15)
+    assert taller == pytest.approx(2.0 * base, rel=1.0e-15)
+
+
+@pytest.mark.parametrize(
+    ("width", "depth", "field"),
+    [
+        (0.0, 0.09, "width_x_m"),
+        (-0.06, 0.09, "width_x_m"),
+        (math.nan, 0.09, "width_x_m"),
+        (0.06, 0.0, "depth_y_m"),
+        (0.06, -0.09, "depth_y_m"),
+        (0.06, math.inf, "depth_y_m"),
+    ],
+)
+def test_the_prism_refuses_an_unusable_side(
+    width: float, depth: float, field: str
+) -> None:
+    """Every side length is refused by name."""
+    with pytest.raises(GeometryError, match=field):
+        rectangular_prism(width, depth, *PRISM_EXTENT_M)
+
+
+def test_the_prism_refuses_an_extent_that_does_not_increase() -> None:
+    """The axial extent rule is the one the round primitives use."""
+    with pytest.raises(GeometryError, match="z_high: must exceed z_low"):
+        rectangular_prism(*PRISM_SIDES_M, 0.1, 0.1)
+    with pytest.raises(GeometryError, match="z_high: must exceed z_low"):
+        rectangular_prism(*PRISM_SIDES_M, 0.2, 0.1)
+    with pytest.raises(GeometryError, match="z_low"):
+        rectangular_prism(*PRISM_SIDES_M, math.nan, 0.1)

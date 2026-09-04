@@ -8,13 +8,22 @@
 
 """Deterministic tessellation of analytic bodies for device 3D models.
 
-Two primitives cover the first analytic bodies of the device 3D models:
-the solid cylinder and the annular tube. Both are built on the axis ``z``
-from the same deterministic unit circle, with fixed vertex and face order
-and outward orientation, so the native kernel reproduces every vertex bit
-for bit. Every function returns raw vertex
-and face streams; :class:`~scpn_reactor_kernels.geometry.mesh.TriangleMesh`
-validates them.
+Three primitives: the solid cylinder, the annular tube and the
+rectangular prism. All are built on the axis ``z`` with fixed vertex and
+face order and outward orientation, so the native kernel reproduces every
+vertex bit for bit. Every function returns raw vertex and face streams;
+:class:`~scpn_reactor_kernels.geometry.mesh.TriangleMesh` validates them.
+
+**The rectangular prism is not an approximation, and the other two are.**
+The round primitives are inscribed regular polygon prisms: their
+tessellation converges on the body only as the segment count rises, and
+their volume is below the analytic one by a deficit the segment count
+sets. A rectangular prism has no curved surface, so its twelve triangles
+*are* the body — there is no segment count to choose, no deficit to
+bound, and refining nothing improves nothing. Consumers must not carry a
+segment-count argument for it, and the evidence a consumer builds around
+it is bounded by floating-point round-off rather than by any geometric
+deficit (ADR 0015).
 """
 
 from __future__ import annotations
@@ -43,6 +52,11 @@ def _require_extent(z_low: float, z_high: float) -> None:
 
 def _require_radius(name: str, value: float) -> float:
     """Validate a radius through the shared positivity rule."""
+    return require_positive(name, value, GeometryError)
+
+
+def _require_extent_length(name: str, value: float) -> float:
+    """Validate a full side length through the shared positivity rule."""
     return require_positive(name, value, GeometryError)
 
 
@@ -171,4 +185,59 @@ def annular_tube(
         following = (index + 1) % count
         faces.append((outer_top + index, outer_top + following, inner_top + following))
         faces.append((outer_top + index, inner_top + following, inner_top + index))
+    return tuple(vertices), tuple(faces)
+
+
+def rectangular_prism(
+    width_x_m: float, depth_y_m: float, z_low_m: float, z_high_m: float
+) -> tuple[tuple[Vertex, ...], tuple[Face, ...]]:
+    """Tessellate a closed rectangular prism centred on the ``z`` axis.
+
+    Parameters
+    ----------
+    width_x_m, depth_y_m
+        Full extents along ``x`` and ``y``; both strictly positive. The
+        body is centred on the axis in both, as the round primitives are.
+    z_low_m, z_high_m
+        Axial extent; ``z_high_m > z_low_m``.
+
+    Returns
+    -------
+    (vertices, faces)
+        Exactly 8 vertices (the bottom rectangle counter-clockwise seen
+        from ``+z``, then the top rectangle in the same order) and
+        exactly 12 outward-oriented triangles (bottom, top, then the four
+        sides in corner order).
+
+    Raises
+    ------
+    GeometryError
+        If an extent is non-finite or not positive.
+
+    Notes
+    -----
+    **There is no segment count here, and that is the point.** The round
+    primitives take one because their tessellation is an inscribed
+    approximation that converges as it rises. This body has no curved
+    surface: these twelve triangles are the prism exactly, at every
+    scale, and no refinement parameter could improve them. A caller that
+    wants to sweep a resolution over this body is asking a question with
+    no answer.
+    """
+    half_width = _require_extent_length("width_x_m", width_x_m) / 2.0
+    half_depth = _require_extent_length("depth_y_m", depth_y_m) / 2.0
+    _require_extent(z_low_m, z_high_m)
+    corners = (
+        (-half_width, -half_depth),
+        (half_width, -half_depth),
+        (half_width, half_depth),
+        (-half_width, half_depth),
+    )
+    vertices: list[Vertex] = [(x, y, z_low_m) for x, y in corners]
+    vertices += [(x, y, z_high_m) for x, y in corners]
+    faces: list[Face] = [(0, 3, 2), (0, 2, 1), (4, 5, 6), (4, 6, 7)]
+    for index in range(4):
+        following = (index + 1) % 4
+        faces.append((index, following, 4 + following))
+        faces.append((index, 4 + following, 4 + index))
     return tuple(vertices), tuple(faces)

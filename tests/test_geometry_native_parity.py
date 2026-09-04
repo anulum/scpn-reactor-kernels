@@ -29,6 +29,7 @@ from scpn_reactor_kernels.geometry import (
     profile_volume_m3,
     profiled_solid,
     profiled_tube,
+    rectangular_prism,
     ring_offsets,
     ring_separation_m,
     translate,
@@ -62,6 +63,43 @@ def test_cylinder_is_bit_exact(
     got_vertices, got_faces = native.tessellate_cylinder(radius, low, high, segments)
     assert stream_bits([c for v in vertices for c in v]) == stream_bits(got_vertices)
     assert [i for f in faces for i in f] == got_faces
+
+
+@pytest.mark.parametrize(
+    ("width", "depth", "low", "high"),
+    [
+        (0.06, 0.09, -0.02, 0.14),
+        (0.01, 0.01, -0.005, 0.005),
+        (1.0, 1.0e-3, 0.0, 1.0e-3),
+        (0.0123456789, 0.0987654321, -0.31, 0.0031415927),
+    ],
+)
+def test_prism_is_bit_exact(
+    width: float, depth: float, low: float, high: float
+) -> None:
+    """Vertices and faces of the rectangular prism agree exactly.
+
+    This kernel is declared ``native_parity: true`` in the inventory, and
+    that declaration covers every function in it. The prism has no
+    circle behind it, so unlike its siblings its parity rests on the
+    halving and the negation alone.
+    """
+    vertices, faces = rectangular_prism(width, depth, low, high)
+    got_vertices, got_faces = native.tessellate_rectangular_prism(
+        width, depth, low, high
+    )
+    assert stream_bits([c for v in vertices for c in v]) == stream_bits(got_vertices)
+    assert [i for f in faces for i in f] == got_faces
+
+
+def test_the_native_prism_takes_no_segment_count() -> None:
+    """The absence of a resolution argument crosses the boundary too.
+
+    A native twin that accepted a segment count would invite a caller to
+    pass one and believe it did something.
+    """
+    with pytest.raises(TypeError):
+        native.tessellate_rectangular_prism(0.06, 0.09, -0.02, 0.14, 8)
 
 
 @pytest.mark.parametrize(("inner", "outer"), [(0.1, 0.11), (0.3, 0.55)])

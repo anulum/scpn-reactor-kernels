@@ -110,7 +110,8 @@
       "module": "src/scpn_reactor_kernels/geometry/primitives.py",
       "native_parity": true,
       "sources": [
-        "Inscribed regular polygon prisms of the solid cylinder and the annular tube (elementary; no external source)"
+        "Inscribed regular polygon prisms of the solid cylinder and the annular tube (elementary; no external source)",
+        "Rectangular prism as eight vertices and twelve triangles: not an inscribed approximation but the body itself, so it carries no segment count and no deficit converges (elementary; no external source; ADR 0015)"
       ]
     },
     {
@@ -192,7 +193,8 @@
       "module": "src/scpn_reactor_kernels/cad/solids.py",
       "native_parity": false,
       "sources": [
-        "CadQuery 2.8 documentation (Workplane, Shape.Volume/Area/BoundingBox) and Open CASCADE Technology 7.9 reference (BRepGProp, Bnd_Box): the pinned third-party B-rep kernel that builds the solids; measures checked against the analytic closed forms of the cylinder and the annular tube (elementary; no external source)"
+        "CadQuery 2.8 documentation (Workplane, Shape.Volume/Area/BoundingBox) and Open CASCADE Technology 7.9 reference (BRepGProp, Bnd_Box): the pinned third-party B-rep kernel that builds the solids; measures checked against the analytic closed forms of the cylinder and the annular tube (elementary; no external source)",
+        "Rectangular prism through the same pinned B-rep kernel, checked against the closed forms w d h and 2 (w d + w h + d h); the first body in this library that is not a solid of revolution (elementary; no external source; ADR 0015)"
       ]
     },
     {
@@ -217,7 +219,8 @@
       "sources": [
         "Open CASCADE Technology 7.9: BRepMesh_IncrementalMesh (linear and angular deflection) through CadQuery Shape.tessellate; vertex welding by exact coordinate equality into the geometry_mesh_contract kernel",
         "Inscribed-chord volume deficit bound 2 d / r and the inscribed regular polygon area ratio (n / 2 pi) sin(2 pi / n) (elementary; no external source)",
-        "A triangle that vertex welding collapses to a repeated index has zero area and is dropped before the mesh contract; its two non-degenerate directed edges are each other's reverse, so no other face's pairing changes (ADR 0012)"
+        "A triangle that vertex welding collapses to a repeated index has zero area and is dropped before the mesh contract; its two non-degenerate directed edges are each other's reverse, so no other face's pairing changes (ADR 0012)",
+        "Faceting of a body with no curved surface is exact: measured over nine rectangular prisms from 1 micrometre to 10 metres and aspect ratios to 1000:1, at every linear deflection the back-end accepts and angular deflections from 0.01 to 1.0 rad, the mesh never left 8 vertices and 12 triangles and the worst relative volume deviation was 2.581e-16, so the declared bound is a round-off tolerance rather than a chord deficit (ADR 0015)"
       ]
     },
     {
@@ -263,7 +266,8 @@
       "module": "src/scpn_reactor_kernels/cad/evidence.py",
       "native_parity": false,
       "sources": [
-        "Composition of the declared bounds of cad_brep_solids (relative measure tolerance against the analytic closed forms) and cad_faceting (the chord deficit bound 2 d / r and the inscribed regular polygon area ratio); no external source"
+        "Composition of the declared bounds of cad_brep_solids (relative measure tolerance against the analytic closed forms) and cad_faceting (the chord deficit bound 2 d / r and the inscribed regular polygon area ratio); no external source",
+        "Selection of a body's faceting bounds by its curvature: the chord and polygon deficits where a body has a smallest circular radius, and the round-off tolerance where it has none; the faceted volume deviation is checked in magnitude, so a faceted volume that overshoots its analytic form is refused as well as one that undershoots (ADR 0015)"
       ]
     },
     {

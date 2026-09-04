@@ -71,8 +71,9 @@ JSON integrity, defensive ignore rules).
 Evidence record of the `geometry` kernel group (`computational_prototype`;
 design records: `docs/adr/0002-geometry-kernels.md`,
 `docs/adr/0007-geometry-placement-kernel.md` and
-`docs/adr/0010-axial-profile-primitive.md` and
-`docs/adr/0012-bodies-that-close-on-the-axis.md`; kernels
+`docs/adr/0010-axial-profile-primitive.md`,
+`docs/adr/0012-bodies-that-close-on-the-axis.md` and
+`docs/adr/0015-bodies-without-curvature.md`; kernels
 `geometry_unit_circle`, `geometry_mesh_contract`, `geometry_primitives`,
 `geometry_exports`, `geometry_placement`, `geometry_profiles` in
 `kernels-domain.json`).
@@ -293,8 +294,9 @@ Evidence record of the `cad` kernel group (`computational_prototype`;
 design records `docs/adr/0006-cad-kernels.md`,
 `docs/adr/0008-cad-placement-kernel.md`,
 `docs/adr/0009-cad-body-evidence-in-the-library.md` and
-`docs/adr/0011-cad-axial-profile-primitive.md` and
-`docs/adr/0012-bodies-that-close-on-the-axis.md`; kernels
+`docs/adr/0011-cad-axial-profile-primitive.md`,
+`docs/adr/0012-bodies-that-close-on-the-axis.md` and
+`docs/adr/0015-bodies-without-curvature.md`; kernels
 `cad_brep_solids`, `cad_step_export`, `cad_faceting`, `cad_volume_mesh`,
 `cad_profiles`, `cad_evidence` and `cad_placement` in
 `kernels-domain.json`). The group adapts two pinned third-party kernels
@@ -461,3 +463,63 @@ Design record: `docs/adr/0014-cad-spherical-bodies.md`.
   of the shell let the profile builder report both radii as `radius_m`,
   so the two tiers refused the same input differently; a test asserts the
   names and the builder now validates them itself.
+
+## Bodies without curvature
+
+Evidence record of the rectangular prism and the faceting regime it
+needs (`computational_prototype`; design record
+`docs/adr/0015-bodies-without-curvature.md`; kernels
+`geometry_primitives`, `cad_brep_solids`, `cad_faceting` and
+`cad_evidence` in `kernels-domain.json`).
+
+**Until this was added every body in this library was a solid of
+revolution**, and two module descriptions said so. Both are corrected
+rather than widened, because a consuming family words its non-claims
+around them.
+
+What is exercised, under the same 100 % statement-and-branch gate:
+
+- The tier-G1 prism: exactly 8 vertices and 12 triangles, closed and
+  outward-oriented under the mesh contract, its volume and area equal to
+  the analytic closed forms, centred on the axis in `x` and `y` and
+  spanning its declared axial extent, each of its three dimensions
+  entering the volume exactly once, and every side and extent refused by
+  name.
+- **That it takes no segment count**, asserted on the signature itself
+  against the cylinder's, because the absence is the statement: there is
+  no inscribed approximation here to refine.
+- The B-rep prism against the same closed forms within the measure
+  tolerance, and every side and extent refused by name.
+- `facet_bounds` in both regimes, and an assembly that mixes a curved
+  body with a planar one, each carrying its own bounds in order.
+
+Measured, rather than assumed:
+
+- **A prism is faceted exactly.** Over nine prisms spanning 1 micrometre
+  to 10 metres and aspect ratios to 1000:1, at every linear deflection
+  the back-end accepts (1e-7 to 1.0) and angular deflections from 0.01 to
+  1.0 rad, the mesher returned 8 vertices and 12 triangles every time and
+  neither deflection changed any measure. Worst relative volume
+  deviation: **2.581e-16**, falling on either side of the analytic value.
+- **The circular bounds would have been decorative.** Supplying the
+  half-width as a radius gives a chord bound eleven orders above that
+  deviation, and the polygon bound is 0.0997 against a measured
+  difference of exactly zero. A test states both.
+- **The declared planar tolerance is `1e-12`**: four orders above the
+  measured ceiling as a stated margin, three orders below the curved
+  bodies' measure tolerance. A test proves it still refuses a prism wrong
+  by one part in ten thousand, so it is not decorative in the other
+  direction.
+- **The back-end has its own deflection floor**, unrelated to the body:
+  a 1 m prism is refused below about 1e-7 m with a numeric error from the
+  mesher. Recorded because it bounds what any consumer at that scale may
+  ask for.
+
+A defect this exposed, and fixed for every body:
+
+- The faceted-volume deviation was compared **one-sidedly**
+  (`deficit > bound`), so a faceted volume arbitrarily *larger* than its
+  analytic form passed without comment. It is now compared in magnitude.
+  No curved body's evidence changes, because an inscribed faceting always
+  undershoots; the change is a strict tightening, and it surfaced only
+  because a prism's deviation is signed.

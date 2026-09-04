@@ -14,9 +14,15 @@ explicitly, full provenance in the artefact. The operation is the
 tessellation of one synthetic body set at a declared segment count,
 followed by the signed volume and surface area of every body: two solid
 cylinders and an annular tube on the axis, a ring of twelve identical rods
-placed off it, one body whose radius varies along the axis, and one that
-closes on the axis at both poles. The last two reach different paths of
-the profile kernel — the second is the only one that builds an apex fan.
+placed off it, one body whose radius varies along the axis, one that
+closes on the axis at both poles, and one rectangular prism. The two
+profiled bodies reach different paths of the profile kernel — the second
+is the only one that builds an apex fan. **The prism is the one body in
+the set whose face count does not depend on the segment count**: it is
+always eight vertices and twelve triangles, because it is the body
+exactly rather than an inscribed approximation, so its share of the pass
+falls as the count rises. It is measured on both backends anyway,
+because a path that is never timed is a path whose cost is unknown.
 Each sample times one full pass and the cost is reported per generated
 face. The Python floor row includes the
 mesh validation every public build performs; the native row calls the
@@ -52,6 +58,7 @@ from scpn_reactor_kernels.geometry import (  # noqa: E402
     cylinder_solid,
     profile_volume_m3,
     profiled_solid,
+    rectangular_prism,
     ring_offsets,
     spherical_shell,
     translate,
@@ -63,6 +70,9 @@ BODIES: Final = (
     ("tube", 0.1, 0.11, 0.0, 1.6),
     ("column", 0.01, None, 1.0, 1.5),
 )
+#: One rectangular prism, so the pass also measures the one primitive that
+#: takes no segment count: (width, depth, z_low, z_high).
+PRISM: Final = (0.06, 0.09, -0.02, 0.14)
 #: One ring of identical rods placed off the axis, so the pass also measures
 #: the placement kernel: (count, ring radius, rod radius, z_low, z_high).
 RING: Final = (12, 0.13, 0.012, 0.0, 1.6)
@@ -170,6 +180,16 @@ def floor_pass(segments: int) -> tuple[float, int]:
     )
     total += shell.signed_volume_m3() + shell.surface_area_m2()
     faces += shell.face_count
+    prism_vertices, prism_faces = rectangular_prism(*PRISM)
+    prism = TriangleMesh(
+        name="prism",
+        role="synthetic",
+        material_identifier="synthetic",
+        vertices=prism_vertices,
+        faces=prism_faces,
+    )
+    total += prism.signed_volume_m3() + prism.surface_area_m2()
+    faces += prism.face_count
     return total, faces
 
 
@@ -236,6 +256,10 @@ def native_pass_factory() -> Callable[[int], tuple[float, int]] | None:
         total += native.mesh_volume(shell_vertices, shell_faces)
         total += native.mesh_area(shell_vertices, shell_faces)
         faces += len(shell_faces) // 3
+        prism_vertices, prism_faces = native.tessellate_rectangular_prism(*PRISM)
+        total += native.mesh_volume(prism_vertices, prism_faces)
+        total += native.mesh_area(prism_vertices, prism_faces)
+        faces += len(prism_faces) // 3
         return total, faces
 
     return native_pass

@@ -19,12 +19,15 @@ from scpn_reactor_kernels.cad import (
     BrepBody,
     annular_tube_brep,
     cylinder_solid_brep,
+    rectangular_prism_brep,
 )
 
 CYLINDER_RADIUS_M = 0.05
 CYLINDER_EXTENT_M = (0.0, 0.3)
 TUBE_RADII_M = (0.08, 0.1)
 TUBE_EXTENT_M = (-0.1, 0.4)
+PRISM_SIDES_M = (0.06, 0.09)
+PRISM_EXTENT_M = (-0.02, 0.14)
 
 
 def cylinder() -> BrepBody:
@@ -42,3 +45,16 @@ def tube() -> BrepBody:
 def assembly() -> BrepAssembly:
     """Return the two-body assembly."""
     return BrepAssembly((cylinder(), tube()))
+
+
+def prism() -> BrepBody:
+    """Return the synthetic rectangular prism.
+
+    The one fixture body in this module with **no curved surface**, so
+    the one whose evidence is bounded by round-off rather than by a chord
+    deficit. Its sides are deliberately unequal and its extent
+    deliberately off-centre, so a test cannot pass by symmetry.
+    """
+    return rectangular_prism_brep(
+        *PRISM_SIDES_M, *PRISM_EXTENT_M, "slab", "target", "fuel"
+    )

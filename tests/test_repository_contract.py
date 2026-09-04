@@ -68,6 +68,7 @@ REQUIRED_PATHS = (
     "docs/adr/0004-first-consumer-pin.md",
     "docs/adr/0005-numerics-bessel-kernels.md",
     "docs/adr/0006-cad-kernels.md",
+    "docs/adr/0015-bodies-without-curvature.md",
     "docs/benchmarks.md",
     "kernel-inventory.json",
     "kernels-domain.json",

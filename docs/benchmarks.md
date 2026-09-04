@@ -45,6 +45,18 @@ different measurement. On a shared workstation under a load average of
 8.19 no cause is attributed to any difference either way. It is a fresh
 measurement of the landing tree, not a regression statement.
 
+**Note added 2026-09-04 (ADR 0015).** The numbers below are the recorded
+artefact of the run named above and are **not** refreshed here: they
+measured the body set as it stood at that commit, and rewriting them
+outside the environment that produced them would replace evidence with an
+estimate. Since that run the pass has gained a **rectangular prism**, so
+the next regeneration will not be comparable to it row by row. The prism
+contributes a constant twelve faces at every segment count — it is the
+body exactly rather than an inscribed approximation, so nothing about it
+scales — and its share of a pass therefore falls as the count rises. It
+is timed on both backends regardless, because a path that is never timed
+is a path whose cost is unknown.
+
 | Backend | P50 µs/face | P95 µs/face | P99 µs/face | mean µs/face | throughput faces/s | status |
 |---|---|---|---|---|---|---|
 | `python_floor` (public API, always available) | 6.392 | 7.158 | 7.195 | 6.380 | 156455 | measured |

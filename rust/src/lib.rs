@@ -149,6 +149,22 @@ mod python {
         Ok((flatten_vertices(&t.vertices), flatten_faces(&t.faces)))
     }
 
+    /// Rectangular prism tessellation as flat vertex and face streams.
+    ///
+    /// Takes no segment count: the prism is the body exactly, so there is
+    /// no resolution to pass.
+    #[pyfunction]
+    fn tessellate_rectangular_prism(
+        width_x_m: f64,
+        depth_y_m: f64,
+        z_low_m: f64,
+        z_high_m: f64,
+    ) -> (Vec<f64>, Vec<u32>) {
+        let t =
+            crate::geometry::primitives::rectangular_prism(width_x_m, depth_y_m, z_low_m, z_high_m);
+        (flatten_vertices(&t.vertices), flatten_faces(&t.faces))
+    }
+
     /// Unflatten a flat `(z, radius, ...)` stream into profile samples.
     fn unflatten_profile(stream: &[f64]) -> PyResult<Vec<[f64; 2]>> {
         if stream.len() % 2 != 0 {
@@ -356,6 +372,7 @@ mod python {
         m.add_function(wrap_pyfunction!(translate, m)?)?;
         m.add_function(wrap_pyfunction!(tessellate_cylinder, m)?)?;
         m.add_function(wrap_pyfunction!(tessellate_annular_tube, m)?)?;
+        m.add_function(wrap_pyfunction!(tessellate_rectangular_prism, m)?)?;
         m.add_function(wrap_pyfunction!(tessellate_profiled_solid, m)?)?;
         m.add_function(wrap_pyfunction!(tessellate_closed_profiled_solid, m)?)?;
         m.add_function(wrap_pyfunction!(tessellate_profiled_tube, m)?)?;

@@ -14,6 +14,40 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Added
 
+- The rectangular prism (`geometry_primitives`, `cad_brep_solids`,
+  ADR 0015): the first body in this library that is **not a solid of
+  revolution**, and the first that is tessellated exactly rather than
+  approximated. It carries no segment count, because there is no
+  inscribed approximation to refine, and a test asserts that absence on
+  the signature itself.
+
+  Two module descriptions said every body here was a solid of revolution.
+  Both are corrected rather than quietly widened, because consuming
+  families word their non-claims around them.
+
+  **The evidence bounds could not be reused by analogy.** Measured over
+  nine prisms from 1 micrometre to 10 metres and aspect ratios to
+  1000:1, at every deflection the back-end accepts: the mesher returns
+  8 vertices and 12 triangles every time, no deflection changes any
+  measure, and the worst relative volume deviation is 2.581e-16 — falling
+  on either side of the analytic value. The chord bound `2 d / r` needs a
+  radius a prism has no such thing as, and supplying the half-width gives
+  eleven orders of slack; the polygon bound is 0.0997 against a measured
+  difference of exactly zero. So a body without curvature declares a
+  round-off tolerance of `1e-12` instead — four orders above the measured
+  ceiling, three orders below the curved bodies' measure tolerance — and
+  a caller states which regime a body is in by passing its smallest
+  circular radius or `None`.
+
+### Fixed
+
+- The faceted-volume deviation is compared **in magnitude** rather than
+  one-sidedly. A faceted volume arbitrarily *larger* than its analytic
+  form previously passed without comment. No curved body's evidence
+  changes — an inscribed faceting always undershoots — so this is a
+  strict tightening; it surfaced only because a prism's deviation is
+  signed.
+
 - Spherical bodies `geometry_spheres`
   (`src/scpn_reactor_kernels/geometry/spheres.py`, ADR 0013): the sphere's
   axial profile, sampled uniformly in polar angle from the first half turn of

@@ -6,8 +6,13 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SCPN Reactor Kernels — analytic surface tessellation kernel
 
-//! Solid cylinder and annular tube tessellation on the device axis with the
-//! vertex and face order of `scpn_reactor_kernels.geometry.primitives`.
+//! Solid cylinder, annular tube and rectangular prism tessellation on the
+//! device axis with the vertex and face order of
+//! `scpn_reactor_kernels.geometry.primitives`.
+//!
+//! The prism takes no segment count and calls no trigonometry: it is the
+//! body exactly rather than an inscribed approximation, so parity with the
+//! Python floor is a property of the arithmetic and not of the circle.
 
 use crate::geometry::trig::{unit_circle, SegmentsError};
 
@@ -136,6 +141,45 @@ pub fn annular_tube(
     Ok(Tessellation { vertices, faces })
 }
 
+/// Closed rectangular prism centred on the axis: 8 vertices, 12 faces.
+///
+/// The caller validates the side lengths and the axial extent; the kernel
+/// assumes finite, strictly positive sides with `z_high > z_low`.
+///
+/// Unlike the round primitives this takes no segment count, because there
+/// is no inscribed approximation to refine: these twelve triangles are the
+/// prism at every scale.
+#[must_use]
+pub fn rectangular_prism(
+    width_x_m: f64,
+    depth_y_m: f64,
+    z_low_m: f64,
+    z_high_m: f64,
+) -> Tessellation {
+    let half_width = width_x_m / 2.0;
+    let half_depth = depth_y_m / 2.0;
+    let corners = [
+        [-half_width, -half_depth],
+        [half_width, -half_depth],
+        [half_width, half_depth],
+        [-half_width, half_depth],
+    ];
+    let mut vertices = Vec::with_capacity(8);
+    for [x, y] in corners {
+        vertices.push([x, y, z_low_m]);
+    }
+    for [x, y] in corners {
+        vertices.push([x, y, z_high_m]);
+    }
+    let mut faces = vec![[0, 3, 2], [0, 2, 1], [4, 5, 6], [4, 6, 7]];
+    for i in 0..4usize {
+        let j = (i + 1) % 4;
+        faces.push([index(i), index(j), index(4 + j)]);
+        faces.push([index(i), index(4 + j), index(4 + i)]);
+    }
+    Tessellation { vertices, faces }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -154,6 +198,19 @@ mod tests {
         let ratio = error(64) / error(128);
         assert!((ratio - 4.0).abs() < 0.05, "ratio {ratio}");
         assert!(surface_area(&coarse.vertices, &coarse.faces) > 0.0);
+    }
+
+    #[test]
+    fn prism_is_exact_and_has_no_resolution() {
+        let t = rectangular_prism(0.06, 0.09, -0.02, 0.14);
+        assert_eq!(t.vertices.len(), 8);
+        assert_eq!(t.faces.len(), 12);
+        let volume = signed_volume(&t.vertices, &t.faces);
+        let analytic = 0.06 * 0.09 * 0.16;
+        assert!((volume - analytic).abs() <= analytic * 1.0e-15);
+        let area = surface_area(&t.vertices, &t.faces);
+        let analytic_area = 2.0 * (0.06 * 0.09 + 0.06 * 0.16 + 0.09 * 0.16);
+        assert!((area - analytic_area).abs() <= analytic_area * 1.0e-15);
     }
 
     #[test]

@@ -9,14 +9,28 @@
 """B-rep solids (CadQuery/OCP) of the same primitives as the tier-G1 meshes.
 
 Every constructor takes the argument list of its tessellating twin in
-:mod:`scpn_reactor_kernels.geometry.primitives` (radius or radii, axial
-extent) plus the body identity (name, role, material token) and returns a
-:class:`BrepBody` whose OpenCASCADE shape is an exact solid of revolution.
-The body carries the analytic volume and surface area of the primitive
-(``pi r^2 h`` and ``2 pi r h + 2 pi r^2`` for the cylinder;
-``pi (r_o^2 - r_i^2) h`` and ``2 pi (r_i + r_o) h + 2 pi (r_o^2 - r_i^2)``
-for the tube) so the B-rep kernel's own measures can be checked against
-them. OpenCASCADE is a pinned third-party kernel: its measures are checked
+:mod:`scpn_reactor_kernels.geometry.primitives` (radius or radii, or side
+lengths, plus the axial extent) and the body identity (name, role,
+material token), and returns a :class:`BrepBody` carrying the analytic
+volume and surface area of the primitive, so the B-rep kernel's own
+measures can be checked against them: ``pi r^2 h`` and
+``2 pi r h + 2 pi r^2`` for the cylinder; ``pi (r_o^2 - r_i^2) h`` and
+``2 pi (r_i + r_o) h + 2 pi (r_o^2 - r_i^2)`` for the tube; ``w d h`` and
+``2 (w d + w h + d h)`` for the rectangular prism.
+
+**Not every body here is a solid of revolution.** Until the rectangular
+prism was added this module built only solids of revolution, and its own
+description said so; that sentence was load-bearing, because a consuming
+family words its non-claims around it and the evidence kernel bounds a
+body's faceting at a circular radius. The prism has no such radius and no
+curved surface at all, so it is faceted exactly and its evidence is
+bounded by round-off rather than by a chord deficit. A consumer must not
+carry that difference implicitly: see ADR 0015 and
+:func:`~scpn_reactor_kernels.cad.evidence.body_evidence`, which takes
+``None`` for a body with no circular radius rather than letting one be
+invented.
+
+OpenCASCADE is a pinned third-party kernel: its measures are checked
 against the analytic forms within a declared relative tolerance, never
 claimed bit-exact. Nothing here describes a device.
 """
@@ -65,6 +79,32 @@ def require_extent(z_low_m: float, z_high_m: float) -> tuple[float, float]:
             f"z_high_m: must exceed z_low_m, got {z_high_m!r} <= {z_low_m!r}"
         )
     return z_low_m, z_high_m
+
+
+def require_side_length(name: str, value: float) -> float:
+    """Return a side length when finite and strictly positive.
+
+    Parameters
+    ----------
+    name
+        Field name reported in the rejection message.
+    value
+        Side length under validation.
+
+    Returns
+    -------
+    float
+        The validated length.
+
+    Raises
+    ------
+    CadError
+        If the length is non-finite or not strictly positive.
+    """
+    try:
+        return require_positive(name, value)
+    except ValueError as exc:
+        raise CadError(str(exc)) from exc
 
 
 def require_radius(name: str, value: float) -> float:
@@ -353,4 +393,65 @@ def annular_tube_brep(
         analytic_volume_m3=math.pi * ring * height,
         analytic_surface_area_m2=2.0 * math.pi * (inner + outer) * height
         + 2.0 * math.pi * ring,
+    )
+
+
+def rectangular_prism_brep(
+    width_x_m: float,
+    depth_y_m: float,
+    z_low_m: float,
+    z_high_m: float,
+    name: str,
+    role: str,
+    material_identifier: str,
+) -> BrepBody:
+    """Build a closed rectangular prism centred on the ``z`` axis.
+
+    Parameters
+    ----------
+    width_x_m, depth_y_m
+        Full extents along ``x`` and ``y``; both strictly positive. The
+        body is centred on the axis in both, as its tier-G1 twin is.
+    z_low_m, z_high_m
+        Axial extent; ``z_high_m > z_low_m``.
+    name, role, material_identifier
+        Body identity.
+
+    Returns
+    -------
+    BrepBody
+        The solid with its analytic volume ``w d h`` and area
+        ``2 (w d + w h + d h)``.
+
+    Raises
+    ------
+    CadError
+        If an argument is invalid; :class:`CadUnavailableError` if the
+        back-end is absent.
+
+    Notes
+    -----
+    **This body is not a solid of revolution**, and it is the first in
+    this module that is not. Its faceting is exact at every deflection
+    the mesher accepts, so a caller must pass ``None`` as its smallest
+    circular radius to
+    :func:`~scpn_reactor_kernels.cad.evidence.body_evidence`; passing a
+    number would bound an exact body by a chord deficit it does not have
+    and the evidence would be decorative.
+    """
+    width = require_side_length("width_x_m", width_x_m)
+    depth = require_side_length("depth_y_m", depth_y_m)
+    low, high = require_extent(z_low_m, z_high_m)
+    height = high - low
+    shape = (
+        _workplane(low).box(width, depth, height, centered=(True, True, False)).val()
+    )
+    return BrepBody(
+        name=name,
+        role=role,
+        material_identifier=material_identifier,
+        shape=shape,
+        analytic_volume_m3=width * depth * height,
+        analytic_surface_area_m2=2.0
+        * (width * depth + width * height + depth * height),
     )

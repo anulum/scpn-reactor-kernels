@@ -39,6 +39,22 @@ from scpn_reactor_kernels.validation import require_positive
 #: Declared bound of the relative volume deficit of a faceted circular body.
 DEFLECTION_DEFICIT_FACTOR: Final = 2.0
 TWO_PI: Final = 6.283185307179586
+#: Declared bound of the relative volume deviation of a faceted body that
+#: has **no curved surface**. Such a body is faceted exactly: the mesher
+#: returns the body itself, so the only deviation is floating-point
+#: round-off and it can fall on either side of the analytic value.
+#:
+#: Measured before it was declared, over nine rectangular prisms spanning
+#: 1 micrometre to 10 metres and aspect ratios to 1000:1, at every linear
+#: deflection the back-end accepts (1e-7 to 1.0) and angular deflections
+#: from 0.01 to 1.0 rad: the worst relative deviation was 2.581e-16, the
+#: facet count never left 8 vertices and 12 triangles, and neither
+#: deflection changed any result. The declared value sits about four
+#: orders above that ceiling as a stated margin against back-end drift,
+#: and three orders **below** the curved bodies' measure tolerance
+#: (:data:`~scpn_reactor_kernels.cad.solids.MEASURE_TOLERANCE`), because
+#: an exact body admits a stronger claim than an approximated one.
+PLANAR_FACETING_TOLERANCE: Final = 1.0e-12
 
 
 def require_deflection(name: str, value: float) -> float:

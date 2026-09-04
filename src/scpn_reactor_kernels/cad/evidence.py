@@ -11,13 +11,27 @@
 A tier-G2 device model is only worth its record if every body in it is
 checked, and the check is the same for every family: the B-rep kernel's
 volume and area against the analytic closed forms within the group's
-declared tolerance, the faceted volume against the declared chord-deficit
-bound of the mesher's linear deflection, and the faceted volume against
-the tier-G1 mesh of the same body within the exact inscribed-polygon
-deficit bound of the reference tessellation. None of that is device
-knowledge, so it lives here rather than once per device repository: a
-family owns its schema identity, its body composition and its non-claims,
-and consumes the evidence.
+declared tolerance, and the faceted volume against both its analytic form
+and the tier-G1 mesh of the same body. None of that is device knowledge,
+so it lives here rather than once per device repository: a family owns
+its schema identity, its body composition and its non-claims, and
+consumes the evidence.
+
+**The faceting bounds depend on whether the body is curved, and the
+caller must say which.** A body with a curved surface is faceted by
+inscribed chords, so its faceted volume falls below the analytic one by a
+deficit bounded by ``2 d / r`` at the body's smallest circular radius,
+and its tier-G1 twin is an inscribed polygon prism bounded by the exact
+polygon-deficit ratio. A body with **no** curved surface has neither
+bound and needs neither: the mesher returns the body itself, so the only
+deviation is round-off, it can fall on either side of the analytic value,
+and it is bounded by
+:data:`~scpn_reactor_kernels.cad.facet.PLANAR_FACETING_TOLERANCE`.
+Callers state which regime a body is in by passing its smallest circular
+radius, or ``None`` where there is none. Reusing the circular bound for a
+prism would not merely be loose — the prism's deviation is negative as
+often as positive and is 14 orders below ``2 d / r``, so the check would
+pass whatever happened, and the evidence would be decorative (ADR 0015).
 
 The evidence object refuses at construction. A bound that is violated
 raises :class:`~scpn_reactor_kernels.errors.CadError` naming the body and
@@ -31,6 +45,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from scpn_reactor_kernels.cad.facet import (
+    PLANAR_FACETING_TOLERANCE,
     deflection_volume_bound,
     inscribed_polygon_area_ratio,
 )
@@ -61,9 +76,14 @@ class BodyEvidence:
         Signed volume of the faceted B-rep (a closed mesh).
     faceted_volume_relative_deficit
         ``(V_analytic - V_faceted) / V_analytic`` of the faceted body.
+        Checked **in magnitude**: a faceted volume that overshoots the
+        analytic one is as much a defect as one that undershoots, and a
+        one-sided check would have admitted the first without comment.
     faceted_volume_deficit_bound
-        Declared bound ``2 d / r`` of the chord deficit at the body's
-        smallest circular radius ``r`` and the linear deflection ``d``.
+        Declared bound of that magnitude. For a curved body it is
+        ``2 d / r`` at the body's smallest circular radius ``r`` and the
+        linear deflection ``d``; for a body with no curved surface it is
+        :data:`~scpn_reactor_kernels.cad.facet.PLANAR_FACETING_TOLERANCE`.
     reference_mesh_volume_m3
         Signed volume of the tier-G1 mesh at the reference segment count.
     mesh_volume_relative_difference
@@ -113,11 +133,13 @@ class BodyEvidence:
                 f"{self.name}.surface_area_relative_error: must not exceed "
                 f"{MEASURE_TOLERANCE!r}, got {self.surface_area_relative_error!r}"
             )
-        if self.faceted_volume_relative_deficit > self.faceted_volume_deficit_bound:
+        if abs(self.faceted_volume_relative_deficit) > (
+            self.faceted_volume_deficit_bound
+        ):
             raise CadError(
                 f"{self.name}.faceted_volume_relative_deficit: must not exceed "
-                f"the declared bound {self.faceted_volume_deficit_bound!r}, got "
-                f"{self.faceted_volume_relative_deficit!r}"
+                f"the declared bound {self.faceted_volume_deficit_bound!r} in "
+                f"magnitude, got {self.faceted_volume_relative_deficit!r}"
             )
         if self.mesh_volume_relative_difference > self.mesh_volume_difference_bound:
             raise CadError(
@@ -154,9 +176,49 @@ class BodyEvidence:
         }
 
 
+def facet_bounds(
+    smallest_radius_m: float | None, linear_deflection_m: float, segments: int
+) -> tuple[float, float]:
+    """Return the two faceting bounds of one body, by its curvature.
+
+    Parameters
+    ----------
+    smallest_radius_m
+        The body's smallest circular radius, or ``None`` where the body
+        has no curved surface.
+    linear_deflection_m
+        The mesher's linear deflection.
+    segments
+        The reference mesh segment count.
+
+    Returns
+    -------
+    (faceted_volume_deficit_bound, mesh_volume_difference_bound)
+        The chord-deficit and polygon-deficit bounds for a curved body;
+        :data:`~scpn_reactor_kernels.cad.facet.PLANAR_FACETING_TOLERANCE`
+        twice for a body with no curved surface.
+
+    Notes
+    -----
+    Neither argument of the curved branch means anything for a body
+    without curvature. A prism has no circular radius to bound a chord
+    against and no inscribed polygon to compare against, and its
+    tessellation does not change with the segment count because there is
+    nothing to refine. Returning the round-off tolerance for it is not a
+    relaxation: measured, it is thirteen orders **tighter** than the
+    chord bound the same deflection would have produced.
+    """
+    if smallest_radius_m is None:
+        return PLANAR_FACETING_TOLERANCE, PLANAR_FACETING_TOLERANCE
+    return (
+        deflection_volume_bound(smallest_radius_m, linear_deflection_m),
+        1.0 - inscribed_polygon_area_ratio(segments),
+    )
+
+
 def body_evidence(
     body: BrepBody,
-    smallest_radius_m: float,
+    smallest_radius_m: float | None,
     faceted: TriangleMesh,
     reference_mesh: TriangleMesh,
     linear_deflection_m: float,
@@ -169,16 +231,21 @@ def body_evidence(
     body
         The B-rep body.
     smallest_radius_m
-        The body's smallest circular radius, which is the radius the chord
-        deficit of the faceting is bounded at.
+        The body's smallest circular radius, which is the radius the
+        chord deficit of the faceting is bounded at, or **``None`` where
+        the body has no curved surface at all**. The caller must state
+        which: a body with no curvature is faceted exactly, and bounding
+        it by a chord deficit it does not have would make the check pass
+        whatever happened.
     faceted
         The faceted closed mesh of the body.
     reference_mesh
         The tier-G1 mesh of the same body at the reference segment count.
     linear_deflection_m
-        The mesher's linear deflection.
+        The mesher's linear deflection. Ignored when the body has no
+        curved surface, because its faceting does not depend on it.
     segments
-        The reference mesh segment count.
+        The reference mesh segment count. Ignored likewise.
 
     Returns
     -------
@@ -194,6 +261,9 @@ def body_evidence(
     faceted_volume = faceted.signed_volume_m3()
     reference_volume = reference_mesh.signed_volume_m3()
     analytic_volume = body.analytic_volume_m3
+    deficit_bound, difference_bound = facet_bounds(
+        smallest_radius_m, linear_deflection_m, segments
+    )
     return BodyEvidence(
         name=body.name,
         role=body.role,
@@ -207,19 +277,17 @@ def body_evidence(
         faceted_volume_m3=faceted_volume,
         faceted_volume_relative_deficit=(analytic_volume - faceted_volume)
         / analytic_volume,
-        faceted_volume_deficit_bound=deflection_volume_bound(
-            smallest_radius_m, linear_deflection_m
-        ),
+        faceted_volume_deficit_bound=deficit_bound,
         reference_mesh_volume_m3=reference_volume,
         mesh_volume_relative_difference=abs(faceted_volume - reference_volume)
         / analytic_volume,
-        mesh_volume_difference_bound=1.0 - inscribed_polygon_area_ratio(segments),
+        mesh_volume_difference_bound=difference_bound,
     )
 
 
 def assembly_evidence(
     bodies: tuple[BrepBody, ...],
-    smallest_radii: tuple[float, ...],
+    smallest_radii: tuple[float | None, ...],
     faceted: tuple[TriangleMesh, ...],
     reference_meshes: tuple[TriangleMesh, ...],
     linear_deflection_m: float,
@@ -232,7 +300,9 @@ def assembly_evidence(
     bodies
         The B-rep bodies in the assembly's fixed order.
     smallest_radii
-        The smallest circular radius of each body, in the same order.
+        The smallest circular radius of each body, in the same order,
+        with ``None`` for any body that has no curved surface. An
+        assembly may mix the two.
     faceted
         The faceted meshes of the bodies, in the same order.
     reference_meshes
