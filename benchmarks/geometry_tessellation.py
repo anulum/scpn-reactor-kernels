@@ -11,10 +11,14 @@
 Follows the ecosystem benchmark standard: warm-up, repeated samples,
 percentiles, one row per (operation, backend), unavailable backends marked
 explicitly, full provenance in the artefact. The operation is the
-tessellation of three synthetic bodies (two solid cylinders and one
-annular tube) at a declared segment count followed by the signed volume
-and surface area of every body; each sample times one full pass and the
-cost is reported per generated face. The Python floor row includes the
+tessellation of one synthetic body set at a declared segment count,
+followed by the signed volume and surface area of every body: two solid
+cylinders and an annular tube on the axis, a ring of twelve identical rods
+placed off it, one body whose radius varies along the axis, and one that
+closes on the axis at both poles. The last two reach different paths of
+the profile kernel — the second is the only one that builds an apex fan.
+Each sample times one full pass and the cost is reported per generated
+face. The Python floor row includes the
 mesh validation every public build performs; the native row calls the
 kernels per body through the binding (call-through cost, not a vectorised
 pipeline). Nothing measured here is a physics or engineering claim.
@@ -26,6 +30,7 @@ import argparse
 import contextlib
 import importlib
 import json
+import math
 import platform
 import shutil
 import statistics
@@ -43,6 +48,7 @@ sys.path.insert(0, str(ROOT / "src"))
 from scpn_reactor_kernels.geometry import (  # noqa: E402
     TriangleMesh,
     annular_tube,
+    closed_profiled_solid,
     cylinder_solid,
     profile_volume_m3,
     profiled_solid,
@@ -67,6 +73,18 @@ WAIST: Final = (
     (0.98, 0.1),
     (1.46, 0.06),
     (1.96, 0.0225),
+)
+#: One body that closes on the axis at both poles, so the pass also measures
+#: the apex-fan path of the profile kernel, which the waist never reaches:
+#: the separatrix ``r(z) = a sqrt(1 - |z / b|^2)`` at seven samples.
+SEPARATRIX: Final = (
+    (-0.15, 0.0),
+    (-0.1125, 0.02 * math.sqrt(1.0 - 0.75**2)),
+    (-0.075, 0.02 * math.sqrt(1.0 - 0.5**2)),
+    (0.0, 0.02),
+    (0.075, 0.02 * math.sqrt(1.0 - 0.5**2)),
+    (0.1125, 0.02 * math.sqrt(1.0 - 0.75**2)),
+    (0.15, 0.0),
 )
 
 
@@ -123,6 +141,17 @@ def floor_pass(segments: int) -> tuple[float, int]:
     total += waist.signed_volume_m3() + waist.surface_area_m2()
     total += profile_volume_m3(WAIST)
     faces += waist.face_count
+    pole_vertices, pole_faces = closed_profiled_solid(SEPARATRIX, segments)
+    separatrix = TriangleMesh(
+        name="separatrix",
+        role="synthetic",
+        material_identifier="synthetic",
+        vertices=pole_vertices,
+        faces=pole_faces,
+    )
+    total += separatrix.signed_volume_m3() + separatrix.surface_area_m2()
+    total += profile_volume_m3(SEPARATRIX)
+    faces += separatrix.face_count
     return total, faces
 
 
@@ -172,6 +201,14 @@ def native_pass_factory() -> Callable[[int], tuple[float, int]] | None:
         total += native.mesh_area(waist_vertices, waist_faces)
         total += native.profile_volume(flat)
         faces += len(waist_faces) // 3
+        pole_flat = [value for sample in SEPARATRIX for value in sample]
+        pole_vertices, pole_faces = native.tessellate_closed_profiled_solid(
+            pole_flat, segments
+        )
+        total += native.mesh_volume(pole_vertices, pole_faces)
+        total += native.mesh_area(pole_vertices, pole_faces)
+        total += native.profile_volume(pole_flat)
+        faces += len(pole_faces) // 3
         return total, faces
 
     return native_pass

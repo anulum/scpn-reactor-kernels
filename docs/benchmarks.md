@@ -18,16 +18,18 @@ engineering claim.
 ## Geometry tessellation
 
 Artefact: `benchmarks/results/geometry_tessellation.local.json`
-(schema `scpn-reactor-kernels.geometry-tessellation-benchmark.v1`, generated 2026-09-03T12:48:44.389226+00:00, at parent commit
-`01590f0c95dd` with the working tree of the landing commit).
+(schema `scpn-reactor-kernels.geometry-tessellation-benchmark.v1`, generated 2026-09-04T01:33:18.282858+00:00, at commit
+`171df047bc10` with the working tree of the landing commit).
 Host: 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz, Linux-7.0.0-30-generic-x86_64-with-glibc2.39, Python 3.12.3;
-load average at start 7.83 (other work was running on the host); cores not
+load average at start 8.46 (other work was running on the host); cores not
 isolated (shared workstation, so treat the numbers as indicative).
 Operation: tessellation of three synthetic bodies on the axis (two solid
 cylinders and one annular tube), a ring of twelve identical rods placed off
-the axis through the placement kernel, and one five-sample body whose radius
-varies along the axis through the profile kernel, with its exact
-frustum-stack volume (303104 faces at
+the axis through the placement kernel, one five-sample body whose radius
+varies along the axis, and one seven-sample body that closes on the axis at
+both poles — the two profile bodies reach different paths of the same
+kernel, and only the second builds an apex fan — each with its exact
+frustum-stack volume (344064 faces at
 4096 segments), followed by the signed volume and surface area of
 every body; 3 warm-up passes, 20 timed passes; time per generated face.
 The Python floor row includes the `TriangleMesh` validation (closure and
@@ -35,17 +37,20 @@ orientation checks) that every public build performs; the native row
 measures the kernels through their bindings (tessellation, ring offsets,
 translation, profiles, volume, area) without that validation, so the ratio
 compares a validated build against the raw kernel cost. The pass is larger
-than the run of 2026-09-03T10:35 by the profiled body and was taken under
-nearly three times the load average, so the two are not comparable row by
-row; this is a fresh measurement of the landing tree, not a regression.
+than the run of 2026-09-03T12:48 by the body that closes on the axis, so
+the two are **not comparable row by row**: both per-face figures are higher
+than that run's and no cause has been established for the difference, which
+on a shared workstation under a load average of 8.46 is not a measurement
+this record can attribute. It is a fresh measurement of the landing tree,
+not a regression statement.
 
 | Backend | P50 µs/face | P95 µs/face | P99 µs/face | mean µs/face | throughput faces/s | status |
 |---|---|---|---|---|---|---|
-| `python_floor` (public API, always available) | 4.003 | 4.231 | 4.281 | 4.027 | 249802 | measured |
-| `rust_native` (optional build: `rust/`, maturin) | 0.121 | 0.153 | 0.158 | 0.124 | 8255642 | measured |
+| `python_floor` (public API, always available) | 6.309 | 6.511 | 6.835 | 6.198 | 158497 | measured |
+| `rust_native` (optional build: `rust/`, maturin) | 0.193 | 0.240 | 0.246 | 0.193 | 5191169 | measured |
 
 P50 speed-up of the native kernels over the validated Python floor:
-33.1×. The fast row requires the optional native module and is never
+32.8×. The fast row requires the optional native module and is never
 the default.
 
 ## Transcendental kernels
