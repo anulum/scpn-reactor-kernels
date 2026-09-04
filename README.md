@@ -198,8 +198,9 @@ kernel, with their native crates depending on this repository's Rust
 crate at the same commit), SCPN-RFP-CORE and SCPN-SPHEROMAK-CORE (Bessel
 kernel, pinned at the commit that introduced it, native crates likewise;
 the spheromak also consumes the unit-circle kernel for its axial phases),
-SCPN-THETA-PINCH-CORE (geometry and CAD kernels), and SCPN-FRC-CORE
-(the first consumer of the closed profile of revolution, ADR 0012).
+SCPN-THETA-PINCH-CORE (geometry and CAD kernels), SCPN-FRC-CORE (the first consumer of the closed profile of
+revolution, ADR 0012), and SCPN-MIF-LINER-CORE (the transcendental
+kernel alone, for a non-integer adiabatic exponent).
 
 ## Scope
 

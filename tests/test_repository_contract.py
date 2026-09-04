@@ -235,6 +235,13 @@ def test_manifest_declares_the_library_truth() -> None:
                 "c1db6afb2dc0f196500514bcc53305c2bc69878e6e5d61730c76e3afcdc418f6"
             ),
         },
+        {
+            "project": "SCPN-MIF-LINER-CORE",
+            "version": "0.1.0.dev0",
+            "inventory_sha256": (
+                "4e3f85ff448b6ff86ff85cda007319c0edb31553d0e2874e0578da9fd4ede888"
+            ),
+        },
     ]
 
 
