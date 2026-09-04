@@ -10,9 +10,9 @@ SCPN Reactor Kernels — CONTRIBUTING
 
 # Contributing
 
-The repository is currently local-first; there is no public hosting yet.
-Until a remote exists, contributions are coordinated directly with the
-owner (protoscience@anulum.li).
+The repository is public and its gates run in CI on every push.
+Contributions are coordinated directly with the owner
+(protoscience@anulum.li).
 
 ## Ground rules
 
