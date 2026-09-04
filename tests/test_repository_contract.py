@@ -242,6 +242,13 @@ def test_manifest_declares_the_library_truth() -> None:
                 "4e3f85ff448b6ff86ff85cda007319c0edb31553d0e2874e0578da9fd4ede888"
             ),
         },
+        {
+            "project": "SCPN-MIF-MAGLIF-CORE",
+            "version": "0.1.0.dev0",
+            "inventory_sha256": (
+                "9c43405ec5a184b813171f29ac0fc1a44eb0860777de9b08e65cd4a7554abb57"
+            ),
+        },
     ]
 
 
