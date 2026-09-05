@@ -44,10 +44,10 @@
       "version": "0.1.0.dev0"
     },
     {
-      "inventory_sha256": "704bcca75675615fa87ff1c1debdf594f3dcdb9df17b19de48ef28046f95a303",
+      "inventory_sha256": "46dc34f9a3c7f498c454bd3219c0233848a71405371ee947d4ab79cf2f5d63f8",
       "project": "SCPN-LEVITATED-DIPOLE-CORE",
-      "source_commit": "4095aa8304974fd44d02c718d36eafc69b254944",
-      "version": "0.1.0.dev0"
+      "source_commit": "c83745c6011d9b0ea6c413cf0b7d607c724090e7",
+      "version": "2.0.0.dev0"
     },
     {
       "inventory_sha256": "4e3f85ff448b6ff86ff85cda007319c0edb31553d0e2874e0578da9fd4ede888",
@@ -325,6 +325,6 @@
   "schema_version": "1.0.0",
   "source": {
     "manifest_path": "kernels-domain.json",
-    "manifest_sha256": "acde1baf02a6580702629b4b05aa761a63a4606aa36bbd4d1b6cdd304ecf448d"
+    "manifest_sha256": "ab229f47e03a4c57b3ad0a0f17a71ada5d19a9d5af2b47a3c684763c3f37b684"
   }
 }
