@@ -19,14 +19,26 @@ same MSH bytes in one environment (gmsh's algorithms are deterministic
 for a fixed option set on one build); identity across gmsh versions is
 not claimed. This is the entry point of the neutronics and
 thermal-structural lanes; nothing here is an engineering result.
+
+Gmsh state is process-global. This kernel refuses an already initialised
+session before changing any options or models; callers needing simultaneous
+independent sessions must isolate them in separate processes. Calls through
+this kernel are serialised. It opens its own session without installing a
+signal handler, allowing worker-thread calls, and finalises it on every exit.
+External code must not initialise or mutate gmsh concurrently with this call.
+See ADR 0019 for the explicit ownership boundary.
 """
 
 from __future__ import annotations
 
 import hashlib
 import tempfile
+import threading
+from collections.abc import Iterator
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
+from types import ModuleType
 from typing import Any, Final
 
 from scpn_reactor_kernels.cad._backend import load_backend
@@ -45,6 +57,9 @@ GMSH_OPTIONS: Final = (
     ("Mesh.MshFileVersion", 4.1),
     ("Mesh.Binary", 0.0),
 )
+MODEL_NAME: Final = "scpn_reactor_kernels"
+"""Model used only inside a session owned by this call."""
+_SESSION_LOCK: Final = threading.Lock()
 
 
 @dataclass(frozen=True, slots=True)
@@ -161,6 +176,21 @@ def tetrahedron_volume(
     return abs(_det3(e1, e2, e3)) / 6.0
 
 
+@contextmanager
+def _meshing_session(gmsh: ModuleType) -> Iterator[str]:
+    """Own a fresh session or refuse without mutating a caller's session."""
+    if gmsh.isInitialized():
+        raise CadError(
+            "gmsh: existing caller session; use an isolated process or close "
+            "that session before meshing"
+        )
+    gmsh.initialize(interruptible=False)
+    try:
+        yield MODEL_NAME
+    finally:
+        gmsh.finalize()
+
+
 def gmsh_volume_mesh(step: bytes, characteristic_length_m: float) -> VolumeMesh:
     """Mesh a STEP assembly into tetrahedra.
 
@@ -179,7 +209,8 @@ def gmsh_volume_mesh(step: bytes, characteristic_length_m: float) -> VolumeMesh:
     Raises
     ------
     CadError
-        If the length is invalid or the STEP carries no volume;
+        If the length is invalid, the STEP carries no volume, or a caller
+        already owns the process-global Gmsh session;
         :class:`CadUnavailableError` if gmsh is absent.
     """
     try:
@@ -189,15 +220,15 @@ def gmsh_volume_mesh(step: bytes, characteristic_length_m: float) -> VolumeMesh:
     if not step:
         raise CadError("step: must be non-empty bytes")
     gmsh = load_backend("gmsh")
-    with tempfile.TemporaryDirectory() as directory:
-        source = Path(directory) / "assembly.step"
+    with _SESSION_LOCK, tempfile.TemporaryDirectory() as directory:
+        workspace = Path(directory)
+        source = workspace / "assembly.step"
         source.write_bytes(step)
-        target = Path(directory) / "assembly.msh"
-        gmsh.initialize()
-        try:
+        target = workspace / "assembly.msh"
+        with _meshing_session(gmsh) as model_name:
             for option, value in GMSH_OPTIONS:
                 gmsh.option.setNumber(option, value)
-            gmsh.model.add("scpn_reactor_kernels")
+            gmsh.model.add(model_name)
             gmsh.model.occ.importShapes(str(source))
             gmsh.model.occ.synchronize()
             volumes = gmsh.model.getEntities(3)
@@ -235,8 +266,6 @@ def gmsh_volume_mesh(step: bytes, characteristic_length_m: float) -> VolumeMesh:
                         count += 1
                 entities.append(VolumeEntity(int(tag), count, total))
             gmsh.write(str(target))
-        finally:
-            gmsh.finalize()
         data = target.read_bytes()
     return VolumeMesh(
         msh_bytes=data,

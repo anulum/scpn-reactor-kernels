@@ -23,6 +23,8 @@ from __future__ import annotations
 
 import hashlib
 import math
+import numbers
+import operator
 import struct
 import sys
 from dataclasses import dataclass
@@ -265,6 +267,136 @@ def _volume_sum(vertices: tuple[Vertex, ...], faces: tuple[Face, ...]) -> float:
     return (total + compensation) / 6.0
 
 
+def _require_stream(field: str, stream: Any, minimum: int) -> tuple[Any, ...]:
+    """Return a stream as a tuple of rows, or refuse it by name.
+
+    Raises
+    ------
+    GeometryError
+        If the stream is not iterable, or holds fewer than ``minimum``
+        rows.
+    """
+    try:
+        rows = tuple(stream)
+    except TypeError as exc:
+        raise GeometryError(
+            f"{field}: must be a sequence of rows, got {stream!r}"
+        ) from exc
+    if len(rows) < minimum:
+        raise GeometryError(f"{field}: at least {minimum} required, got {len(rows)}")
+    return rows
+
+
+def _require_row(field: str, index: int, row: Any) -> tuple[Any, Any, Any]:
+    """Return a row of exactly three components, or refuse it by name.
+
+    Parameters
+    ----------
+    field
+        ``"vertices"`` or ``"faces"``, so the refusal says which stream.
+    index
+        Position of the row in that stream.
+    row
+        The caller's row, of any shape.
+
+    Returns
+    -------
+    tuple
+        The row's three components.
+
+    Raises
+    ------
+    GeometryError
+        If the row is not a sized sequence of exactly three components.
+
+    Notes
+    -----
+    **Length was being checked by whatever consumed the row next, which
+    meant it was checked differently in each place and sometimes not at
+    all.** A vertex of four coordinates passed construction and then
+    reached :func:`struct.pack` as ``pack expected 3 items for packing
+    (got 4)``; a vertex of two failed inside the face measure as
+    ``IndexError: tuple index out of range``. Neither names the body, the
+    row or the field, and neither is the error type this module
+    documents.
+    """
+    try:
+        length = len(row)
+    except TypeError as exc:
+        raise GeometryError(
+            f"{field}[{index}]: must be a sequence of three, got {row!r}"
+        ) from exc
+    if length != 3:
+        raise GeometryError(
+            f"{field}[{index}]: exactly three components required, "
+            f"got {length} in {row!r}"
+        )
+    first, second, third = row
+    return first, second, third
+
+
+def _require_coordinate(index: int, axis: int, value: Any) -> float:
+    """Return one coordinate as a finite double, or refuse it by name.
+
+    Raises
+    ------
+    GeometryError
+        If the value is not a real number, is a boolean, or is not finite.
+
+    Notes
+    -----
+    A boolean is a real number to Python and is not a coordinate to
+    anyone else, so it is refused for the same reason a boolean index is.
+    """
+    if isinstance(value, bool) or not isinstance(value, numbers.Real):
+        raise GeometryError(
+            f"vertices[{index}][{axis}]: must be a real number, got {value!r}"
+        )
+    try:
+        coordinate = float(value)
+    except OverflowError as exc:
+        raise GeometryError(
+            f"vertices[{index}][{axis}]: outside the float64 range"
+        ) from exc
+    if not math.isfinite(coordinate):
+        raise GeometryError(f"vertices[{index}][{axis}]: must be finite, got {value!r}")
+    return coordinate
+
+
+def _require_index(index: int, position: int, corner: Any, count: int) -> int:
+    """Return one face index as an integer, or refuse it by name.
+
+    Raises
+    ------
+    GeometryError
+        If the corner is a boolean, is not usable as an index, or falls
+        outside ``[0, count)``.
+
+    Notes
+    -----
+    ``operator.index`` is the test rather than ``isinstance(corner, int)``
+    because it is the protocol an integer type implements, so an integer
+    from another library is accepted while **a float is refused rather
+    than truncated**. A fractional index is not a rounding question: it
+    names a vertex that does not exist.
+    """
+    if isinstance(corner, bool):
+        raise GeometryError(
+            f"faces[{index}][{position}]: must be an integer index, got {corner!r}"
+        )
+    try:
+        value = operator.index(corner)
+    except TypeError as exc:
+        raise GeometryError(
+            f"faces[{index}][{position}]: must be an integer index, got {corner!r}"
+        ) from exc
+    if not 0 <= value < count:
+        raise GeometryError(
+            f"faces[{index}]: index {corner!r} out of range [0, {count})"
+        )
+    return value
+
+
 @dataclass(frozen=True, slots=True)
 class TriangleMesh:
     """One closed, consistently oriented triangle mesh.
@@ -312,28 +444,33 @@ class TriangleMesh:
         ):
             if not value:
                 raise GeometryError(f"{field_name}: must be non-empty")
-        if len(self.vertices) < MIN_VERTICES:
-            raise GeometryError(
-                f"vertices: at least {MIN_VERTICES} required, got {len(self.vertices)}"
-            )
-        for index, vertex in enumerate(self.vertices):
-            for coordinate in vertex:
-                if not math.isfinite(coordinate):
-                    raise GeometryError(
-                        f"vertices[{index}]: must be finite, got {vertex!r}"
-                    )
-        if len(self.faces) < MIN_FACES:
-            raise GeometryError(
-                f"faces: at least {MIN_FACES} required, got {len(self.faces)}"
-            )
+        vertices = _require_stream("vertices", self.vertices, MIN_VERTICES)
+        object.__setattr__(
+            self,
+            "vertices",
+            tuple(
+                tuple(
+                    _require_coordinate(index, axis, value)
+                    for axis, value in enumerate(_require_row("vertices", index, row))
+                )
+                for index, row in enumerate(vertices)
+            ),
+        )
+        faces = _require_stream("faces", self.faces, MIN_FACES)
         count = len(self.vertices)
+        object.__setattr__(
+            self,
+            "faces",
+            tuple(
+                tuple(
+                    _require_index(index, position, corner, count)
+                    for position, corner in enumerate(_require_row("faces", index, row))
+                )
+                for index, row in enumerate(faces)
+            ),
+        )
         edges: set[tuple[int, int]] = set()
         for index, face in enumerate(self.faces):
-            for corner in face:
-                if isinstance(corner, bool) or not 0 <= corner < count:
-                    raise GeometryError(
-                        f"faces[{index}]: index {corner!r} out of range [0, {count})"
-                    )
             if len(set(face)) != 3:
                 raise GeometryError(
                     f"faces[{index}]: repeated vertex index in {face!r}"

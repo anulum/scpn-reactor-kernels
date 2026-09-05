@@ -125,10 +125,13 @@ def test_too_few_vertices_is_refused() -> None:
 
 
 def test_non_finite_vertex_is_refused() -> None:
-    """NaN coordinates fail closed."""
+    """NaN coordinates fail closed, and the refusal names the axis."""
     bad = ((math.nan, 0.0, 0.0), *TETRA_VERTICES[1:])
-    with pytest.raises(GeometryError, match=r"vertices\[0\]: must be finite"):
+    with pytest.raises(GeometryError, match=r"vertices\[0\]\[0\]: must be finite"):
         tetrahedron(vertices=bad)
+    worse = ((0.0, 0.0, math.inf), *TETRA_VERTICES[1:])
+    with pytest.raises(GeometryError, match=r"vertices\[0\]\[2\]: must be finite"):
+        tetrahedron(vertices=worse)
 
 
 def test_too_few_faces_is_refused() -> None:
@@ -137,11 +140,23 @@ def test_too_few_faces_is_refused() -> None:
         tetrahedron(faces=TETRA_FACES[:3])
 
 
-@pytest.mark.parametrize("corner", [4, -1, True])
+@pytest.mark.parametrize("corner", [4, -1])
 def test_index_out_of_range_is_refused(corner: int) -> None:
-    """Indices outside [0, count) and booleans fail closed."""
+    """Indices outside [0, count) fail closed."""
     faces = ((corner, 2, 1), *TETRA_FACES[1:])
     with pytest.raises(GeometryError, match="out of range"):
+        tetrahedron(faces=faces)
+
+
+def test_a_boolean_index_is_refused_as_a_type_not_as_a_range() -> None:
+    """``True`` is in range and is still not an index.
+
+    It used to be refused with the out-of-range message, which is the
+    wrong reason: ``True`` names vertex one perfectly well. What is wrong
+    with it is that a caller who passed it did not mean an index.
+    """
+    faces = ((True, 2, 1), *TETRA_FACES[1:])
+    with pytest.raises(GeometryError, match="must be an integer index"):
         tetrahedron(faces=faces)
 
 
@@ -602,3 +617,250 @@ def test_a_zero_area_face_reports_a_positive_zero_norm() -> None:
     """
     with pytest.raises(GeometryError, match="degenerate triangle"):
         face_normal_and_area((-0.0, -0.0, -0.0), (-0.0, 0.0, 0.0), (0.0, -0.0, 0.0))
+
+
+# --- the shape and the types of a row, at the boundary ----------------------
+
+
+@pytest.mark.parametrize(
+    ("row", "fragment"),
+    [
+        ((0.0, 0.0, 0.0, 0.0), "exactly three components required, got 4"),
+        ((0.0, 0.0), "exactly three components required, got 2"),
+        ((), "exactly three components required, got 0"),
+        (0.0, "must be a sequence of three"),
+    ],
+)
+def test_a_vertex_row_that_is_not_three_components_is_refused(
+    row: Any, fragment: str
+) -> None:
+    """Length was being checked by whatever consumed the row next.
+
+    A vertex of four coordinates passed construction and reached
+    :func:`struct.pack` as ``pack expected 3 items for packing (got 4)``;
+    a vertex of two failed inside the face measure as ``IndexError: tuple
+    index out of range``. Neither names the field, the row, or the body,
+    and neither is the error type this module documents.
+    """
+    with pytest.raises(GeometryError, match=fragment):
+        tetrahedron(vertices=(row, *TETRA_VERTICES[1:]))
+
+
+@pytest.mark.parametrize(
+    ("row", "fragment"),
+    [
+        ((0, 2, 1, 3), "exactly three components required, got 4"),
+        ((0, 2), "exactly three components required, got 2"),
+        (0, "must be a sequence of three"),
+    ],
+)
+def test_a_face_row_that_is_not_three_components_is_refused(
+    row: Any, fragment: str
+) -> None:
+    """The same check on the other stream, named for that stream."""
+    with pytest.raises(GeometryError, match=fragment):
+        tetrahedron(faces=(row, *TETRA_FACES[1:]))
+
+
+@pytest.mark.parametrize("value", ["nought", None, 1j, True, [0.0]])
+def test_a_coordinate_that_is_not_a_real_number_is_refused(value: Any) -> None:
+    """A string reached :func:`math.isfinite` as a raw ``TypeError``.
+
+    ``True`` is refused for the same reason a boolean index is: it is a
+    real number to Python and is not a coordinate to anyone else.
+    """
+    with pytest.raises(GeometryError, match=r"vertices\[0\]\[0\]: must be a real"):
+        tetrahedron(vertices=((value, 0.0, 0.0), *TETRA_VERTICES[1:]))
+
+
+@pytest.mark.parametrize("corner", [0.0, 0.5, "0", None, [0]])
+def test_a_face_index_that_is_not_an_integer_is_refused(corner: Any) -> None:
+    """A fractional index is not a rounding question.
+
+    It reached ``self.vertices[corner]`` as ``TypeError: tuple indices
+    must be integers or slices, not float``. It names a vertex that does
+    not exist, so it is refused rather than truncated.
+    """
+    with pytest.raises(GeometryError, match=r"faces\[0\]\[0\]: must be an integer"):
+        tetrahedron(faces=((corner, 2, 1), *TETRA_FACES[1:]))
+
+
+def test_an_integer_from_another_library_is_still_an_index() -> None:
+    """The test is the integer protocol, not the concrete ``int`` type.
+
+    Refusing anything that is not exactly ``int`` would drop a capability
+    for the sake of the check, so what is required is ``__index__``.
+    """
+
+    class Ordinal:
+        def __init__(self, value: int) -> None:
+            self.value = value
+
+        def __index__(self) -> int:
+            return self.value
+
+    mesh = tetrahedron(
+        faces=(tuple(Ordinal(c) for c in TETRA_FACES[0]), *TETRA_FACES[1:])
+    )
+    assert mesh.faces[0] == TETRA_FACES[0]
+    assert all(type(corner) is int for corner in mesh.faces[0])
+
+
+def test_a_frozen_mesh_really_is_frozen_and_hashable() -> None:
+    """The dataclass claims immutability; it now holds immutable rows.
+
+    Rows given as lists used to be stored as lists, so a frozen,
+    slotted dataclass with a generated ``__hash__`` raised ``TypeError:
+    unhashable type: 'list'`` the first time anything hashed it, and the
+    caller could still mutate the mesh's geometry from the outside.
+    """
+    rows = [list(vertex) for vertex in TETRA_VERTICES]
+    mesh = tetrahedron(vertices=rows, faces=[list(f) for f in TETRA_FACES])
+    assert isinstance(mesh.vertices, tuple)
+    assert all(isinstance(vertex, tuple) for vertex in mesh.vertices)
+    assert all(isinstance(face, tuple) for face in mesh.faces)
+    assert hash(mesh) == hash(tetrahedron())
+    rows[0][0] = 99.0
+    assert mesh.vertices[0] == (0.0, 0.0, 0.0)
+
+
+def test_normalising_the_rows_moves_no_valid_mesh() -> None:
+    """A body's identity is its canonical bytes, and they did not change.
+
+    Measured over the library's twelve fixture bodies and the fifty
+    bodies of the six device families: every digest identical to the
+    committed code.
+    """
+    reference = tetrahedron()
+    from_lists = tetrahedron(
+        vertices=[list(v) for v in TETRA_VERTICES],
+        faces=[list(f) for f in TETRA_FACES],
+    )
+    from_integers = tetrahedron(
+        vertices=tuple(tuple(int(c) for c in v) for v in TETRA_VERTICES)
+    )
+    assert from_lists.canonical_bytes() == reference.canonical_bytes()
+    assert from_lists.digest_sha256() == reference.digest_sha256()
+    assert from_integers.digest_sha256() == reference.digest_sha256()
+
+
+def test_a_validated_mesh_can_always_be_encoded() -> None:
+    """The acceptance criterion, asserted rather than assumed.
+
+    Every shape the constructor now refuses used to reach one of these
+    four entry points instead, as ``struct.error``, ``IndexError`` or
+    ``TypeError``.
+    """
+    mesh = tetrahedron(
+        vertices=[list(v) for v in TETRA_VERTICES],
+        faces=[list(f) for f in TETRA_FACES],
+    )
+    assert len(mesh.canonical_bytes()) == 8 + 24 * 4 + 12 * 4
+    assert len(mesh.digest_sha256()) == 64
+    assert mesh.summary_record()["face_count"] == 4
+    assert struct.unpack("<II", mesh.canonical_bytes()[:8]) == (4, 4)
+
+
+@pytest.mark.parametrize(
+    ("stream", "fragment"),
+    [
+        ({"vertices": 0}, "vertices: must be a sequence of rows"),
+        ({"faces": 0}, "faces: must be a sequence of rows"),
+    ],
+)
+def test_a_stream_that_is_not_a_sequence_is_refused(
+    stream: dict[str, Any], fragment: str
+) -> None:
+    """The streams themselves are checked, not only their rows."""
+    with pytest.raises(GeometryError, match=fragment):
+        tetrahedron(**stream)
+
+
+# --- the same questions, asked of the native boundary ------------------------
+
+native = pytest.importorskip("scpn_reactor_kernels_native")
+
+FLAT_VERTICES = [value for vertex in TETRA_VERTICES for value in vertex]
+FLAT_FACES = [corner for face in TETRA_FACES for corner in face]
+
+
+@pytest.mark.parametrize("entry", ["mesh_volume", "mesh_area"])
+def test_the_native_boundary_refuses_a_non_finite_coordinate(entry: str) -> None:
+    """It used to accept one and return a NaN measure.
+
+    A NaN compares false against every bound it is later checked against,
+    which is the failure the evidence contract exists to prevent, so the
+    native entry points were letting through exactly what the Python
+    constructor refuses. Both now name the row and the axis.
+    """
+    call = getattr(native, entry)
+    assert isinstance(call(FLAT_VERTICES, FLAT_FACES), float)
+    with pytest.raises(ValueError, match=r"vertices\[0\]\[0\]: must be finite"):
+        call([math.nan, *FLAT_VERTICES[1:]], FLAT_FACES)
+    with pytest.raises(ValueError, match=r"vertices\[1\]\[2\]: must be finite"):
+        call([*FLAT_VERTICES[:5], math.inf, *FLAT_VERTICES[6:]], FLAT_FACES)
+
+
+@pytest.mark.parametrize("entry", ["mesh_volume", "mesh_area"])
+def test_the_native_boundary_refuses_the_shapes_the_constructor_refuses(
+    entry: str,
+) -> None:
+    """Streams that are not triples, and indices outside the vertex list."""
+    call = getattr(native, entry)
+    with pytest.raises(ValueError, match="flat streams of triples"):
+        call(FLAT_VERTICES[:-1], FLAT_FACES)
+    with pytest.raises(ValueError, match="flat streams of triples"):
+        call(FLAT_VERTICES, FLAT_FACES[:-1])
+    with pytest.raises(ValueError, match=r"face index 9 out of range \[0, 4\)"):
+        call(FLAT_VERTICES, [9, *FLAT_FACES[1:]])
+    with pytest.raises(TypeError):
+        call(FLAT_VERTICES, [0.5, *FLAT_FACES[1:]])
+
+
+def test_the_two_boundaries_differ_in_exactly_two_places_and_both_are_declared() -> (
+    None
+):
+    """A difference that is measured and recorded is not a divergence.
+
+    These two are deliberate. The native entry points take flat streams
+    rather than a body, so they carry no minimum-body invariant: an empty
+    mesh has volume zero and that is the right answer for a raw kernel,
+    while ``TriangleMesh`` requires four vertices because a closed surface
+    does. And a boolean reaches them through the back-end's own integer
+    conversion, which this repository does not own. Asserted here so that
+    neither can change without a test saying so.
+    """
+    assert native.mesh_volume([], []) == 0.0
+    assert native.mesh_area([], []) == 0.0
+    with pytest.raises(GeometryError, match="vertices: at least 4"):
+        tetrahedron(vertices=())
+
+    assert native.mesh_volume(FLAT_VERTICES, [True, *FLAT_FACES[1:]]) == pytest.approx(
+        native.mesh_volume(FLAT_VERTICES, [1, *FLAT_FACES[1:]])
+    )
+    with pytest.raises(GeometryError, match="must be an integer index"):
+        tetrahedron(faces=((True, 2, 1), *TETRA_FACES[1:]))
+
+
+def test_upper_area_boundary_and_adjacent_float() -> None:
+    """The oracle locates the final-area boundary, not an intermediate sum."""
+    boundary = 8.716619296087305e153
+    next_scale = math.nextafter(boundary, math.inf)
+    limit = Decimal(float.fromhex("0x1.fffffffffffffp+1023"))
+    accepted = at_scale(boundary)
+    refused = at_scale(next_scale)
+    assert exact_surface_area(accepted) <= limit
+    assert exact_surface_area(refused) > limit
+    assert accepted.surface_area_m2() == pytest.approx(
+        float(exact_surface_area(accepted)), rel=1e-15
+    )
+    with pytest.raises(GeometryError, match="surface_area_m2: not representable"):
+        refused.surface_area_m2()
+
+
+def test_unbounded_integer_coordinate_raises_geometry_error() -> None:
+    """An integer beyond float64 range must not leak OverflowError."""
+    vertices = [list(v) for v in TETRA_VERTICES]
+    vertices[0][0] = 10**1000
+    with pytest.raises(GeometryError, match="outside the float64 range"):
+        tetrahedron(vertices=vertices)

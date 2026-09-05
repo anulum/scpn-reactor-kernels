@@ -109,6 +109,152 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Fixed
 
+- **A malformed mesh row is refused where it is given, not where it is
+  eventually unpacked.** `TriangleMesh` checked that coordinates were
+  finite and that indices were in range, and left the shape and the types
+  of every row to whatever consumed it next. So a vertex with four
+  coordinates was constructed, validated and measured, and then failed as
+  `struct.error: pack expected 3 items for packing (got 4)` in the
+  canonical bytes, the digest, the GLB writer and the summary record; a
+  vertex with two failed earlier as `IndexError: tuple index out of
+  range`; a coordinate that was a string reached `math.isfinite` as
+  `TypeError: must be real number, not str`; and a fractional face index
+  reached the vertex list as `TypeError: tuple indices must be integers
+  or slices, not float`. **None of them named the field, the row or the
+  body, and none was the error type the module documents.**
+
+  Rows are now required to have exactly three components before anything
+  indexes or unpacks them; a coordinate must be a real number and finite;
+  and an index must satisfy the integer protocol, so an integer from
+  another library is accepted while a fractional one is refused rather
+  than truncated. A boolean is refused on both streams — it is a real
+  number to Python and is neither a coordinate nor an index to anyone
+  else — and it is now refused **as a type rather than as a range**,
+  which is the honest reason: `True` names vertex one perfectly well.
+
+  **The frozen dataclass is now telling the truth.** Rows given as lists
+  were stored as lists, so a mesh that declared itself frozen, slotted
+  and hashable raised `TypeError: unhashable type: 'list'` the first time
+  anything hashed it, and a caller could still change the geometry from
+  outside. Rows are normalised into tuples on construction, so lists are
+  accepted, hashing works, and the mesh no longer aliases the caller's
+  data.
+
+  **Nothing that was already valid moved.** Every digest of the library's
+  twelve fixture bodies and of the fifty bodies of the six device
+  families is identical to the committed code, and a mesh built from
+  lists, from tuples or from integer coordinates produces the same
+  canonical bytes.
+
+  The native boundary was asked the same questions and **was not as
+  strict**: it accepted a non-finite coordinate and returned a NaN
+  measure, which compares false against every bound it is later checked
+  against. It now refuses one by name, in the same words as the Python
+  side. Two differences remain and are deliberate, declared and asserted
+  so that neither can change quietly: the native entry points take flat
+  streams rather than a body, so they carry no four-vertex minimum, and a
+  boolean index reaches them through the back-end's own integer
+  conversion.
+
+- **A meshing call no longer ends a session it did not start.** The
+  volume-mesh kernel called gmsh's `initialize` unconditionally and its
+  `finalize` from `finally`, so a consumer that already had a gmsh session
+  open lost it — models, options and all — the first time it asked for a
+  mesh. **The failure path destroyed exactly as much as the success
+  path**: refusing a STEP file with no volume left the caller's session
+  just as finalised as meshing one did, which is the half of this the
+  reported reproducer does not show.
+
+  Two further consequences of the same assumption were measured while
+  repairing it, and neither had been reported:
+
+  - **A caller's options reached the kernel's output.** The kernel sets
+    seven options and two mesh sizes and inherited everything else from
+    whatever session it ran in, so its documented fixed option set was not
+    fixed. A session with `Mesh.RecombineAll` on made it emit pyramids and
+    fail its own element-type check. Nine caller options were each
+    measured to change the result.
+  - **A worker thread could not use it at all.** Opening a gmsh session
+    installs an interrupt handler, which CPython allows only on the main
+    thread, so the call raised `ValueError: signal only works in main
+    thread of the main interpreter` from a module the caller never
+    imported.
+
+  ADR 0019 refuses an already initialised session before Gmsh mutation.
+  Otherwise the kernel owns a fresh session, disables interrupt-handler
+  installation and finalises from finally. Worker-thread calls through
+  this module are serialised. Unrelated concurrent Gmsh access requires
+  external coordination or process isolation.
+
+  The reviewed borrow-and-restore candidate was rejected because derived
+  state could not be fully restored. Real-backend tests confirm no change
+  to caller models, options or derived bounding-box state on refusal.
+
+- **An export no longer writes a body it has already destroyed.** Binary
+  STL and GLB both store positions as float32, and neither writer looked
+  at what that did. A tetrahedron whose four corners are a metre apart, on
+  a grid a hundred thousand kilometres from the origin, came back out of
+  both containers as **one point and four triangles of zero area** — as
+  ordinary bytes, with a valid header, a correct triangle count and a
+  correct length. Every test the module had passed on those bytes.
+
+  **The collapse is the end of the damage, not the start of it.** Measured
+  on this library's own fixture bodies, of which the annular tube's
+  one-centimetre wall is the finest: past **sixty-four metres** of offset
+  more than a thousandth of a facet's area is already gone; at ten
+  kilometres the tube has lost a tenth of it and at a hundred kilometres a
+  third — with every triangle still a triangle and nothing to see. Only
+  past two hundred kilometres does anything collapse. A check for
+  degenerate triangles alone would have passed all of it.
+
+  Both writers now measure the geometry they are about to store and refuse
+  one that has lost more than `EXPORT_AREA_TOLERANCE`, one part in a
+  thousand, of any facet's area, or that has collapsed a facet, or that
+  carries a coordinate outside the float32 range. **The tolerance was
+  chosen from the bodies that exist**: across the fifty bodies of the six
+  device families that use these writers the worst measured loss is
+  `5.61e-6` and this library's own fixtures sit at `7.7e-7`, so the bound
+  is about a hundred and eighty times above anything real. It cannot be
+  tightened much further either, because a rebased body is no better than
+  the same body at the origin and the tube is already at `7.2e-7` there.
+
+  The two containers then differ in what they can offer instead, and the
+  difference is a property of the formats:
+
+  - **GLB has a node transform.** A body that does not survive absolute
+    storage is stored about the midpoint of its own bounding box, with
+    that midpoint in the node's `translation`. The body does not move —
+    a glTF node's translation composes with its mesh — so nothing is
+    moved silently, and the tetrahedron above comes back at a **hundred
+    million times** its previous usable offset with its areas intact.
+  - **Binary STL has no transform of any kind**, so rebasing one really
+    would move the device. The writer refuses instead and names the
+    translation that would work, which a caller passes explicitly through
+    the new `translation_m` argument and is then responsible for
+    recording, because the file cannot.
+
+  A refusal only names a remedy once that remedy has been measured on the
+  bodies that were refused; if the recommended midpoint fails, the writer
+  reports that failure without claiming that every translation fails.
+
+  **The rebase is an ordinary double, and the two cheaper rules were
+  measured and rejected.** Rounding the translation to a float32 first
+  costs `8.0e-2` at an offset of `1e12`; snapping it to a power of two is
+  worse and collapses facets from `1e6` upwards. The bounding-box midpoint
+  leaves a rebased body exactly as accurate as the same body at the
+  origin, `7.17e-7` at every offset measured.
+
+  A coordinate above the float32 range used to escape as `OverflowError`
+  from the standard library, naming neither the body nor the vertex; it is
+  now a `GeometryError` that names both. The range is checked before
+  anything is converted, because the conversion itself is what raised.
+
+  **Nothing that was already right moved.** Every export of this library's
+  four fixture sets and of all fifty bodies of the six device families is
+  byte-for-byte identical to the bytes the previous writer produced, and
+  each of those six repositories' own export tests passes against the
+  repaired writer unchanged.
+
 - **A measure the format can hold is no longer thrown away by its own
   intermediates.** The surface area squared each cross-product component
   before taking a square root, so the sum of squares left the exponent
@@ -121,14 +267,14 @@ SCPN Reactor Kernels — CHANGELOG
 
   Measured on the library's tetrahedron, the range that gave a correct
   area ran from a scale of `9.543299509722758e-79` to
-  `8.798296151866603e+76`. It now runs from `1.77e-162` to
-  `6.163580613284844e+153`, and one unit in the last place beyond that
+  `8.798296151866603e+76`. It now runs from `2.222758749485082e-162` to
+  `8.716619296087305e+153`, and one unit in the last place beyond that
   the area genuinely does not fit and is refused by name. **About 160
   orders of magnitude of representable results were being discarded.**
 
   The norm is now rescaled by the largest component, but **only where the
   direct sum of squares would fail** — it is kept wherever it lands on a
-  finite normal double, which is every body a device has. Measured over
+  finite normal double, as checked on ordinary-scale fixtures. Measured over
   3660 face norms and five body areas of the library's own bodies,
   **nothing that was already right moved by a single bit.** Rescaling by
   a power of two instead would make the scaling exact and was measured
@@ -481,3 +627,20 @@ Public triangle measurements refuse nonfinite outputs; normal-range paths
 retain their arithmetic order. Subnormal area totals are accumulated at scale
 before the final rounding. The draft's half-range ceiling is superseded by
 final-quantity checks with rational and Decimal oracles.
+
+
+### Breaking development generation 2.0.0.dev0
+
+Geometry export and constructor refusals, together with the Gmsh ownership
+contract, advance the Python and native packages to 2.0.0.dev0 (Rust
+2.0.0-dev.0). Consumer pins stay unchanged pending explicit adoption.
+
+The reviewed borrowing design for Gmsh is superseded: existing sessions are
+refused without mutation. Owned sessions disable signal-handler installation,
+so worker-thread callers can mesh without touching a caller's session. Tests
+exercise real Gmsh cleanup and preserve derived caller state on refusals.
+
+The upper mesh-area threshold now has an exact-neighbour regression backed by
+an independent Decimal oracle. Overlarge integer coordinates are refused with
+GeometryError. Export midpoint guidance states only the measured heuristic;
+changing units is not presented as a cure for relative float32 precision loss.

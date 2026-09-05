@@ -18,9 +18,12 @@ equilibrium boundary or an engineering model. Design record: ADR 0002.
 from __future__ import annotations
 
 from scpn_reactor_kernels.geometry.export import (
+    EXPORT_AREA_TOLERANCE,
+    EXPORT_STORAGE_CONTRACT,
     GLTF_GENERATOR,
     STL_HEADER,
     glb_bytes,
+    recommended_translation_m,
     stl_bytes,
     write_glb,
     write_stl,
@@ -104,6 +107,8 @@ from scpn_reactor_kernels.geometry.trig import (
 
 __all__ = [
     "DEGREES_PER_HALF_TURN",
+    "EXPORT_AREA_TOLERANCE",
+    "EXPORT_STORAGE_CONTRACT",
     "GLTF_GENERATOR",
     "MAX_ANGLE_RAD",
     "MAX_QUADRANT_INDEX",
@@ -146,6 +151,7 @@ __all__ = [
     "profiled_tube",
     "quadrant_reduction",
     "radians_from_degrees",
+    "recommended_translation_m",
     "rectangular_prism",
     "require_aligned_profiles",
     "require_circle_point",

@@ -29,7 +29,7 @@ def test_valid_values_pass_through() -> None:
     assert require_finite("x", 1.5) == 1.5
     assert require_positive("x", 2.0) == 2.0
     assert require_non_negative("x", 0.0) == 0.0
-    assert __version__ == "1.0.0.dev0"
+    assert __version__ == "2.0.0.dev0"
 
 
 @pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf])

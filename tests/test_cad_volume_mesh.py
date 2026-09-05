@@ -11,6 +11,9 @@
 from __future__ import annotations
 
 import math
+from collections.abc import Iterator
+from concurrent.futures import ThreadPoolExecutor
+from typing import Any
 
 import pytest
 
@@ -23,11 +26,68 @@ from scpn_reactor_kernels.cad import (
     step_bytes,
     tetrahedron_volume,
 )
+from scpn_reactor_kernels.cad.volume_mesh import (
+    MODEL_NAME,
+)
 from scpn_reactor_kernels.errors import CadError
 
-pytest.importorskip("gmsh")
+gmsh = pytest.importorskip("gmsh")
 
 LENGTH_M = 0.02
+CALLER_MODEL = "caller_model"
+CALLER_OPTIONS = (
+    ("Mesh.Algorithm", 5.0),
+    ("Mesh.Algorithm3D", 7.0),
+    ("Mesh.Optimize", 0.0),
+    ("Mesh.RecombineAll", 1.0),
+    ("Mesh.ElementOrder", 2.0),
+    ("Mesh.MshFileVersion", 2.2),
+    ("Mesh.MeshSizeFactor", 3.0),
+    ("General.Verbosity", 4.0),
+)
+STEP_WITHOUT_A_VOLUME = (
+    b"ISO-10303-21;\nHEADER;\nFILE_DESCRIPTION(('x'),'2;1');\n"
+    b"FILE_NAME('x','2000-01-01T00:00:00',(''),(''),'','','');\n"
+    b"FILE_SCHEMA(('AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }'));\n"
+    b"ENDSEC;\nDATA;\nENDSEC;\nEND-ISO-10303-21;\n"
+)
+
+
+@pytest.fixture(autouse=True)
+def _no_session_leaks_between_tests() -> Iterator[None]:
+    """Leave gmsh uninitialised whatever a test does to it.
+
+    These tests are the only ones in the suite that open real gmsh
+    sessions, and a session left open would silently change which branch
+    of the ownership contract every later test takes.
+    """
+    yield
+    while gmsh.isInitialized():
+        gmsh.finalize()
+
+
+@pytest.fixture(scope="module")
+def step() -> bytes:
+    """Return the reference assembly, built once for the whole module."""
+    return step_bytes(assembly(), {"test": True})
+
+
+def open_caller_session(model: str = CALLER_MODEL) -> None:
+    """Open a session the way a consumer that owns gmsh would."""
+    gmsh.initialize()
+    for option, value in CALLER_OPTIONS:
+        gmsh.option.setNumber(option, value)
+    gmsh.model.add(model)
+
+
+def caller_state() -> dict[str, Any]:
+    """Everything a caller can observe of its own session."""
+    return {
+        "initialized": int(gmsh.isInitialized()),
+        "models": sorted(gmsh.model.list()),
+        "current_model": gmsh.model.getCurrent(),
+        "options": {name: gmsh.option.getNumber(name) for name, _ in CALLER_OPTIONS},
+    }
 
 
 def test_volume_mesh_is_deterministic_and_consistent() -> None:
@@ -92,30 +152,46 @@ def test_step_without_a_volume_is_refused() -> None:
         gmsh_volume_mesh(empty, LENGTH_M)
 
 
-def test_non_tetrahedral_elements_are_refused(monkeypatch: pytest.MonkeyPatch) -> None:
-    """A mesher returning a non-tetrahedral 3D element type is refused, never summed."""
-    from types import SimpleNamespace
+@pytest.mark.parametrize("use_valid_step", [True, False])
+def test_existing_session_is_refused_without_mutation(
+    step: bytes, *, use_valid_step: bool
+) -> None:
+    """Both inputs preserve caller models, options and derived state."""
+    open_caller_session(model=MODEL_NAME)
+    gmsh.model.occ.addBox(0.0, 0.0, 0.0, 1.0, 1.0, 1.0)
+    gmsh.model.occ.synchronize()
+    before = caller_state()
+    entities = gmsh.model.getEntities()
+    bounding = gmsh.option.getNumber("General.BoundingBoxSize")
+    with pytest.raises(CadError, match="existing caller session"):
+        gmsh_volume_mesh(step if use_valid_step else STEP_WITHOUT_A_VOLUME, LENGTH_M)
+    assert caller_state() == before
+    assert gmsh.model.getEntities() == entities
+    assert gmsh.option.getNumber("General.BoundingBoxSize") == bounding
 
+
+def test_owned_session_cleanup_after_real_backend_refusal(
+    monkeypatch: pytest.MonkeyPatch, step: bytes
+) -> None:
+    """A real higher-order mesh exercises element refusal and finalisation."""
     from scpn_reactor_kernels.cad import volume_mesh
 
-    calls: list[str] = []
-    fake = SimpleNamespace(
-        initialize=lambda: calls.append("init"),
-        finalize=lambda: calls.append("finalize"),
-        write=lambda *_: calls.append("write"),
-        option=SimpleNamespace(setNumber=lambda *_: None),
-        model=SimpleNamespace(
-            add=lambda *_: None,
-            occ=SimpleNamespace(importShapes=lambda *_: None, synchronize=lambda: None),
-            getEntities=lambda *_: [(3, 1)],
-            mesh=SimpleNamespace(
-                generate=lambda *_: None,
-                getNodes=lambda: ([1, 2, 3, 4], [0.0] * 12, []),
-                getElements=lambda *_: ([5], [[1]], [[1, 2, 3, 4, 1, 2, 3, 4]]),
-            ),
-        ),
+    monkeypatch.setattr(
+        volume_mesh,
+        "GMSH_OPTIONS",
+        (*volume_mesh.GMSH_OPTIONS, ("Mesh.ElementOrder", 2.0)),
     )
-    monkeypatch.setattr(volume_mesh, "load_backend", lambda *_: fake)
-    with pytest.raises(CadError, match="unexpected element type 5"):
-        gmsh_volume_mesh(b"ISO-10303-21;", LENGTH_M)
-    assert calls == ["init", "finalize"]
+    with pytest.raises(CadError, match="unexpected element type"):
+        gmsh_volume_mesh(step, LENGTH_M)
+    assert not gmsh.isInitialized()
+
+
+def test_worker_threads_own_serial_fresh_sessions(step: bytes) -> None:
+    """No signal handler or caller session is needed by either worker."""
+    reference = gmsh_volume_mesh(step, LENGTH_M).msh_sha256()
+    with ThreadPoolExecutor(max_workers=2) as pool:
+        results = list(
+            pool.map(lambda _: gmsh_volume_mesh(step, LENGTH_M).msh_sha256(), range(2))
+        )
+    assert results == [reference, reference]
+    assert not gmsh.isInitialized()

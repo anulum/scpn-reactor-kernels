@@ -44,6 +44,18 @@ mod python {
                 "vertices and faces must be flat streams of triples",
             ));
         }
+        // A non-finite coordinate was accepted here and came back out as a
+        // NaN measure, which compares false against every bound it is later
+        // checked against. The Python boundary refuses one by name; this is
+        // the same policy on the same inputs.
+        if let Some(position) = vertices.iter().position(|value| !value.is_finite()) {
+            return Err(PyValueError::new_err(format!(
+                "vertices[{}][{}]: must be finite, got {}",
+                position / 3,
+                position % 3,
+                vertices[position]
+            )));
+        }
         let vertex_triples: Vec<[f64; 3]> = vertices
             .chunks_exact(3)
             .map(|c| [c[0], c[1], c[2]])

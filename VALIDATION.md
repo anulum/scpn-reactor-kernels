@@ -772,8 +772,8 @@ estimated:
 
 | | Previous | Now |
 |---|---|---|
-| smallest scale with a correct area | `9.543299509722758e-79` | `1.77e-162` and below, correctly rounded |
-| largest scale with a correct area | `8.798296151866603e+76` | `6.163580613284844e+153` |
+| smallest scale with a correct area | `9.543299509722758e-79` | `2.222758749485082e-162` (tested face-area cutoff) |
+| largest scale with a correct area | `8.798296151866603e+76` | `8.716619296087305e+153` |
 | at a scale of `1e100` | area `inf`, exact `2.37e200` | correct |
 | far enough down | **triangle refused as degenerate** | measured |
 
@@ -784,8 +784,8 @@ The repair rescales the norm by the largest component **only where the
 direct sum of squares would fail** — it is kept wherever the sum lands on
 a finite normal double.
 
-What is exercised, under the same 100 % statement-and-branch gate — 55
-tests over 125 statements and 44 branches of the Python module, and eight
+What is exercised, under the same 100 % statement-and-branch gate — dedicated public
+tests over the current module of the Python module, and eight
 Rust tests:
 
 - Areas at scales whose squares overflow (`1e77` to `1e153`) and whose
@@ -830,12 +830,265 @@ Scaling extends the tested dynamic range; it does not prove accuracy for all
 ill-conditioned or extremely anisotropic meshes. Test oracle tolerances apply
 to their recorded geometries, not a universal error bound.
 
+## Geometry a container can hold, and geometry it cannot
+
+Evidence record of the float32 storage contract of the open-format exports
+(`computational_prototype`; kernel `geometry_exports` in
+`kernels-domain.json`; module
+`src/scpn_reactor_kernels/geometry/export.py`).
+
+**Binary STL and glTF both store positions as float32, and neither writer
+used to look at what that did.** A tetrahedron one metre across, on a grid
+`1e8` m from the origin, was written by both containers as four corners
+that decode to a single point and four triangles of zero area. The bytes
+were otherwise perfect: correct header, correct triangle count, correct
+length, repeatable. Reproducer:
+`evidence/claude_k04/k04_reproducer.py`.
+
+### What float32 actually costs, measured before anything was chosen
+
+A float32 holds about seven decimal digits, so what survives storage is
+not a body's size but the ratio between its coordinates and its smallest
+feature. Measured on the fixture bodies, whose finest wall is one
+centimetre:
+
+| Offset from the origin | Worst relative facet-area error | Collapsed facets |
+|---|---|---|
+| 0 m | `7.17e-7` | 0 |
+| 100 m | `1.03e-3` | 0 |
+| 10 km | `1.16e-1` | 0 |
+| 100 km | `3.62e-1` | 0 |
+| 200 km | — | 16 |
+
+**The collapse the audit reported is the end of the damage, not the
+start.** Four decades of silent, unbounded error come first, and a check
+for degenerate triangles alone passes every one of them.
+
+### The contract both writers enforce
+
+Every stored coordinate is inside the float32 range, no facet collapses,
+and no facet's area changes by more than `EXPORT_AREA_TOLERANCE`
+(`1.0e-3`). The bound was chosen from the bodies that exist rather than
+from the format: across the **fifty bodies of the six device families**
+that use these writers the worst measured loss is `5.61e-6`, and the
+library's own fixtures sit at `7.7e-7`, so the bound is about a hundred
+and eighty times above anything real. It cannot be tightened much
+further, because a rebased body is no better than the same body at the
+origin and the tube is already at `7.2e-7` there. Measurement:
+`evidence/claude_k04/tolerance_scan.json` and `device_bodies.txt`.
+
+The contract is versioned in `EXPORT_STORAGE_CONTRACT` rather than in
+`STL_HEADER` or `GLTF_GENERATOR`, because those strings are in every byte
+stream the library produces and changing them would rewrite every export
+in order to distinguish a corpus of older files that measurably does not
+exist: no `.stl`, `.glb` or `.gltf` is committed in this repository or in
+any of the six consumer repositories, and no consumer records a digest of
+export bytes.
+
+### What each container can offer instead of refusing
+
+**GLB has a node transform.** A body that does not survive absolute
+storage is stored about the midpoint of its own bounding box with that
+midpoint in the node's `translation`, which composes with the mesh and
+leaves the body where it was. The reported tetrahedron is carried at
+`1e12` m — a hundred million times its previous usable offset — with its
+facet areas inside the tolerance.
+
+**Binary STL has no transform of any kind**, so a rebase there really does
+move the device. The writer refuses and names the translation that would
+work; a caller passes it through the new `translation_m` argument and owns
+the value afterwards, because the file cannot record it. A refusal names a
+remedy only after measuring that the remedy works on the bodies that were
+refused.
+
+The rebase is an ordinary double. Two cheaper rules were measured on the
+same bodies from the origin to `1e12` m and both are far worse: rounding
+the midpoint to a float32 costs `8.0e-2` at `1e12`, and snapping it to a
+power of two collapses facets from `1e6` upwards. The midpoint leaves a
+rebased body exactly as accurate as the same body at the origin, `7.17e-7`
+at every offset measured. Evidence:
+`evidence/claude_k04/translation_candidates.json`.
+
+### Boundaries, bisected rather than estimated
+
+| | Largest accepted | Smallest refused |
+|---|---|---|
+| offset of a one-metre tetrahedron | `16484177.499999998` | `16484177.5` |
+| offset of the fixture bodies | `63.99925751495179` | `63.9992575149518` |
+| coordinate magnitude | `3.4028234663852886e+38` | the next double above |
+
+Each pair is two adjacent doubles, so every refusal test asserts the
+nearest failing case. Evidence: `evidence/claude_k04/boundaries.json`.
+
+A coordinate above the float32 range previously escaped as
+`OverflowError` from the standard library, which named neither the body
+nor the vertex and was in neither writer's documented contract. It is now
+a `GeometryError` naming both. The range is checked **before** anything is
+converted, because the conversion is what raised; the first draft of this
+repair checked afterwards and the reproducer caught it.
+
+### Nothing that was already right moved
+
+Every export of the library's four fixture sets and of **all fifty bodies
+of the six device families** is byte-for-byte identical to the bytes the
+previous writer produced, and each of those six repositories' own export
+tests — 49 in total — passes against the repaired writer unchanged.
+Evidence: `evidence/claude_k04/byte_identity.json` and
+`consumer_impact.txt`.
+
+### What is exercised, under a 100 % statement-and-branch gate
+
+30 tests over 152 statements and 40 branches of the module:
+
+- Both containers decoded with spec-level readers and **every triangle
+  measured again from its decoded float32 corners**, against an area
+  formula written out in the tests rather than taken from the code that
+  decides. Testing headers, lengths or byte repeatability passes on the
+  collapsed file.
+- The reported collapse refused by STL and carried by GLB, with the node
+  translation composed back and the world positions recovered.
+- The boundaries above, each asserted at the adjacent double.
+- A fine feature at the origin stored, and the same feature at the far end
+  of a metre-long body refused — **the size of a feature is not what
+  decides; where it sits is**, and a writer gated on feature size would
+  get both wrong.
+- A translation that destroys the body in doubles before any float32
+  rounding, refused as such.
+- A translation that is not three finite numbers, refused per component
+  and for its arity.
+- Both branches of the remedy: the translation that works, and a body
+  the recommended midpoint does not recover.
+- Ordinary documents carrying no `translation` key at all.
+
+## Gmsh session ownership
+
+ADR 0019 selects refusal of pre-initialised caller sessions. The reviewed
+borrow-and-restore candidate left derived state changed and is not shipped.
+The public call checks ownership under its lock before Gmsh mutations, raises
+CadError for an existing session, and otherwise initialises with
+interruptible=False and finalises from finally. Worker-thread calls are
+supported through serial owned sessions. External Gmsh access must not race
+these calls; process isolation is required for independent concurrent sessions.
+
+Real-backend tests retain caller model entities, options and bounding-box state
+on valid and invalid STEP refusals; measure deterministic owned meshes; verify
+worker-thread use and cleanup after an actual unsupported-element result.
+No mocked backend establishes any lifecycle claim.
+
+## A row that was checked by whatever unpacked it next
+
+Evidence record of the public mesh boundary (`computational_prototype`;
+kernel `geometry_mesh_contract` in `kernels-domain.json`; modules
+`src/scpn_reactor_kernels/geometry/mesh.py` and the native entry points
+in `rust/src/lib.rs`).
+
+`TriangleMesh` validated that coordinates were finite and that indices
+were in range. **It did not validate the shape or the type of a row**,
+and the consequence is that each consumer of a row checked it
+differently, or not at all. Reproducer:
+`evidence/claude_k06/k06_reproducer.py`.
+
+| Malformed row | Construction | Where it actually failed |
+|---|---|---|
+| vertex of four coordinates | **accepted** | `struct.error` in canonical bytes, digest, GLB and the summary record |
+| vertex of two coordinates | `IndexError: tuple index out of range` | inside the face measure |
+| coordinate that is a string | `TypeError: must be real number, not str` | inside `math.isfinite` |
+| face index that is a float | `TypeError: tuple indices must be integers` | indexing the vertex list |
+| rows given as lists | **accepted** | `TypeError: unhashable type: 'list'` on `hash()` |
+
+None names the field, the row or the body; none is the error type this
+module documents; and the first is the one the acceptance criterion is
+about, because a validated mesh could not always be encoded by the
+declared canonical layout.
+
+### The contract now checked before anything indexes or unpacks
+
+Exactly three components per row on both streams; a coordinate is a real
+number and finite, named by row **and axis**; an index satisfies the
+integer protocol, so an integer from another library is accepted while a
+fractional one is refused rather than truncated. A boolean is refused on
+both streams, and on the index stream it is now refused **as a type
+rather than as a range**, which is the honest reason: `True` names vertex
+one perfectly well; what is wrong is that a caller who wrote it did not
+mean an index.
+
+Rows are normalised into tuples of floats and ints on construction, which
+makes the frozen, slotted, hashable dataclass truthful: lists are
+accepted, `hash()` works, and the mesh no longer aliases a caller's
+mutable rows.
+
+### Nothing that was already valid moved
+
+`evidence/claude_k06/digest_identity.json` and `device_digests.txt`.
+Twelve library fixture bodies and the fifty bodies of the six device
+families, each digest compared against the committed code: **all
+identical**. A mesh built from lists, from tuples, or with integer
+coordinates gives the same canonical bytes as the reference.
+
+### The two boundaries, compared rather than assumed
+
+`evidence/claude_k06/boundary_policy.json`. The native entry points were
+asked the same malformed questions.
+
+| Input | Native, before | Native, now | Python |
+|---|---|---|---|
+| stream not a multiple of three | refused | refused | refused |
+| index out of range | refused | refused | refused |
+| fractional index | refused, not coerced | refused, not coerced | refused, not coerced |
+| **non-finite coordinate** | **accepted, returns NaN** | **refused, by row and axis** | refused, by row and axis |
+| empty streams | accepted, `0.0` | accepted, `0.0` | refused: four vertices required |
+| boolean index | accepted as `1` | accepted as `1` | refused as a type |
+
+The non-finite case was a real gap: a NaN measure compares false against
+every bound it is later checked against, which is precisely the failure
+the evidence contract exists to prevent. It is closed in the same words
+as the Python refusal.
+
+**The last two rows are deliberate and are asserted in the suite**, so
+neither can drift without a test saying so. The native entry points take
+flat streams rather than a body, so they carry no minimum-body invariant:
+an empty mesh has volume zero and that is the right answer for a raw
+kernel, while `TriangleMesh` requires four vertices because a closed
+surface does. A boolean index reaches the native side through the
+back-end's own integer conversion, which this repository does not own.
+
+### What is exercised, under a 100 % statement-and-branch gate
+
+92 tests over 199 statements and 62 branches of the Python module:
+
+- Every malformed row shape on both streams, and a stream that is not a
+  sequence at all, each refused by field and row.
+- Every non-real coordinate type and every non-integer index type,
+  refused by row and position.
+- An integer from another library accepted through `__index__`, because
+  requiring the concrete `int` type would drop a capability for the sake
+  of the check.
+- A mesh built from mutable lists: normalised, hashable, equal in digest
+  to the same mesh built from tuples, and **unaffected when the caller
+  mutates the list afterwards**.
+- All four encoding entry points on a validated mesh, which is the
+  acceptance criterion stated as an assertion.
+- The native boundary refusing a non-finite coordinate at two different
+  rows and axes, refusing the shapes the constructor refuses, and the two
+  declared differences.
+
 ## Breaking development version
 
-Python floor and optional native distribution are `1.0.0.dev0`; the Rust crate
-is `1.0.0-dev.0`. This major development generation explicitly marks changed
+Python floor and optional native distribution are `2.0.0.dev0`; the Rust crate
+is `2.0.0-dev.0`. This major development generation explicitly marks changed
 mesh measures and stricter CAD evidence/refusal contracts. Existing consumer
 manifest records retain their old versions and source commits: none has been
 silently migrated. Adopting consumers must regenerate measure-bearing digests,
 run native/analytic checks and obtain fresh receiver acceptance. This local
 version change is not a release or publication receipt.
+
+
+### Exact neighbour regression and additional constructor refusal
+
+The tetrahedron at scale 8.716619296087305e153 has exact area below float64's
+maximum; its nextafter neighbour has exact area above it, checked with a
+Decimal oracle over the actual binary input coordinates. The test requires
+acceptance then refusal without an unchecked interval. An integer coordinate
+outside float64's range now raises GeometryError instead of OverflowError.
+The midpoint export helper is public; its recommendation is a heuristic,
+not proof that every alternative translation or unit choice fails.
