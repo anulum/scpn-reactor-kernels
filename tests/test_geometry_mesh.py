@@ -778,14 +778,31 @@ def test_a_stream_that_is_not_a_sequence_is_refused(
 
 # --- the same questions, asked of the native boundary ------------------------
 
-native = pytest.importorskip("scpn_reactor_kernels_native")
+
+@pytest.fixture(scope="module")
+def native() -> Any:
+    """Return the optional native module, or skip only what needs it.
+
+    **This was a module-level ``importorskip`` and that took the whole file
+    down with it.** The ninety-four tests above need no native module, but
+    a skip raised while the module is being imported removes every item in
+    it from collection, so on a runner that does not build the native
+    module this file contributed nothing and the repository's coverage
+    gate fell to 97.5 % with every extreme-scale and refusal branch of
+    ``geometry/mesh.py`` unexercised. The local gate never saw it, because
+    a development checkout has the native module installed.
+    """
+    return pytest.importorskip("scpn_reactor_kernels_native")
+
 
 FLAT_VERTICES = [value for vertex in TETRA_VERTICES for value in vertex]
 FLAT_FACES = [corner for face in TETRA_FACES for corner in face]
 
 
 @pytest.mark.parametrize("entry", ["mesh_volume", "mesh_area"])
-def test_the_native_boundary_refuses_a_non_finite_coordinate(entry: str) -> None:
+def test_the_native_boundary_refuses_a_non_finite_coordinate(
+    native: Any, entry: str
+) -> None:
     """It used to accept one and return a NaN measure.
 
     A NaN compares false against every bound it is later checked against,
@@ -803,7 +820,7 @@ def test_the_native_boundary_refuses_a_non_finite_coordinate(entry: str) -> None
 
 @pytest.mark.parametrize("entry", ["mesh_volume", "mesh_area"])
 def test_the_native_boundary_refuses_the_shapes_the_constructor_refuses(
-    entry: str,
+    native: Any, entry: str
 ) -> None:
     """Streams that are not triples, and indices outside the vertex list."""
     call = getattr(native, entry)
@@ -817,9 +834,9 @@ def test_the_native_boundary_refuses_the_shapes_the_constructor_refuses(
         call(FLAT_VERTICES, [0.5, *FLAT_FACES[1:]])
 
 
-def test_the_two_boundaries_differ_in_exactly_two_places_and_both_are_declared() -> (
-    None
-):
+def test_the_two_boundaries_differ_in_exactly_two_places_and_both_are_declared(
+    native: Any,
+) -> None:
     """A difference that is measured and recorded is not a divergence.
 
     These two are deliberate. The native entry points take flat streams

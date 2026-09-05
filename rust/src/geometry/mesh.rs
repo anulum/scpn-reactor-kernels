@@ -153,8 +153,8 @@ fn volume_sum(vertices: &[[f64; 3]], faces: &[[u32; 3]]) -> f64 {
 
 /// Total surface area, `sum(|(v1 - v0) x (v2 - v0)|) / 2`.
 ///
-/// Each face's norm is taken by [`norm`], so a triangle whose cross product
-/// overflows or falls subnormal is measured rather than lost.
+/// Each face's norm is taken by the crate-private `norm`, so a triangle whose
+/// cross product overflows or falls subnormal is measured rather than lost.
 ///
 /// Indices are assumed valid, and a measure the format cannot hold is
 /// returned as it comes out rather than refused: **the Python floor is the
