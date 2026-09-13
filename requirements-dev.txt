@@ -17,4 +17,4 @@ pytest-cov==7.1.0
 coverage==7.16.0
 reuse==6.2.0
 PyYAML==6.0.3
-types-PyYAML==6.0.12.20260815
+types-PyYAML==6.0.12.20260906
