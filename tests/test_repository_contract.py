@@ -307,10 +307,10 @@ def test_manifest_declares_the_library_truth() -> None:
         },
         {
             "project": "SCPN-THETA-PINCH-CORE",
-            "version": "0.1.0.dev0",
-            "source_commit": "98e6de5139f8856f5d50b4ac86f531b7dc38c1dc",
+            "version": "2.0.0.dev0",
+            "source_commit": "c83745c6011d9b0ea6c413cf0b7d607c724090e7",
             "inventory_sha256": (
-                "8b409c63435088f2e36d66322ec7a379243474bf8b99856100e8fc4c8add679a"
+                "46dc34f9a3c7f498c454bd3219c0233848a71405371ee947d4ab79cf2f5d63f8"
             ),
         },
         {
