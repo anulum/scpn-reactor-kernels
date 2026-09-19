@@ -251,10 +251,10 @@ def test_manifest_declares_the_library_truth() -> None:
         },
         {
             "project": "SCPN-LEVITATED-DIPOLE-CORE",
-            "version": "0.1.0.dev0",
-            "source_commit": "4095aa8304974fd44d02c718d36eafc69b254944",
+            "version": "2.0.0.dev0",
+            "source_commit": "c83745c6011d9b0ea6c413cf0b7d607c724090e7",
             "inventory_sha256": (
-                "704bcca75675615fa87ff1c1debdf594f3dcdb9df17b19de48ef28046f95a303"
+                "46dc34f9a3c7f498c454bd3219c0233848a71405371ee947d4ab79cf2f5d63f8"
             ),
         },
         {
