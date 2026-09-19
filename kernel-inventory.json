@@ -86,10 +86,10 @@
       "version": "0.1.0.dev0"
     },
     {
-      "inventory_sha256": "8b409c63435088f2e36d66322ec7a379243474bf8b99856100e8fc4c8add679a",
+      "inventory_sha256": "46dc34f9a3c7f498c454bd3219c0233848a71405371ee947d4ab79cf2f5d63f8",
       "project": "SCPN-THETA-PINCH-CORE",
-      "source_commit": "98e6de5139f8856f5d50b4ac86f531b7dc38c1dc",
-      "version": "0.1.0.dev0"
+      "source_commit": "c83745c6011d9b0ea6c413cf0b7d607c724090e7",
+      "version": "2.0.0.dev0"
     },
     {
       "inventory_sha256": "943d8f7a3e96069309ceab13f92d0c3fe86838216d23a067c531b50f45db8462",
@@ -325,6 +325,6 @@
   "schema_version": "1.0.0",
   "source": {
     "manifest_path": "kernels-domain.json",
-    "manifest_sha256": "ab229f47e03a4c57b3ad0a0f17a71ada5d19a9d5af2b47a3c684763c3f37b684"
+    "manifest_sha256": "9a9ddd8121793aea9c54384929911408e1268f5f5e30db0691b66aa9d21d627f"
   }
 }

@@ -54,19 +54,18 @@ def test_inventory_reports_exact_kernel_set() -> None:
     projects = [c["project"] for c in inventory["consumers"]]
     assert len(projects) == 17
     assert projects == sorted(projects)
-    levitated = next(
-        row
-        for row in inventory["consumers"]
-        if row["project"] == "SCPN-LEVITATED-DIPOLE-CORE"
-    )
-    assert levitated == {
-        "project": "SCPN-LEVITATED-DIPOLE-CORE",
-        "version": "2.0.0.dev0",
-        "source_commit": "c83745c6011d9b0ea6c413cf0b7d607c724090e7",
-        "inventory_sha256": (
-            "46dc34f9a3c7f498c454bd3219c0233848a71405371ee947d4ab79cf2f5d63f8"
-        ),
-    }
+    for project in ("SCPN-LEVITATED-DIPOLE-CORE", "SCPN-THETA-PINCH-CORE"):
+        adopted = next(
+            row for row in inventory["consumers"] if row["project"] == project
+        )
+        assert adopted == {
+            "project": project,
+            "version": "2.0.0.dev0",
+            "source_commit": "c83745c6011d9b0ea6c413cf0b7d607c724090e7",
+            "inventory_sha256": (
+                "46dc34f9a3c7f498c454bd3219c0233848a71405371ee947d4ab79cf2f5d63f8"
+            ),
+        }
     assert all(
         set(row) == {"project", "version", "source_commit", "inventory_sha256"}
         for row in inventory["consumers"]
