@@ -10,6 +10,7 @@
 
 from __future__ import annotations
 
+import tomllib
 from pathlib import Path
 
 import pytest
@@ -156,6 +157,16 @@ def test_changelog_starts_unreleased() -> None:
     """The changelog carries an Unreleased section and no invented release."""
     changelog = (REPO / "CHANGELOG.md").read_text(encoding="utf-8")
     assert "[Unreleased]" in changelog
+
+
+def test_cad_extra_keeps_the_compatible_trame_major() -> None:
+    """The declared CAD resolver excludes Trame 4 until its VTK peer supports it."""
+    with (REPO / "pyproject.toml").open("rb") as project_file:
+        project = tomllib.load(project_file)
+    cad_requirements = project["project"]["optional-dependencies"]["cad"]
+    assert "cadquery==2.8.0" in cad_requirements
+    assert "gmsh==4.15.2" in cad_requirements
+    assert "trame>=3.13.2,<4" in cad_requirements
 
 
 def test_manifest_declares_the_library_truth() -> None:

@@ -406,6 +406,9 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Changed
 
+- Keep the optional CAD dependency on the newest compatible Trame 3 chain
+  while `trame-vtk` requires `trame-client<4`; refresh Ruff, coverage,
+  CycloneDX and the aligned CodeQL action pins together.
 - The revolve helper of `cad.profiles` is shared with `cad.spheres` and lost
   its leading underscore for that reason. It is still not part of the
   package's public surface.
