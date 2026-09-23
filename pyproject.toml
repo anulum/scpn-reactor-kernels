@@ -25,7 +25,7 @@ dynamic = ["version"]
 cad = [
     "cadquery==2.8.0",
     "gmsh==4.15.2",
-    "trame>=3.13.2,<4",
+    "trame>=3.13.2,<5",
 ]
 
 [tool.setuptools.dynamic]
