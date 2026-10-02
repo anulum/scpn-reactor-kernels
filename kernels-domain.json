@@ -2,106 +2,106 @@
   "claims": [],
   "consumers": [
     {
+      "inventory_sha256": "943d8f7a3e96069309ceab13f92d0c3fe86838216d23a067c531b50f45db8462",
       "project": "SCPN-BEAM-TARGET-CORE",
-      "version": "0.1.0.dev0",
       "source_commit": "9ea9eaee41a4378a8c23e647bbfde01bfb21bc49",
-      "inventory_sha256": "943d8f7a3e96069309ceab13f92d0c3fe86838216d23a067c531b50f45db8462"
+      "version": "0.1.0.dev0"
     },
     {
+      "inventory_sha256": "8b409c63435088f2e36d66322ec7a379243474bf8b99856100e8fc4c8add679a",
       "project": "SCPN-DENSE-PLASMA-FOCUS-CORE",
-      "version": "0.1.0.dev0",
       "source_commit": "98e6de5139f8856f5d50b4ac86f531b7dc38c1dc",
-      "inventory_sha256": "8b409c63435088f2e36d66322ec7a379243474bf8b99856100e8fc4c8add679a"
+      "version": "0.1.0.dev0"
     },
     {
+      "inventory_sha256": "c1db6afb2dc0f196500514bcc53305c2bc69878e6e5d61730c76e3afcdc418f6",
       "project": "SCPN-FRC-CORE",
-      "version": "0.1.0.dev0",
       "source_commit": "7f419ea413af0e8fc051587ec0b3c83edf209c9f",
-      "inventory_sha256": "c1db6afb2dc0f196500514bcc53305c2bc69878e6e5d61730c76e3afcdc418f6"
+      "version": "0.1.0.dev0"
     },
     {
+      "inventory_sha256": "943d8f7a3e96069309ceab13f92d0c3fe86838216d23a067c531b50f45db8462",
       "project": "SCPN-FUSION-FISSION-HYBRID-CORE",
-      "version": "0.1.0.dev0",
       "source_commit": "9ea9eaee41a4378a8c23e647bbfde01bfb21bc49",
-      "inventory_sha256": "943d8f7a3e96069309ceab13f92d0c3fe86838216d23a067c531b50f45db8462"
+      "version": "0.1.0.dev0"
     },
     {
+      "inventory_sha256": "de551e5ee272c42c646a89b77be5ad7a0475ceda951b0ac2d8a975fd00c42b79",
       "project": "SCPN-ICF-BEAM-CORE",
-      "version": "0.1.0.dev0",
       "source_commit": "4d48b811ebf0c5a633963c047410c790ed0daa57",
-      "inventory_sha256": "de551e5ee272c42c646a89b77be5ad7a0475ceda951b0ac2d8a975fd00c42b79"
+      "version": "0.1.0.dev0"
     },
     {
+      "inventory_sha256": "704bcca75675615fa87ff1c1debdf594f3dcdb9df17b19de48ef28046f95a303",
       "project": "SCPN-ICF-IMPACT-CORE",
-      "version": "0.1.0.dev0",
       "source_commit": "4095aa8304974fd44d02c718d36eafc69b254944",
-      "inventory_sha256": "704bcca75675615fa87ff1c1debdf594f3dcdb9df17b19de48ef28046f95a303"
+      "version": "0.1.0.dev0"
     },
     {
+      "inventory_sha256": "de551e5ee272c42c646a89b77be5ad7a0475ceda951b0ac2d8a975fd00c42b79",
       "project": "SCPN-ICF-LASER-CORE",
-      "version": "0.1.0.dev0",
       "source_commit": "4d48b811ebf0c5a633963c047410c790ed0daa57",
-      "inventory_sha256": "de551e5ee272c42c646a89b77be5ad7a0475ceda951b0ac2d8a975fd00c42b79"
+      "version": "0.1.0.dev0"
     },
     {
+      "inventory_sha256": "46dc34f9a3c7f498c454bd3219c0233848a71405371ee947d4ab79cf2f5d63f8",
       "project": "SCPN-LEVITATED-DIPOLE-CORE",
-      "version": "2.0.0.dev0",
       "source_commit": "c83745c6011d9b0ea6c413cf0b7d607c724090e7",
-      "inventory_sha256": "46dc34f9a3c7f498c454bd3219c0233848a71405371ee947d4ab79cf2f5d63f8"
+      "version": "2.0.0.dev0"
     },
     {
+      "inventory_sha256": "4e3f85ff448b6ff86ff85cda007319c0edb31553d0e2874e0578da9fd4ede888",
       "project": "SCPN-MIF-LINER-CORE",
-      "version": "0.1.0.dev0",
       "source_commit": "5bb26fd6bfd43acec34c3df9ef4c074532d671e4",
-      "inventory_sha256": "4e3f85ff448b6ff86ff85cda007319c0edb31553d0e2874e0578da9fd4ede888"
+      "version": "0.1.0.dev0"
     },
     {
+      "inventory_sha256": "9c43405ec5a184b813171f29ac0fc1a44eb0860777de9b08e65cd4a7554abb57",
       "project": "SCPN-MIF-MAGLIF-CORE",
-      "version": "0.1.0.dev0",
       "source_commit": "d9db5a425ae744bf60659edc7a1c3dda16bb1802",
-      "inventory_sha256": "9c43405ec5a184b813171f29ac0fc1a44eb0860777de9b08e65cd4a7554abb57"
+      "version": "0.1.0.dev0"
     },
     {
+      "inventory_sha256": "2bcbfd2adb3873ed38508bebefc3b5175fae9548fb372c9efa7cb845157ff7ac",
       "project": "SCPN-MIF-PLASMA-JET-CORE",
-      "version": "0.1.0.dev0",
       "source_commit": "86f14c0f0fd2dfb05e4cf9c78bad6308dcd5197e",
-      "inventory_sha256": "2bcbfd2adb3873ed38508bebefc3b5175fae9548fb372c9efa7cb845157ff7ac"
+      "version": "0.1.0.dev0"
     },
     {
+      "inventory_sha256": "8b409c63435088f2e36d66322ec7a379243474bf8b99856100e8fc4c8add679a",
       "project": "SCPN-MIRROR-CORE",
-      "version": "0.1.0.dev0",
       "source_commit": "98e6de5139f8856f5d50b4ac86f531b7dc38c1dc",
-      "inventory_sha256": "8b409c63435088f2e36d66322ec7a379243474bf8b99856100e8fc4c8add679a"
+      "version": "0.1.0.dev0"
     },
     {
+      "inventory_sha256": "8b409c63435088f2e36d66322ec7a379243474bf8b99856100e8fc4c8add679a",
       "project": "SCPN-RFP-CORE",
-      "version": "0.1.0.dev0",
       "source_commit": "98e6de5139f8856f5d50b4ac86f531b7dc38c1dc",
-      "inventory_sha256": "8b409c63435088f2e36d66322ec7a379243474bf8b99856100e8fc4c8add679a"
+      "version": "0.1.0.dev0"
     },
     {
+      "inventory_sha256": "8b409c63435088f2e36d66322ec7a379243474bf8b99856100e8fc4c8add679a",
       "project": "SCPN-SPHEROMAK-CORE",
-      "version": "0.1.0.dev0",
       "source_commit": "98e6de5139f8856f5d50b4ac86f531b7dc38c1dc",
-      "inventory_sha256": "8b409c63435088f2e36d66322ec7a379243474bf8b99856100e8fc4c8add679a"
+      "version": "0.1.0.dev0"
     },
     {
+      "inventory_sha256": "46dc34f9a3c7f498c454bd3219c0233848a71405371ee947d4ab79cf2f5d63f8",
       "project": "SCPN-THETA-PINCH-CORE",
-      "version": "2.0.0.dev0",
       "source_commit": "c83745c6011d9b0ea6c413cf0b7d607c724090e7",
-      "inventory_sha256": "46dc34f9a3c7f498c454bd3219c0233848a71405371ee947d4ab79cf2f5d63f8"
+      "version": "2.0.0.dev0"
     },
     {
+      "inventory_sha256": "943d8f7a3e96069309ceab13f92d0c3fe86838216d23a067c531b50f45db8462",
       "project": "SCPN-TOKAMAK-CORE",
-      "version": "0.1.0.dev0",
       "source_commit": "9ea9eaee41a4378a8c23e647bbfde01bfb21bc49",
-      "inventory_sha256": "943d8f7a3e96069309ceab13f92d0c3fe86838216d23a067c531b50f45db8462"
+      "version": "0.1.0.dev0"
     },
     {
+      "inventory_sha256": "8b409c63435088f2e36d66322ec7a379243474bf8b99856100e8fc4c8add679a",
       "project": "SCPN-Z-PINCH-CORE",
-      "version": "0.1.0.dev0",
       "source_commit": "98e6de5139f8856f5d50b4ac86f531b7dc38c1dc",
-      "inventory_sha256": "8b409c63435088f2e36d66322ec7a379243474bf8b99856100e8fc4c8add679a"
+      "version": "0.1.0.dev0"
     }
   ],
   "evidence_maturity": "computational_prototype",
@@ -260,7 +260,7 @@
       "module": "src/scpn_reactor_kernels/cad/step.py",
       "native_parity": false,
       "sources": [
-        "Open CASCADE Technology 7.9: STEPControl_Writer and APIHeaderSection_MakeHeader (Part 21 HEADER: FILE_DESCRIPTION, FILE_NAME with time stamp, FILE_SCHEMA); CadQuery 2.8 Assembly export",
+        "Open CASCADE Technology 7.9: STEPControl_Writer and APIHeaderSection_MakeHeader (Part 21 HEADER and native length contexts); CadQuery 2.8 Assembly.export with explicit internal unit M and outputUnit M; unit-aware imports into M and MM recover physical metre dimensions and cubic-metre volumes",
         "ISO 10303-21 clear-text encoding: structure taken from the writer output and the OCC documentation (the standard text is not freely available)"
       ]
     },
@@ -286,7 +286,7 @@
       "module": "src/scpn_reactor_kernels/cad/volume_mesh.py",
       "native_parity": false,
       "sources": [
-        "Gmsh 4.15.2 reference manual: OpenCASCADE import (model.occ.importShapes), Mesh.MeshSizeMin/Max, Mesh.Algorithm3D, MSH 4.1 ASCII format",
+        "Gmsh 4.15.2 reference manual: explicit Geometry.OCCTargetUnit M before OpenCASCADE import (model.occ.importShapes), Mesh.MeshSizeMin/Max in metres, Mesh.Algorithm3D, MSH 4.1 ASCII format; declared STEP file units are honoured and tetrahedral volumes are cubic metres",
         "Tetrahedron volume |det(v1 - v0, v2 - v0, v3 - v0)| / 6 (elementary; no external source)"
       ]
     },

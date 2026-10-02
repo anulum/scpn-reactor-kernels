@@ -13,13 +13,15 @@ SCPN Reactor Kernels — Architecture
 ## Purpose and evidence state
 
 `SCPN-REACTOR-KERNELS` is the shared kernel library of the SCPN Reactor
-Systems Research Group. It owns two implemented kernel groups at
+Systems Research Group. It owns three implemented kernel groups at
 `computational_prototype` in `src/scpn_reactor_kernels/`: the geometry
 kernels (design records ADR 0002 and ADR 0007, evidence record
 `VALIDATION.md#geometry-kernels`; owned domain `shared_geometry_kernels`)
 and the numerics kernels (design record ADR 0003, evidence record
 `VALIDATION.md#numerics-kernels`; the numerical substrate of the owned
-domain `shared_physics_kernels`).
+domain `shared_physics_kernels`) and the optional CAD adapters on pinned
+third-party C++ kernels (ADR 0006, `VALIDATION.md#cad-kernels`, owned domain
+`shared_cad_and_meshing_adapters`).
 Every other section below describes boundaries and contracts. The claim
 inventory is empty; the kernel inventory is generated and drift-checked.
 
@@ -56,6 +58,12 @@ Every kernel satisfies all of the following before it enters the manifest:
 6. A benchmark row per backend following the ecosystem benchmark standard.
 7. An entry in `kernels-domain.json` (identifier, module, sources, maturity,
    evidence pointer, native parity flag, benchmark pointer).
+
+For the CAD group, ADR 0006 records the third-party backend boundary:
+`native_parity=false`, with physical measures checked against analytic
+references rather than an independent Rust floor. B-rep values and native
+STEP exports use metres. The volume-mesh adapter explicitly converts
+declared STEP units to metres before meshing and reports cubic metres.
 
 ## Position in the SCPN ecosystem
 
@@ -95,7 +103,7 @@ protection or any actuator; it computes numbers from declared inputs.
 - `kernels-domain.json` follows schema `scpn.reactor-kernels-domain.v1`;
   unknown schemas are rejected by consumers.
 - The distribution `scpn-reactor-kernels` follows semantic versioning; a
-  kernel whose numerical output changes for any input is a breaking change
+  kernel whose output changes for any input is a breaking change
   of that kernel and bumps the major version.
 - Consumers record `{distribution, version, inventory_sha256}` in their own
   manifests; the `consumers` list here is updated when a consumer lands.

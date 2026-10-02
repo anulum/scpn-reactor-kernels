@@ -380,7 +380,10 @@ none of it is skipped there):
   the generator name and the caller's provenance with Part 21 escaping
   (apostrophes doubled); the usage-occurrence identifiers are renumbered
   from one in order; different extras change the bytes and the digest;
-  re-importing the written file reproduces both volumes within `1e-9`;
+  native length contexts are metres and a unit-aware re-import in M or MM
+  reproduces both physical volumes within `1e-9`, converting cubic
+  millimetres to cubic metres when required; an asymmetric off-centre prism
+  retains all four declared dimensions in either target unit;
   non-JSON extras and a writer output without the header entities are
   refused.
 - **Faceting** (`facet.py`): the faceted cylinder and tube validate as
@@ -401,7 +404,22 @@ none of it is skipped there):
   element counts per entity; the unit right tetrahedron has volume `1/6`
   independent of orientation; empty STEP bytes, non-positive lengths, a
   STEP without a volume and a non-tetrahedral element type are refused,
-  and the back-end is finalised on every path.
+  and the back-end is finalised on every path. The owned importer sets
+  `Geometry.OCCTargetUnit` to M before importing, including after a prior
+  real session selected MM. Physically equivalent metre and millimetre
+  STEP encodings of a rectangular prism each mesh to `0.000864 m³` within
+  `1e-9` relative. Existing caller sessions retain their string unit option
+  as well as models, numeric options and derived state when refused.
+
+The physical STEP unit contract changes in package `3.0.0.dev0` (ADR 0006).
+Earlier exports wrote metre-valued coordinates with millimetre native units:
+their physical lengths were `1e-3` of the requested lengths and volumes
+`1e-9` of the requested volumes. A raw-coordinate round trip through a default
+millimetre reader hid that error. The corrected writer explicitly declares
+both internal and output units M; changing provenance alone cannot repair an
+old file. Native unit-aware import is the regression oracle. STEP digests
+change and affected downstream artefact identities must be regenerated under
+the consumer's actual pin. Maturity remains `computational_prototype`.
 - **Placement** (`placement.py`): a translated body carries the analytic
   closed forms of its source unchanged and its own measured volume and
   area stay within `1e-9` relative of them; the bounding box shifts by

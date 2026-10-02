@@ -15,7 +15,7 @@ from pathlib import Path
 
 import pytest
 
-from cad_fixtures import assembly, cylinder, tube
+from cad_fixtures import assembly, cylinder, prism, tube
 from scpn_reactor_kernels.cad import (
     MEASURE_TOLERANCE,
     STEP_FILE_NAME,
@@ -62,19 +62,38 @@ def test_extras_change_the_bytes_and_the_digest() -> None:
     assert step_sha256(one) != step_sha256(two)
 
 
-def test_round_trip_reproduces_the_volumes(tmp_path: Path) -> None:
-    """Re-importing the written file gives the bodies' volumes within tolerance."""
+@pytest.mark.parametrize(("unit", "scale"), [("M", 1.0), ("MM", 0.001)])
+def test_round_trip_reproduces_the_volumes(
+    tmp_path: Path, unit: str, scale: float
+) -> None:
+    """Unit-aware imports reproduce physical cubic metres in either target unit."""
     target = tmp_path / "assembly.step"
     written = write_step(target, assembly(), EXTRAS)
     assert written == target.stat().st_size
     assert target.read_bytes() == step_bytes(assembly(), EXTRAS)
     cadquery = load_backend("cadquery")
-    imported = cadquery.importers.importStep(str(target))
+    imported = cadquery.importers.importStep(str(target), unit=unit)
     solids = imported.solids().vals()
     assert len(solids) == 2
     expected = sorted(body.analytic_volume_m3 for body in assembly().bodies)
-    got = sorted(float(solid.Volume()) for solid in solids)
+    got = sorted(float(solid.Volume()) * scale**3 for solid in solids)
     for value, reference in zip(got, expected, strict=True):
+        assert math.isclose(value, reference, rel_tol=MEASURE_TOLERANCE)
+
+
+@pytest.mark.parametrize(("unit", "scale"), [("M", 1.0), ("MM", 0.001)])
+def test_step_preserves_physical_dimensions(
+    tmp_path: Path, unit: str, scale: float
+) -> None:
+    """An asymmetric off-centre prism retains its metre-valued dimensions."""
+    target = tmp_path / "prism.step"
+    write_step(target, BrepAssembly((prism(),)), EXTRAS)
+    cadquery = load_backend("cadquery")
+    solid = cadquery.importers.importStep(str(target), unit=unit).val()
+    box = solid.BoundingBox()
+    actual = (box.xlen * scale, box.ylen * scale, box.zmin * scale, box.zmax * scale)
+    expected = (0.06, 0.09, -0.02, 0.14)
+    for value, reference in zip(actual, expected, strict=True):
         assert math.isclose(value, reference, rel_tol=MEASURE_TOLERANCE)
 
 
@@ -101,8 +120,10 @@ def test_malformed_writer_output_is_refused() -> None:
     assert normalise_step_text(text, {}) == text
 
 
+@pytest.mark.parametrize("import_unit", ["M", "MM"])
 def test_repeated_exports_stay_byte_identical_past_the_counter_digit_boundary(
     tmp_path: Path,
+    import_unit: str,
 ) -> None:
     """Six bodies, three exports, one import: the bytes never drift.
 
@@ -129,7 +150,7 @@ def test_repeated_exports_stay_byte_identical_past_the_counter_digit_boundary(
     target = tmp_path / "six.step"
     target.write_bytes(first)
     cadquery = load_backend("cadquery")
-    imported = cadquery.importers.importStep(str(target))
+    imported = cadquery.importers.importStep(str(target), unit=import_unit)
     assert len(imported.solids().vals()) == 6
     third = step_bytes(six, EXTRAS)
     assert first == third

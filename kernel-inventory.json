@@ -235,7 +235,7 @@
       "module": "src/scpn_reactor_kernels/cad/step.py",
       "native_parity": false,
       "sources": [
-        "Open CASCADE Technology 7.9: STEPControl_Writer and APIHeaderSection_MakeHeader (Part 21 HEADER: FILE_DESCRIPTION, FILE_NAME with time stamp, FILE_SCHEMA); CadQuery 2.8 Assembly export",
+        "Open CASCADE Technology 7.9: STEPControl_Writer and APIHeaderSection_MakeHeader (Part 21 HEADER and native length contexts); CadQuery 2.8 Assembly.export with explicit internal unit M and outputUnit M; unit-aware imports into M and MM recover physical metre dimensions and cubic-metre volumes",
         "ISO 10303-21 clear-text encoding: structure taken from the writer output and the OCC documentation (the standard text is not freely available)"
       ]
     },
@@ -261,7 +261,7 @@
       "module": "src/scpn_reactor_kernels/cad/volume_mesh.py",
       "native_parity": false,
       "sources": [
-        "Gmsh 4.15.2 reference manual: OpenCASCADE import (model.occ.importShapes), Mesh.MeshSizeMin/Max, Mesh.Algorithm3D, MSH 4.1 ASCII format",
+        "Gmsh 4.15.2 reference manual: explicit Geometry.OCCTargetUnit M before OpenCASCADE import (model.occ.importShapes), Mesh.MeshSizeMin/Max in metres, Mesh.Algorithm3D, MSH 4.1 ASCII format; declared STEP file units are honoured and tetrahedral volumes are cubic metres",
         "Tetrahedron volume |det(v1 - v0, v2 - v0, v3 - v0)| / 6 (elementary; no external source)"
       ]
     },
@@ -325,6 +325,6 @@
   "schema_version": "1.0.0",
   "source": {
     "manifest_path": "kernels-domain.json",
-    "manifest_sha256": "9a9ddd8121793aea9c54384929911408e1268f5f5e30db0691b66aa9d21d627f"
+    "manifest_sha256": "e0d1744a66de42f2afdbbe98869ce117061659481b12e5fdeba0731942cbdfbe"
   }
 }

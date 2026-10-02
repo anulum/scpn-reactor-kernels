@@ -46,3 +46,13 @@ The lock coordinates only calls through this module. External Gmsh calls must
 not race this library. This does not claim crash isolation or thread safety for
 arbitrary concurrent users of the Gmsh global API. Package 2.0.0.dev0 marks the
 changed refusal/ownership contract; publication and consumer adoption are separate.
+
+## Addendum 2026-10-02 — owned import units
+
+The physical STEP contract in package `3.0.0.dev0` explicitly converts native
+file units to metres. The importer sets `Geometry.OCCTargetUnit` to M only
+after the ownership refusal and inside the newly owned session, before
+`importShapes`. A prior session selecting MM cannot choose this call's scale.
+Caller-session refusal tests now also preserve the caller's string unit
+option. The lock and external concurrency boundary above remain applicable;
+no borrowing or option restoration is introduced.

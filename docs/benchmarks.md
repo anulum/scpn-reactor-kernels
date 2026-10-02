@@ -19,68 +19,49 @@ engineering claim.
 
 Artefact: `benchmarks/results/geometry_tessellation.local.json`
 (schema `scpn-reactor-kernels.geometry-tessellation-benchmark.v1`, generated
-2026-09-04T16:51:02.216499+00:00 at commit `4cf9211f7520`).
-Host: 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz, Linux-7.0.0-30-generic-x86_64-with-glibc2.39, Python 3.12.3;
-**load average at start 81.29**; cores not isolated (shared workstation).
+2026-10-02T15:20:32.161927+00:00).
 
-**Read the load average before the numbers.** Other seats' work was
-saturating the host when this ran, and the artefact says so. The native
-row's P50 is 4.6 times the previous run's for kernel work that did not
-change, and the floor row's P99 is fifteen times its own P50 — both are
-contention, not the kernels. What this run does establish is that the two
-backends completed the enlarged pass and returned the **identical
-checksum and the identical face count**, which is a correctness statement
-and stands regardless of the load. Nothing here should be read as a
-performance comparison, with the previous run or with anything else; a
-run on a quiet host is still owed.
-Operation: tessellation of three synthetic bodies on the axis (two solid
-cylinders and one annular tube), a ring of twelve identical rods placed off
-the axis through the placement kernel, one five-sample body whose radius
-varies along the axis, one seven-sample body that closes on the axis at
-both poles, and a spherical shell of a 1.0 m sphere around a 0.6 m cavity
-at sixteen polar steps — the two profile bodies reach different paths of
-the same kernel, and only the second builds an apex fan — each with its
-exact frustum-stack volume (589824 faces at 4096 segments), followed by
-the signed volume and surface area of
-every body, one rectangular prism, and **one latitude of ten identical
-bodies on a 1.5 m sphere at a polar angle of 59 degrees, each turned to
-point at the centre** — the only part of the pass that reaches the
-arbitrary-angle circle point and the aiming rotation, and the reason the
-polar angle is deliberately not a rational multiple of a turn (753676
-faces at 4096 segments); 3 warm-up passes, 20 timed passes; time per
-generated face.
-The Python floor row includes the `TriangleMesh` validation (closure and
-orientation checks) that every public build performs; the native row
-measures the kernels through their bindings (tessellation, ring offsets,
-translation, profiles, volume, area, aiming and rotation) without that
-validation, so the ratio compares a validated build against the raw kernel
-cost. The pass is larger than the run of 2026-09-04T06:00 by the
-**rectangular prism** and the **aimed latitude**, so the two are **not
-comparable row by row**: this pass generates 753676 faces against that
-run's 589824, and a per-face figure over a different body mix is a
-different measurement in any case.
+The measured Python package is `3.0.0.dev0`, installed together with its
+native wheel before measurement. The source is a precommit candidate based
+on `790a70fd89a74ef4b138d19043f9f0fa49e9a194`; the artefact's
+`platform.commit` is empty, so it establishes no candidate Git revision.
+The installed native image has SHA-256
+`a7141e99e78eb5847bb904bb8cb6b0c6f7ea14e63abc4f0865c7a371ad966352`.
 
-The rectangular prism contributes a constant twelve faces at every segment
-count — it is the body exactly rather than an inscribed approximation, so
-nothing about it scales — and its share of a pass therefore falls as the
-count rises. It is timed on both backends regardless, because a path that
-is never timed is a path whose cost is unknown.
+Host: 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz, Linux-7.0.0-34-generic-x86_64-with-glibc2.39,
+Python 3.12.3. Cores were not isolated.
+**These are functional/parity and local regression measurements on a
+shared workstation.** The supervised process recorded one-minute load
+37.33 before and 23.82 after. The stock artefact's historical
+`load_average_1min_at_start` field is populated when the results are
+written, after the pass; its 23.82 value is end-of-pass context. No quiet-host
+performance advantage or production speedup is established.
+
+The complete pass includes three synthetic axial bodies, twelve off-axis
+rods, a varying-radius profile, a profile closing on both poles, a spherical
+shell at sixteen polar steps, a rectangular prism and ten aimed rods on a
+1.5 m spherical latitude at 59 degrees. At 4096 segments this produces
+753676 faces. Both implementations completed three warm-up passes and
+twenty timed passes. A separate actual public precheck produced exactly
+753676 faces and checksum 26.241979006604854 on both implementations.
+
+The Python floor includes public `TriangleMesh` closure and orientation
+validation. The Rust row times raw kernels through their bindings. Their
+overheads differ; the ratio does not compare identical work. Synthetic
+body dimensions establish no real-device or physical calibration claim.
 
 | Backend | P50 µs/face | P95 µs/face | P99 µs/face | mean µs/face | throughput faces/s | status |
 |---|---|---|---|---|---|---|
-| `python_floor` (public API, always available) | 7.809 | 17.536 | 116.548 | 14.130 | 128058 | measured |
-| `rust_native` (optional build: `rust/`, maturin) | 0.923 | 2.583 | 2.796 | 1.126 | 1083357 | measured |
+| `python_floor` | 15.861 | 20.754 | 22.973 | 16.231 | 63047 | measured |
+| `rust_native` | 0.244 | 0.311 | 0.396 | 0.248 | 4099562 | measured |
 
-P50 ratio of the two rows in this run: 8.5×. **That ratio is a property of
-the host at load 81.29, not of the kernels**, and it should not be quoted.
-The fast row requires the optional native module and is never the default.
 
-For reference, the previous run of 2026-09-04T06:00 at commit
-`9ea9eaee41a4`, over a **smaller** body set (589824 faces, no prism and no
-aimed latitude) and at a load average of 8.19, recorded 6.392 / 7.158 /
-7.195 / 6.380 µs per face on the floor and 0.202 / 0.242 / 0.244 / 0.200
-on the native row. Those numbers measured a different pass on a quieter
-host and are kept here only so the difference in conditions is visible.
+The first full pass exhausted a 180 CPU-second allowance. A complete
+successor finished with a 420 CPU-second and 540 wall-second bound, 3 GiB
+address-space limit and nice10. It retained the same bodies, segments,
+warm-ups, repeats and both implementations; the failed predecessor is
+retained in internal verification evidence. The fast row requires the
+optional native module and is never the default.
 
 ## Transcendental kernels
 
@@ -134,69 +115,61 @@ the default.
 
 ## CAD kernels
 
-Artefact: `benchmarks/results/cad.local.json` (schema `scpn-reactor-kernels.cad-benchmark.v1`,
-generated 2026-09-04T17:02:38.047803+00:00 at commit `a2b500a167ef`).
+Artefact: `benchmarks/results/cad.local.json` (schema
+`scpn-reactor-kernels.cad-benchmark.v1`, generated
+2026-10-02T15:05:53.219664+00:00).
+
+The measured package is `3.0.0.dev0`, installed from the complete precommit
+candidate based on `790a70fd89a74ef4b138d19043f9f0fa49e9a194`.
+The artefact's `platform.commit` is empty; no candidate Git object is
+claimed. The corrected runtime files retain these SHA-256 identities:
+
+- `cad/step.py`: `b7c13d06054bd652e5f2750c8a1b86eaab16d9f7463696baabe4c29241f1eefb`.
+- `cad/volume_mesh.py`: `12b95aa1eae0d5d979d9ddeb2fb66c7f8ec7f16123c157e918f641e4f7139249`.
+
 Host: 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz,
-Linux-7.0.0-30-generic-x86_64-with-glibc2.39, Python 3.12.3; back-ends cadquery 2.8.0,
-OCP 7.9.3.1, gmsh 4.15.2; **load average at start 65.92**; cores not
-isolated.
+Linux-7.0.0-34-generic-x86_64-with-glibc2.39, Python 3.12.3.
+Backends: CadQuery 2.8.0, OCP 7.9.3.1 and Gmsh 4.15.2.
+Cores were not isolated. The stock artefact captures its load field after
+the measured pass; 18.77 is end-of-pass context despite the historical
+`load_average_1min_at_start` name. **This is a shared-host functional and
+local regression measurement, with no production-performance or speedup
+claim and no comparison against the earlier run.**
 
-**Read the load average before the numbers.** Other seats' work was
-saturating the shared host. The `facet_two_bodies` row shows what that
-does: 29.5 ms at P50 against 2471.6 ms at P95, a spread of eighty-four to
-one that is contention and nothing else. Treat every row here as a record
-that the operation ran and returned, not as its cost. A run on a quiet
-host is still owed.
+All eleven public operations completed with two warm-ups and ten timed
+runs per operation. Parameters remain linear deflection 0.0001 m, angular
+deflection 0.1 rad and characteristic length 0.02 m. The two-body assembly
+contains a solid cylinder and annular tube; placement uses twelve ring rods
+and ten aimed latitude rods. The evidence row compares both bodies with
+analytic forms and 64-segment G1 meshes. Profiles use five and seven
+samples; sphere and shell use sixteen polar rings.
 
-Parameters:
-2 warm-up runs, 10 timed runs per operation; linear deflection
-0.0001 m, angular deflection 0.1 rad, characteristic
-length 0.02 m. One synthetic two-body assembly (solid cylinder and
-annular tube), and for the placement row a ring of 12 identical rods of
-radius 0.006 m on a circle of radius 0.1 m; the evidence row checks both
-bodies of the two-body assembly against their analytic forms and against
-their tier-G1 meshes at 64 segments; the two revolution rows build one
-five-sample body whose radius varies along the axis, and one seven-sample
-body that closes on the axis at both poles; the two spherical rows build a
-sixteen-ring sphere of radius 0.1 m and the shell between it and a
-0.06 m cavity; and the aimed row places 10 identical rods on a latitude of
-a 1.5 m sphere at a polar angle of 59 degrees, each turned to point at its
-centre.
+Actual independent prechecks exercised all eleven operations. Declared
+analytic volume is 0.008011061266653975 cubic metres; the coarse Gmsh mesh
+measured 0.007964397256728352, a relative difference of
+0.005824947328746785 within the predeclared 0.02 mesh bound. This tests
+metre-valued geometry and does not calibrate a physical reactor. STEP uses
+native metre contexts, and Gmsh converts declared STEP units to metres.
 
-There is no Python-floor row: these kernels adapt pinned third-party code
-and carry no bit-exact floor (ADR 0006). The table is a fresh run of the
-landing working tree; the earlier run measured ten operations rather than
-eleven and was taken at a load average of 7.84, so its numbers are not
-comparable with these on either count.
+There is one applicable pinned native backend per operation. CAD has no
+Python floor or Rust counterpart (ADR 0006); both manifest entries retain
+`native_parity: false`. Faceting and reference meshes for the evidence row
+are built outside its timed region. Full raw percentiles, extrema and
+throughput remain in the artefact.
 
-| Operation | Backend | P50 ms | P95 ms | mean ms | operations/s | status |
-|---|---|---|---|---|---|---|
-| `brep_build_and_manifest` | `cadquery_ocp` | 6.91 | 13.68 | 8.16 | 144.7 | measured |
-| `step_export_normalised` | `cadquery_ocp` | 5.33 | 18.02 | 6.99 | 187.7 | measured |
-| `facet_two_bodies` | `cadquery_ocp` | 29.48 | 2471.64 | 274.46 | 33.9 | measured |
-| `gmsh_volume_mesh` | `gmsh` | 325.34 | 400.54 | 324.81 | 3.1 | measured |
-| `place_ring_of_bodies` | `cadquery_ocp` | 1.58 | 1.97 | 1.64 | 632.5 | measured |
-| `place_aimed_latitude` | `cadquery_ocp` | 2.08 | 6.56 | 3.01 | 480.2 | measured |
-| `assembly_body_evidence` | `cadquery_ocp` | 2.08 | 3.42 | 2.31 | 480.5 | measured |
-| `revolve_axial_profile` | `cadquery_ocp` | 4.08 | 6.39 | 4.71 | 245.1 | measured |
-| `revolve_closed_profile` | `cadquery_ocp` | 4.82 | 8.53 | 5.81 | 207.7 | measured |
-| `revolve_sphere` | `cadquery_ocp` | 16.55 | 26.72 | 17.45 | 60.4 | measured |
-| `revolve_spherical_shell` | `cadquery_ocp` | 25.57 | 31.93 | 26.07 | 39.1 | measured |
-
-The two placement rows are the only pair in this run whose comparison is
-worth anything, because they differ by one thing and ran seconds apart:
-twelve rigid **translations** at 1.58 ms against ten general rigid
-**motions** at 2.08 ms, which is 0.132 against 0.208 ms per placed body.
-Aiming a body therefore costs the back-end about half as much again as
-sliding it, on this host under this load. Both rows include the back-end
-volume measure of every placed body.
-
-No claim is made about any other row of this table, and none should be
-read into the differences between the revolution rows: at a load average
-of 66 the spreads do not separate anything. The evidence row is dominated
-by the back-end measures it asks for, not by the arithmetic of the bounds;
-the faceting and the reference meshes are built outside the timed region,
-because a device model builds them once and checks them once.
+| Operation | Backend | P50 ms | P95 ms | P99 ms | mean ms | operations/s | status |
+|---|---|---|---|---|---|---|---|
+| `brep_build_and_manifest` | `cadquery_ocp` | 8.327 | 9.487 | 9.487 | 8.368 | 120.093 | measured |
+| `step_export_normalised` | `cadquery_ocp` | 4.244 | 6.186 | 6.186 | 4.513 | 235.619 | measured |
+| `facet_two_bodies` | `cadquery_ocp` | 41.129 | 47.172 | 47.172 | 41.805 | 24.314 | measured |
+| `gmsh_volume_mesh` | `gmsh` | 274.752 | 415.886 | 415.886 | 295.996 | 3.640 | measured |
+| `place_ring_of_bodies` | `cadquery_ocp` | 2.708 | 3.835 | 3.835 | 3.044 | 369.244 | measured |
+| `place_aimed_latitude` | `cadquery_ocp` | 3.446 | 4.293 | 4.293 | 3.564 | 290.154 | measured |
+| `assembly_body_evidence` | `cadquery_ocp` | 6.613 | 8.655 | 8.655 | 6.736 | 151.227 | measured |
+| `revolve_axial_profile` | `cadquery_ocp` | 8.007 | 10.186 | 10.186 | 8.240 | 124.892 | measured |
+| `revolve_closed_profile` | `cadquery_ocp` | 9.895 | 11.169 | 11.169 | 10.202 | 101.066 | measured |
+| `revolve_sphere` | `cadquery_ocp` | 12.755 | 14.853 | 14.853 | 13.256 | 78.398 | measured |
+| `revolve_spherical_shell` | `cadquery_ocp` | 19.729 | 25.037 | 25.037 | 20.235 | 50.687 | measured |
 
 ## Fixed-runner (CI) number
 

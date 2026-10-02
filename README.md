@@ -145,7 +145,7 @@ VIRTUAL_ENV=.venv PATH=.venv/bin:$PATH maturin develop --release -m rust/Cargo.t
 The CAD kernels (ADR 0006, optional extra `cad`) build the same
 primitives as B-rep solids on the pinned OpenCASCADE kernel through
 CadQuery, keep them in an ordered assembly with a canonical manifest,
-export a deterministic STEP file (fixed header time stamp, renumbered
+export a deterministic STEP file in metres (fixed header time stamp, renumbered
 assembly identifiers, provenance in the description), facet the solids
 back into the closed-mesh contract, place a body off the axis or once per
 centre of a ring (ADR 0008, the tier-G2 counterpart of the tessellating
@@ -177,8 +177,17 @@ assembly = BrepAssembly(
         annular_tube_brep(0.08, 0.1, -0.1, 0.4, "outer", "wall", "steel"),
     )
 )
-step = step_bytes(assembly, {"design_digest": "..."})  # deterministic bytes
+step = step_bytes(assembly, {"design_digest": "..."})  # native STEP units: metres
 ```
+
+Geometry values are metres. `step_bytes` explicitly exports metre length
+contexts; provenance extras do not set the scale. A CadQuery reader can use
+`importers.importStep(path, unit="M")` to recover metre coordinates or
+`unit="MM"` for equivalent millimetre coordinates. The Gmsh adapter converts
+the declared STEP unit to metres before meshing, including files encoded in
+millimetres, and reports cubic metres. Package `3.0.0.dev0` changes the native
+STEP unit contract and exported bytes; consumers must regenerate affected
+artefact identities when adopting it (ADR 0006).
 
 ## Consuming and pinning
 
@@ -190,7 +199,7 @@ The inventory is derived from the kernel manifest
 [`kernels-domain.json`](kernels-domain.json) (schema
 `scpn.reactor-kernels-domain.v1`) and drift-checked, so a pin identifies
 the exact set of implemented kernels and their evidence pointers. A kernel
-whose numerical output changes for any input is a breaking change of that
+whose output changes for any input is a breaking change of that
 kernel and bumps the major version. The `consumers` list of the manifest
 gains an entry when a consumer first lands a pin; because that entry
 changes the inventory, a consumer's digest always names the inventory at

@@ -11,7 +11,9 @@
 The STEP bytes of :mod:`scpn_reactor_kernels.cad.step` are imported into
 gmsh's OpenCASCADE model, meshed in three dimensions with a declared
 characteristic length and a fixed option set, and written as MSH 4.1
-bytes. The kernel sums the tetrahedra volumes per volume entity
+bytes. The declared STEP length unit is converted to metres explicitly
+before import; node coordinates and characteristic lengths are metres,
+and volumes are cubic metres. The kernel sums the tetrahedra volumes per volume entity
 (``|det(v1 - v0, v2 - v0, v3 - v0)| / 6`` in fixed order) so the mesh can
 be checked against the B-rep volumes within a declared tolerance, and
 reports node and element counts. The same STEP bytes and length give the
@@ -197,7 +199,9 @@ def gmsh_volume_mesh(step: bytes, characteristic_length_m: float) -> VolumeMesh:
     Parameters
     ----------
     step
-        STEP bytes (normalised or not).
+        STEP bytes (normalised or not). The declared STEP length unit is
+        converted to metres before meshing; all returned coordinates and
+        volumes use metres and cubic metres.
     characteristic_length_m
         Target element size; strictly positive.
 
@@ -229,6 +233,7 @@ def gmsh_volume_mesh(step: bytes, characteristic_length_m: float) -> VolumeMesh:
             for option, value in GMSH_OPTIONS:
                 gmsh.option.setNumber(option, value)
             gmsh.model.add(model_name)
+            gmsh.option.setString("Geometry.OCCTargetUnit", "M")
             gmsh.model.occ.importShapes(str(source))
             gmsh.model.occ.synchronize()
             volumes = gmsh.model.getEntities(3)

@@ -48,7 +48,7 @@ revisited whenever a new kernel group or a new consumer contract is added.
 | Misuse path | Mitigation |
 |---|---|
 | Feeding a kernel an input outside its validity range and using the result | every kernel refuses non-finite and out-of-range inputs with a named error; ranges are declared in the docstring and the manifest |
-| Silent unit errors | SI units in every field name; no implicit unit conversion in any public function |
+| Silent unit errors | SI units in field names; explicit metre STEP export and declared-file-unit conversion to metres before meshing; unit-aware physical dimension and volume regressions |
 | A native kernel diverging from the floor | parity tests by float64 bit pattern in the hosted `rust` job and locally; identical operation order is a review requirement |
 | Editing the inventory to imply an implemented kernel | the inventory is generated; `--check` drift gates in pre-commit, preflight and CI fail on any manual edit |
 | Adding a kernel without sources or evidence | the validator refuses a kernel item without a non-empty source list, a resolvable module path and a resolvable evidence pointer |

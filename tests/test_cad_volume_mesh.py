@@ -13,6 +13,7 @@ from __future__ import annotations
 import math
 from collections.abc import Iterator
 from concurrent.futures import ThreadPoolExecutor
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -26,6 +27,7 @@ from scpn_reactor_kernels.cad import (
     step_bytes,
     tetrahedron_volume,
 )
+from scpn_reactor_kernels.cad._backend import load_backend
 from scpn_reactor_kernels.cad.volume_mesh import (
     MODEL_NAME,
 )
@@ -75,6 +77,7 @@ def step() -> bytes:
 def open_caller_session(model: str = CALLER_MODEL) -> None:
     """Open a session the way a consumer that owns gmsh would."""
     gmsh.initialize()
+    gmsh.option.setString("Geometry.OCCTargetUnit", "MM")
     for option, value in CALLER_OPTIONS:
         gmsh.option.setNumber(option, value)
     gmsh.model.add(model)
@@ -87,6 +90,7 @@ def caller_state() -> dict[str, Any]:
         "models": sorted(gmsh.model.list()),
         "current_model": gmsh.model.getCurrent(),
         "options": {name: gmsh.option.getNumber(name) for name, _ in CALLER_OPTIONS},
+        "target_unit": gmsh.option.getString("Geometry.OCCTargetUnit"),
     }
 
 
@@ -115,6 +119,34 @@ def test_volume_mesh_is_deterministic_and_consistent() -> None:
     assert record["msh_sha256"] == first.msh_sha256()
     assert [entity["tag"] for entity in record["entities"]] == [1, 2]
     assert isinstance(first.entities[0], VolumeEntity)
+
+
+def test_volume_mesh_honours_step_units(tmp_path: Path) -> None:
+    """Metre and millimetre encodings of one physical body mesh in cubic metres."""
+    from cad_fixtures import prism
+    from scpn_reactor_kernels.cad import BrepAssembly
+
+    body = prism()
+    built = BrepAssembly((body,))
+    metre_step = step_bytes(built, {"test": True})
+    millimetre_path = tmp_path / "prism_mm.step"
+    built.to_cadquery().export(str(millimetre_path), unit="M", outputUnit="MM")
+    millimetre_step = millimetre_path.read_bytes()
+    assert metre_step != millimetre_step
+    cadquery = load_backend("cadquery")
+    solid = cadquery.importers.importStep(str(millimetre_path), unit="M").val()
+    expected = 0.06 * 0.09 * (0.14 + 0.02)
+    assert math.isclose(float(solid.Volume()), expected, rel_tol=1e-9)
+    gmsh.initialize(interruptible=False)
+    gmsh.option.setString("Geometry.OCCTargetUnit", "MM")
+    gmsh.finalize()
+    for encoded_step in (metre_step, millimetre_step):
+        # The coarse box mesh also bounds a wrong-unit regression's cost.
+        mesh = gmsh_volume_mesh(encoded_step, 1000.0)
+        assert math.isclose(mesh.total_volume_m3, expected, rel_tol=1e-9)
+        assert len(mesh.entities) == 1
+        assert mesh.node_count > 0
+        assert mesh.element_count > 0
 
 
 def test_tetrahedron_volume_closed_form() -> None:

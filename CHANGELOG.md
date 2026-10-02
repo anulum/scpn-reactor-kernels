@@ -12,6 +12,20 @@ SCPN Reactor Kernels — CHANGELOG
 
 ## [Unreleased]
 
+### Changed
+
+- Package and native distribution `3.0.0.dev0` correct the physical STEP
+  length-unit contract. B-rep values are metres; the writer now declares
+  internal and output units M rather than labelling those values as
+  millimetres. STEP bytes and their digests change. Unit-aware imports in
+  metres and millimetres preserve dimensions and physical volumes.
+- Volume meshing explicitly converts the declared STEP unit to metres
+  inside its owned Gmsh session, including when an earlier caller selected
+  millimetres. Equivalent M and MM files mesh in cubic metres. The
+  caller-session refusal and cleanup contract remains in force. Affected
+  consumers must regenerate their export and mesh identities when adopting
+  the new major version; existing immutable pins are preserved.
+
 ### Added
 
 - Aiming a body, and placing it on a sphere (`geometry_placement`,

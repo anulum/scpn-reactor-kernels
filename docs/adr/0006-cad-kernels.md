@@ -99,3 +99,40 @@ and the writer never wraps inside a string — and a regression test proves
 byte identity across repeated exports and across an interleaved import.
 The correction changes the normalised bytes of every export; no consumer
 was pinned to the earlier form (the group had not been pushed).
+
+## Addendum 2026-10-02 — physical STEP units and import scale
+
+The B-rep coordinate contract is metres. The original assembly exporter
+used CadQuery's default internal unit MM, so its native STEP contexts
+declared millimetres while retaining metre-valued coordinate numbers.
+Physical lengths were therefore 1000 times smaller and volumes one billion
+times smaller. A default-MM round trip compared raw numbers and hid the
+defect; provenance describing metres did not change the native units.
+
+`step_bytes` now passes `unit="M", outputUnit="M"` to the public assembly
+exporter. The writer creates the native unit contexts; the text normaliser
+only changes its existing deterministic fields. Unit-aware CadQuery imports
+into M and MM independently recover the same physical dimensions and
+volumes. Both target-unit imports are interleaved with repeated exports to
+exercise the writer's process-global unit state as well as its counters.
+
+The owned Gmsh session sets `Geometry.OCCTargetUnit` to M before import.
+It honours the native file unit rather than treating every coordinate as
+metres: physically equivalent metre and millimetre encodings of an
+off-centre rectangular prism each mesh to its analytic cubic-metre volume,
+even after an earlier real session selected MM. Existing caller sessions
+are refused before any unit option changes (ADR 0019).
+
+This is a breaking export contract after consumer registration, so both
+distributions advance to `3.0.0.dev0` and the Rust crate to `3.0.0-dev.0`.
+STEP identities and any affected mesh identities must be regenerated at
+adoption. Consumer source commits and inventory digests remain immutable;
+publication and one-consumer-at-a-time adoption are separate operations.
+The CAD kernels retain `native_parity=false`: these tests exercise the
+pinned third-party C++ implementations, not a new independent Rust CAD
+counterpart. Maturity remains `computational_prototype`.
+
+Sources: [CadQuery assembly exporter](https://cadquery.readthedocs.io/en/latest/_modules/cadquery/occ_impl/exporters/assembly.html)
+(`unit` and `outputUnit`, verified against installed 2.8.0) and
+[Gmsh 4.15.2 geometry options](https://gmsh.info/doc/texinfo/gmsh.html#Geometry-options)
+(`Geometry.OCCTargetUnit`, set before import).
