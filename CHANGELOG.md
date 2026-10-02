@@ -14,6 +14,10 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Changed
 
+- The CAD benchmark uses one catalogue for all eleven measured and
+  unavailable operation/backend rows. A missing optional backend during
+  measurement leaves its row unavailable while other operations continue.
+
 - Package and native distribution `3.0.0.dev0` correct the physical STEP
   length-unit contract. B-rep values are metres; the writer now declares
   internal and output units M rather than labelling those values as

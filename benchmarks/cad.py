@@ -17,9 +17,13 @@ normalised STEP bytes, faceting both bodies into closed meshes, and
 meshing the STEP into tetrahedra, placing a ring of twelve identical rods
 off the axis, and placing a latitude of ten identical rods on a sphere with
 each one turned to point at its centre; each sample times one operation and
-the
-cost is reported per operation. The backends are the pinned third-party
-kernels (``cadquery_ocp`` for the first three, ``gmsh`` for the last);
+cost is reported per operation. Body evidence, axial and closed-profile
+revolutions, and sphere/spherical-shell revolutions complete the eleven
+operations. One ordered catalogue defines every operation/backend row in
+both measured and unavailable runs. A missing backend discovered during
+measurement leaves its row unavailable and the other operations continue.
+The backends are the pinned third-party kernels (``cadquery_ocp`` except
+``gmsh`` for tetrahedral meshing);
 there is no Python-floor row because these kernels have no bit-exact
 floor by design (ADR 0006). Nothing measured here is a physics or
 engineering claim.
@@ -45,10 +49,20 @@ from typing import Any, Final
 ROOT: Final = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "src"))
 
-from scpn_reactor_kernels.cad._backend import backend_versions  # noqa: E402
-from scpn_reactor_kernels.errors import CadUnavailableError  # noqa: E402
-
 SCHEMA: Final = "scpn-reactor-kernels.cad-benchmark.v1"
+OPERATION_BACKENDS: Final = (
+    ("brep_build_and_manifest", "cadquery_ocp"),
+    ("step_export_normalised", "cadquery_ocp"),
+    ("facet_two_bodies", "cadquery_ocp"),
+    ("gmsh_volume_mesh", "gmsh"),
+    ("place_ring_of_bodies", "cadquery_ocp"),
+    ("place_aimed_latitude", "cadquery_ocp"),
+    ("assembly_body_evidence", "cadquery_ocp"),
+    ("revolve_axial_profile", "cadquery_ocp"),
+    ("revolve_closed_profile", "cadquery_ocp"),
+    ("revolve_sphere", "cadquery_ocp"),
+    ("revolve_spherical_shell", "cadquery_ocp"),
+)
 LINEAR_DEFLECTION_M: Final = 1.0e-4
 ANGULAR_DEFLECTION_RAD: Final = 0.1
 CHARACTERISTIC_LENGTH_M: Final = 0.02
@@ -95,7 +109,8 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
     Returns
     -------
     list of (name, backend, callable)
-        Each callable performs one operation and returns a checksum.
+        Catalogue order is preserved; each callable performs its named
+        operation and returns a checksum.
 
     Raises
     ------
@@ -234,18 +249,22 @@ def operations() -> list[tuple[str, str, Callable[[], float]]]:
         )
         return sum(body.volume_m3 for body in bodies)
 
+    runners = (
+        build,
+        export,
+        facet,
+        volume_mesh,
+        place_ring,
+        place_aimed_latitude,
+        evidence,
+        revolve_profile,
+        revolve_closed_profile,
+        revolve_sphere,
+        revolve_spherical_shell,
+    )
     return [
-        ("brep_build_and_manifest", "cadquery_ocp", build),
-        ("step_export_normalised", "cadquery_ocp", export),
-        ("facet_two_bodies", "cadquery_ocp", facet),
-        ("gmsh_volume_mesh", "gmsh", volume_mesh),
-        ("place_ring_of_bodies", "cadquery_ocp", place_ring),
-        ("place_aimed_latitude", "cadquery_ocp", place_aimed_latitude),
-        ("assembly_body_evidence", "cadquery_ocp", evidence),
-        ("revolve_axial_profile", "cadquery_ocp", revolve_profile),
-        ("revolve_closed_profile", "cadquery_ocp", revolve_closed_profile),
-        ("revolve_sphere", "cadquery_ocp", revolve_sphere),
-        ("revolve_spherical_shell", "cadquery_ocp", revolve_spherical_shell),
+        (name, backend, run)
+        for (name, backend), run in zip(OPERATION_BACKENDS, runners, strict=True)
     ]
 
 
@@ -299,6 +318,8 @@ def provenance() -> dict[str, Any]:
     dict[str, Any]
         Interpreter, platform, CPU model, commit, host load and back-end versions.
     """
+    from scpn_reactor_kernels.cad._backend import backend_versions
+
     cpu_model = "unknown"
     with contextlib.suppress(OSError):
         for line in Path("/proc/cpuinfo").read_text(encoding="utf-8").splitlines():
@@ -344,6 +365,8 @@ def main(argv: list[str] | None = None) -> int:
     int
         0 on completion.
     """
+    from scpn_reactor_kernels.errors import CadUnavailableError
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--warmup", type=int, default=2)
     parser.add_argument("--repeats", type=int, default=10)
@@ -354,16 +377,7 @@ def main(argv: list[str] | None = None) -> int:
     try:
         timed = operations()
     except CadUnavailableError as exc:
-        for name, backend in (
-            ("brep_build_and_manifest", "cadquery_ocp"),
-            ("step_export_normalised", "cadquery_ocp"),
-            ("facet_two_bodies", "cadquery_ocp"),
-            ("gmsh_volume_mesh", "gmsh"),
-            ("place_ring_of_bodies", "cadquery_ocp"),
-            ("assembly_body_evidence", "cadquery_ocp"),
-            ("revolve_axial_profile", "cadquery_ocp"),
-            ("revolve_closed_profile", "cadquery_ocp"),
-        ):
+        for name, backend in OPERATION_BACKENDS:
             results.append(
                 {
                     "name": name,
@@ -374,12 +388,19 @@ def main(argv: list[str] | None = None) -> int:
             )
     else:
         for name, backend, run in timed:
+            try:
+                stats = measure(run, args.warmup, args.repeats)
+            except CadUnavailableError as exc:
+                stats = None
+                status = f"unavailable: {exc}"
+            else:
+                status = "measured"
             results.append(
                 {
                     "name": name,
                     "backend": backend,
-                    "stats": measure(run, args.warmup, args.repeats),
-                    "status": "measured",
+                    "stats": stats,
+                    "status": status,
                     "requires": "optional extra scpn-reactor-kernels[cad]",
                 }
             )

@@ -136,3 +136,13 @@ Sources: [CadQuery assembly exporter](https://cadquery.readthedocs.io/en/latest/
 (`unit` and `outputUnit`, verified against installed 2.8.0) and
 [Gmsh 4.15.2 geometry options](https://gmsh.info/doc/texinfo/gmsh.html#Geometry-options)
 (`Geometry.OCCTargetUnit`, set before import).
+
+## Addendum 2026-10-02 — benchmark operation catalogue
+
+The benchmark has eleven operations after the placement, evidence and
+revolution extensions. One ordered catalogue supplies the operation/backend
+identities to both measured and unavailable output. Runner binding refuses
+a length mismatch. If an optional backend is missing during a timed
+operation, that row is unavailable and remaining operations continue.
+Domain and unexpected runtime errors are not converted into availability
+results. The v1 output schema and the existing physical kernels are unchanged.

@@ -320,6 +320,8 @@ by a script under `benchmarks/` per the ecosystem benchmark standard
 (warm-up, repeated samples, percentiles, one row per backend, provenance in
 the committed artefact) and is labelled with the host it was measured on.
 Nothing there is a physics or engineering claim.
+The CAD CLI retains all eleven operation/backend rows when the optional
+backends are absent; unavailable rows carry no timing statistics.
 
 ## Contributing, governance, support
 

@@ -117,12 +117,14 @@ the default.
 
 Artefact: `benchmarks/results/cad.local.json` (schema
 `scpn-reactor-kernels.cad-benchmark.v1`, generated
-2026-10-02T15:05:53.219664+00:00).
+2026-10-02T18:19:33.255224+00:00).
 
-The measured package is `3.0.0.dev0`, installed from the complete precommit
-candidate based on `790a70fd89a74ef4b138d19043f9f0fa49e9a194`.
-The artefact's `platform.commit` is empty; no candidate Git object is
-claimed. The corrected runtime files retain these SHA-256 identities:
+The measured package is `3.0.0.dev0`. This run used the canonical source
+package from committed STEP producer `90301714852b4fbf6264fda649d42e1863109451`
+and the benchmark catalogue correction in its working tree. The artefact
+records that base commit; it does not claim a later commit. Benchmark
+source SHA-256 is `e7331a4855d7c23e24a28e9cd16d328db9526994be15aa3e303cb8a922caebe2`.
+The unchanged physical runtime files retain these SHA-256 identities:
 
 - `cad/step.py`: `b7c13d06054bd652e5f2750c8a1b86eaab16d9f7463696baabe4c29241f1eefb`.
 - `cad/volume_mesh.py`: `12b95aa1eae0d5d979d9ddeb2fb66c7f8ec7f16123c157e918f641e4f7139249`.
@@ -131,7 +133,7 @@ Host: 11th Gen Intel(R) Core(TM) i5-11600K @ 3.90GHz,
 Linux-7.0.0-34-generic-x86_64-with-glibc2.39, Python 3.12.3.
 Backends: CadQuery 2.8.0, OCP 7.9.3.1 and Gmsh 4.15.2.
 Cores were not isolated. The stock artefact captures its load field after
-the measured pass; 18.77 is end-of-pass context despite the historical
+the measured pass; 31.70 is end-of-pass context despite the historical
 `load_average_1min_at_start` name. **This is a shared-host functional and
 local regression measurement, with no production-performance or speedup
 claim and no comparison against the earlier run.**
@@ -147,29 +149,37 @@ samples; sphere and shell use sixteen polar rings.
 Actual independent prechecks exercised all eleven operations. Declared
 analytic volume is 0.008011061266653975 cubic metres; the coarse Gmsh mesh
 measured 0.007964397256728352, a relative difference of
-0.005824947328746785 within the predeclared 0.02 mesh bound. This tests
+0.005824947328747 within the predeclared 0.02 mesh bound. This tests
 metre-valued geometry and does not calibrate a physical reactor. STEP uses
 native metre contexts, and Gmsh converts declared STEP units to metres.
+
+One ordered catalogue supplies all eleven rows in successful and
+unavailable runs. Twelve real public CLI cases passed across entirely
+absent CAD, CadQuery/OCP without Gmsh, and the complete pinned backend
+composition. A missing Gmsh backend leaves only its operation unavailable;
+the ten CadQuery/OCP operations still measure. Unavailable rows retain
+their operation/backend identity and contain no invented timing.
 
 There is one applicable pinned native backend per operation. CAD has no
 Python floor or Rust counterpart (ADR 0006); both manifest entries retain
 `native_parity: false`. Faceting and reference meshes for the evidence row
 are built outside its timed region. Full raw percentiles, extrema and
-throughput remain in the artefact.
+throughput remain in the artefact. Other benchmark artefacts retain their
+original source and compiled-image provenance.
 
 | Operation | Backend | P50 ms | P95 ms | P99 ms | mean ms | operations/s | status |
 |---|---|---|---|---|---|---|---|
-| `brep_build_and_manifest` | `cadquery_ocp` | 8.327 | 9.487 | 9.487 | 8.368 | 120.093 | measured |
-| `step_export_normalised` | `cadquery_ocp` | 4.244 | 6.186 | 6.186 | 4.513 | 235.619 | measured |
-| `facet_two_bodies` | `cadquery_ocp` | 41.129 | 47.172 | 47.172 | 41.805 | 24.314 | measured |
-| `gmsh_volume_mesh` | `gmsh` | 274.752 | 415.886 | 415.886 | 295.996 | 3.640 | measured |
-| `place_ring_of_bodies` | `cadquery_ocp` | 2.708 | 3.835 | 3.835 | 3.044 | 369.244 | measured |
-| `place_aimed_latitude` | `cadquery_ocp` | 3.446 | 4.293 | 4.293 | 3.564 | 290.154 | measured |
-| `assembly_body_evidence` | `cadquery_ocp` | 6.613 | 8.655 | 8.655 | 6.736 | 151.227 | measured |
-| `revolve_axial_profile` | `cadquery_ocp` | 8.007 | 10.186 | 10.186 | 8.240 | 124.892 | measured |
-| `revolve_closed_profile` | `cadquery_ocp` | 9.895 | 11.169 | 11.169 | 10.202 | 101.066 | measured |
-| `revolve_sphere` | `cadquery_ocp` | 12.755 | 14.853 | 14.853 | 13.256 | 78.398 | measured |
-| `revolve_spherical_shell` | `cadquery_ocp` | 19.729 | 25.037 | 25.037 | 20.235 | 50.687 | measured |
+| `brep_build_and_manifest` | `cadquery_ocp` | 16.840 | 19.241 | 19.241 | 17.289 | 59.384 | measured |
+| `step_export_normalised` | `cadquery_ocp` | 7.478 | 9.491 | 9.491 | 7.649 | 133.720 | measured |
+| `facet_two_bodies` | `cadquery_ocp` | 62.956 | 123.843 | 123.843 | 73.815 | 15.884 | measured |
+| `gmsh_volume_mesh` | `gmsh` | 416.880 | 869.548 | 869.548 | 510.337 | 2.399 | measured |
+| `place_ring_of_bodies` | `cadquery_ocp` | 2.349 | 3.329 | 3.329 | 2.655 | 425.756 | measured |
+| `place_aimed_latitude` | `cadquery_ocp` | 4.211 | 6.418 | 6.418 | 4.365 | 237.494 | measured |
+| `assembly_body_evidence` | `cadquery_ocp` | 5.678 | 6.667 | 6.667 | 5.586 | 176.131 | measured |
+| `revolve_axial_profile` | `cadquery_ocp` | 10.819 | 13.657 | 13.657 | 11.143 | 92.432 | measured |
+| `revolve_closed_profile` | `cadquery_ocp` | 10.367 | 11.191 | 11.191 | 10.460 | 96.456 | measured |
+| `revolve_sphere` | `cadquery_ocp` | 14.969 | 17.139 | 17.139 | 15.058 | 66.805 | measured |
+| `revolve_spherical_shell` | `cadquery_ocp` | 22.734 | 28.518 | 28.518 | 23.696 | 43.987 | measured |
 
 ## Fixed-runner (CI) number
 

@@ -505,9 +505,13 @@ the consumer's actual pin. Maturity remains `computational_prototype`.
   zipping four sequences of different lengths into a short answer; the
   record is frozen after it has been checked.
 - **Benchmark**: `benchmarks/cad.py` per the ecosystem benchmark standard
-  (seven operations, back-end versions in the provenance); results in
+  (eleven operations, back-end versions in the provenance); results in
   `docs/benchmarks.md` and the committed local artefact
   `benchmarks/results/cad.local.json`.
+  The public CLI regression exercises entirely absent, CadQuery-only and
+  fully installed backend compositions. Every output retains the same
+  eleven identities; unavailable rows have null statistics, and measured
+  rows retain finite ordered percentiles and their throughput relation.
 
 Bounded claims — what is NOT claimed:
 
