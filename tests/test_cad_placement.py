@@ -89,8 +89,8 @@ def test_translation_keeps_the_identity_and_may_rename() -> None:
     assert renamed.material_identifier == body.material_identifier
 
 
-def test_placed_body_facets_to_the_translated_tier_g1_mesh() -> None:
-    """Faceting a placed solid agrees with translating the G1 mesh in volume."""
+def test_placed_body_facets_to_the_translated_reference_mesh() -> None:
+    """Faceting and the translated analytic mesh agree in volume."""
     body = cylinder()
     placed = translate_brep(body, OFFSET_M[0], OFFSET_M[1], 0.0)
     faceted = facet_body(placed, 1.0e-4, 0.1)
@@ -110,7 +110,7 @@ def test_placed_body_facets_to_the_translated_tier_g1_mesh() -> None:
     assert math.isclose(0.5 * (low[1] + high[1]), OFFSET_M[1], abs_tol=1.0e-6)
 
 
-def test_ring_of_placed_bodies_assembles_with_the_tier_g1_centres() -> None:
+def test_ring_of_placed_bodies_assembles_with_the_reference_mesh_centres() -> None:
     """One solid placed once per ring centre gives a valid assembly."""
     count = 12
     radius = 0.5

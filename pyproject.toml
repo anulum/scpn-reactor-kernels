@@ -18,7 +18,7 @@ requires-python = ">=3.12"
 license = "AGPL-3.0-or-later"
 dynamic = ["version"]
 
-# The CAD kernel group (tier G2) sits behind an optional extra: the pinned
+# The CAD kernel group sits behind an optional extra: the pinned
 # third-party B-rep kernel (CadQuery/OCP) and the volume mesher (gmsh).
 # Current trame-vtk requires trame-client <4; Trame 4 requires client >=4.
 [project.optional-dependencies]

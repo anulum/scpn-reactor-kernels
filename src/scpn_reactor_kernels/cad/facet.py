@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SCPN Reactor Kernels — faceting of B-rep solids into closed meshes
 
-"""Faceting of B-rep solids into the tier-G1 closed-mesh contract.
+"""Faceting of B-rep solids into the closed triangle-mesh contract.
 
 The OpenCASCADE incremental mesher (``BRepMesh_IncrementalMesh`` through
 CadQuery ``Shape.tessellate``) facets every face of a solid with a linear
@@ -20,8 +20,8 @@ the true one by the inscribed-chord deficit: for a circular profile of
 radius ``r`` and deflection ``d`` the relative deficit is bounded by
 ``2 d / r`` (the exact deficit ``1 - sin(theta) / theta`` of a chord angle
 ``theta`` with sagitta ``d = r (1 - cos(theta/2))`` is below ``4 d / (3 r)``
-for small angles). The G1 kernels' inscribed regular polygons obey the
-exact ratio :func:`inscribed_polygon_area_ratio`, evaluated from the
+for small angles). The analytic mesh kernels' inscribed regular polygons
+obey the exact ratio :func:`inscribed_polygon_area_ratio`, evaluated from the
 library's unit circle. Nothing here describes a device.
 """
 

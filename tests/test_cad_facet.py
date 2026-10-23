@@ -67,17 +67,19 @@ def test_assembly_facets_in_order() -> None:
     assert [mesh.name for mesh in meshes] == ["inner", "outer"]
 
 
-def test_inscribed_polygon_ratio_matches_the_g1_tessellation() -> None:
-    """The exact ratio (n / 2 pi) sin(2 pi / n) equals the G1 prism volume ratio."""
+def test_inscribed_polygon_ratio_matches_the_analytic_tessellation() -> None:
+    """The polygon ratio equals the analytic prism mesh's volume ratio."""
     for segments in (8, 16, 64):
         ratio = inscribed_polygon_area_ratio(segments)
         assert math.isclose(
             ratio, segments / (2.0 * math.pi) * math.sin(2.0 * math.pi / segments)
         )
         vertices, faces = cylinder_solid(0.05, 0.0, 0.3, segments)
-        g1 = TriangleMesh("g1", "r", "m", vertices, faces)
+        reference_mesh = TriangleMesh("reference_mesh", "r", "m", vertices, faces)
         analytic = math.pi * 0.05**2 * 0.3
-        assert math.isclose(g1.signed_volume_m3(), analytic * ratio, rel_tol=1.0e-12)
+        assert math.isclose(
+            reference_mesh.signed_volume_m3(), analytic * ratio, rel_tol=1.0e-12
+        )
 
 
 def test_weld_merges_exact_duplicates_only() -> None:

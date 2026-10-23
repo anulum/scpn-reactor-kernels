@@ -29,7 +29,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Final
 
-MARKDOWN_LINK: Final = re.compile(r"\[[^\]]*\]\(([^)\s]+)\)")
+MARKDOWN_LINK: Final = re.compile(r"\[[^\]]*\]\((<[^>\n]*>|[^)\s]+)\)")
 EXTERNAL_TARGET: Final = re.compile(r"^(https?:|mailto:|#)")
 SKIPPED_DIRECTORIES: Final = frozenset({".git", ".venv", "__pycache__"})
 
@@ -133,6 +133,8 @@ def check_docs(root: Path) -> list[str]:
             continue
         for match in MARKDOWN_LINK.finditer(text):
             target = match.group(1)
+            if target.startswith("<"):
+                target = target[1:-1]
             if EXTERNAL_TARGET.match(target):
                 continue
             resolved = (path.parent / target.split("#", 1)[0]).resolve()

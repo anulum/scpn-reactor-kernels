@@ -15,7 +15,7 @@ generalises the unit circle of ADR 0002 to any point count.
 
 ## Context
 
-The tier-G1 primitives build every body centred on the axis. Real machines
+The analytic mesh primitives build every body centred on the axis. Real machines
 are not axisymmetric down to the last conductor: a plasma-focus cathode is a
 squirrel cage of discrete rods on a coaxial circle, a coil set has feed
 conductors, a vessel has ports. Until this record a device repository facing

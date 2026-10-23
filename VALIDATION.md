@@ -387,11 +387,11 @@ none of it is skipped there):
   non-JSON extras and a writer output without the header entities are
   refused.
 - **Faceting** (`facet.py`): the faceted cylinder and tube validate as
-  closed, outward-oriented `TriangleMesh` bodies (the G1 contract); the
+  closed, outward-oriented `TriangleMesh` bodies (the analytic mesh contract); the
   faceted volume lies below the analytic one within the declared bound
   `2 d / r` (measured deficit `2.0e-4` against the bound `4.0e-3` at
   `d = 1e-4 m`, `r = 0.05 m`); the tube's area is within 1 % of the
-  analytic one; the exact inscribed-polygon ratio equals the G1 prism
+  analytic one; the exact inscribed-polygon ratio equals the analytic mesh prism
   volume ratio to `1e-12` for 8, 16 and 64 segments; the weld merges only
   exact duplicates and keeps first-occurrence order; non-positive
   deflections are refused; the faceted bodies pass through the STL
@@ -425,10 +425,10 @@ the consumer's actual pin. Maturity remains `computational_prototype`.
   area stay within `1e-9` relative of them; the bounding box shifts by
   exactly the offset in every component; the identity (role, material
   token) survives and the caller may rename a member of a ring; faceting
-  a placed solid agrees in volume with the tier-G1 mesh of the same body
+  a placed solid agrees in volume with the analytic mesh of the same body
   translated by the same offset, within the exact inscribed-polygon
   deficit bound of the reference tessellation; a ring built on the
-  tier-G1 `ring_offsets` puts every member's box centre on the circle to
+  analytic mesh `ring_offsets` puts every member's box centre on the circle to
   `1e-9`; non-finite offsets are named in the refusal, and the ring
   refuses an empty centre list, a mismatched name count and repeated
   names. One test states the boundary of the evidence class explicitly:
@@ -436,12 +436,12 @@ the consumer's actual pin. Maturity remains `computational_prototype`.
   of identical placed bodies are NOT required to be equal to one another
   — only to agree with the analytic form within the declared tolerance.
 - **Aimed placement** (`placement.py`, ADR 0018): a body placed with the
-  tier-G1 aiming rotation carries the analytic closed forms unchanged;
+  analytic mesh aiming rotation carries the analytic closed forms unchanged;
   over the thirty placements of a printed node set its measured volume
   and area depart from those forms by at most `4.0e-16` relative,
   measured; the frame the back-end builds from the rotation departs from
   the rotation by at most `1.1102230246251565e-16` in any component,
-  which is the assertion that says both tiers are placed in one frame;
+  which is the assertion that says both representations are placed in one frame;
   the box of a placed cylinder has its midpoint at `R - L/2` from the
   centre of the sphere rather than `R + L/2`, which is what aiming it
   inward means; and a scaling, a reflection, a non-finite entry, a
@@ -454,11 +454,11 @@ the consumer's actual pin. Maturity remains `computational_prototype`.
   the reference environment); a two-sample constant profile carries the
   identical analytic references as the extruded cylinder, and a pair of
   them the identical references as the extruded tube; faceting the
-  revolved solid agrees in volume with the tier-G1 mesh of the same
+  revolved solid agrees in volume with the analytic mesh of the same
   profile within the exact polygon deficit of the reference count, which
-  is the test that the two tiers describe one body rather than two similar
+  is the test that the two representations describe one body rather than two similar
   ones; the body assembles and its manifest record carries the usual
-  measures; and the profile contract is the tier-G1 contract, reused
+  measures; and the profile contract is the analytic mesh contract, reused
   rather than restated, so every rejection carries the geometry group's
   wording and sample index under the CAD error type.
 - **Bodies that close on the axis** (`profiles.py`:
@@ -466,9 +466,9 @@ the consumer's actual pin. Maturity remains `computational_prototype`.
   revolved cone agree with the same two closed forms within the declared
   tolerance, with no new formula on either side — a pole contributes no
   disc, so the cone's area carries exactly one disc term and the
-  separatrix's none. Faceting the closed body agrees with its tier-G1
+  separatrix's none. Faceting the closed body agrees with its analytic mesh
   twin, which is the same two-tiers-one-body test the open profile
-  carries. The contract is again the tier-G1 contract under the CAD error
+  carries. The contract is again the analytic mesh contract under the CAD error
   type.
 - **A measured limit of the revolution** (`profiles.py`, ADR 0012
   addendum): the revolved volume stops matching the exact frustum sum when
@@ -476,10 +476,10 @@ the consumer's actual pin. Maturity remains `computational_prototype`.
   the radii are well separated, between 5e-5 and 3e-4 as they crowd, on a
   deliberately flat-topped polyline. The limit is the CAD back-end's, not
   the closed profile's: the open primitive shows the same numbers for the
-  same shape lifted off the axis, and the tier-G1 tessellation is exact
+  same shape lifted off the axis, and the analytic mesh tessellation is exact
   for every one of those profiles. A test pins the behaviour on both sides
   of the threshold, for the open and the closed primitive, and asserts
-  that tier G1 builds them all. No bound is promised; what protects a
+  that the analytic mesh implementation builds them all. No bound is promised; what protects a
   consumer is the evidence kernel, which refuses a body whose measured
   volume misses its analytic form by more than the measure tolerance.
 - **Welding at a pole** (`facet.py`, ADR 0012): faceting a body that comes
@@ -499,7 +499,7 @@ the consumer's actual pin. Maturity remains `computational_prototype`.
 - **Body evidence** (`evidence.py`): the checked record of one body
   carries every measured value next to the bound it is under, and refuses
   at construction — each of the four bounds (both measure tolerances, the
-  chord deficit of the faceting, the polygon deficit against the tier-G1
+  chord deficit of the faceting, the polygon deficit against the analytic
   mesh) is proven to raise, naming the body and the bound; the assembly
   form keeps the body order and refuses a ragged input rather than
   zipping four sequences of different lengths into a short answer; the
@@ -543,7 +543,7 @@ Design record: `docs/adr/0014-cad-spherical-bodies.md`.
   is what a sphere's volume does and a mistaken construction would not.
 - Both builders refusing by the caller's own field names. The first draft
   of the shell let the profile builder report both radii as `radius_m`,
-  so the two tiers refused the same input differently; a test asserts the
+  so the two representations refused the same input differently; a test asserts the
   names and the builder now validates them itself.
 
 ## Bodies without curvature
@@ -561,7 +561,7 @@ around them.
 
 What is exercised, under the same 100 % statement-and-branch gate:
 
-- The tier-G1 prism: exactly 8 vertices and 12 triangles, closed and
+- The analytic mesh prism: exactly 8 vertices and 12 triangles, closed and
   outward-oriented under the mesh contract, its volume and area equal to
   the analytic closed forms, centred on the axis in `x` and `y` and
   spanning its declared axial extent, each of its three dimensions

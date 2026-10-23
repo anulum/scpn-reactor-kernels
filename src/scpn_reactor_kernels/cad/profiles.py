@@ -8,13 +8,13 @@
 
 """B-rep solids of revolution through a sampled axial radius profile.
 
-The tier-G2 twin of :mod:`scpn_reactor_kernels.geometry.profiles`. The
+The CAD twin of :mod:`scpn_reactor_kernels.geometry.profiles`. The
 profile contract is that module's, unchanged: an ordered sequence of
 ``(z, radius)`` samples, at least two, strictly increasing in ``z``, radii
 strictly positive, and the surface linear between samples. The B-rep is
 built by revolving the polyline through those samples about the axis, so
-the two tiers describe the same body — the tessellation is the inscribed
-approximation of exactly this solid.
+the two representations describe the same body. The tessellation is an
+inscribed approximation of exactly this solid.
 
 The analytic closed forms carried by the body are the geometry group's
 frustum-stack sums, which are exact for a linear profile, plus the end

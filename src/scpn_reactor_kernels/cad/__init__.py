@@ -4,15 +4,15 @@
 # © Code 2020–2026 Miroslav Šotek. All rights reserved.
 # ORCID: 0009-0009-3560-0851
 # Contact: www.anulum.li | protoscience@anulum.li
-# SCPN Reactor Kernels — CAD kernel group (tier G2)
+# SCPN Reactor Kernels — CAD kernel group
 
-"""CAD kernels (tier G2): B-rep solids, assemblies, STEP, faceting, volume mesh.
+"""CAD kernels: B-rep solids, assemblies, STEP, faceting, volume mesh.
 
 Optional group behind the ``cad`` extra (CadQuery/OCP and gmsh). The
-B-rep solids are the same primitives as the tier-G1 meshes, built by the
+B-rep solids are the same primitives as the analytic meshes, built by the
 pinned OpenCASCADE kernel and checked against the analytic closed forms;
 the assembly manifest is the record, the normalised STEP file its
-deterministic export; the faceting returns the G1 closed-mesh contract;
+deterministic export; the faceting returns the closed triangle-mesh contract;
 the gmsh volume mesh is the entry point of the simulation lanes. Nothing
 here describes a device. Design record: ADR 0006.
 """

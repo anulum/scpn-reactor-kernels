@@ -8,11 +8,11 @@
 
 """Fail-closed evidence of a B-rep body against its analytic closed form.
 
-A tier-G2 device model is only worth its record if every body in it is
+A CAD device model is only worth its record if every body in it is
 checked, and the check is the same for every family: the B-rep kernel's
 volume and area against the analytic closed forms within the group's
 declared tolerance, and the faceted volume against both its analytic form
-and the tier-G1 mesh of the same body. None of that is device knowledge,
+and the analytic mesh of the same body. None of that is device knowledge,
 so it lives here rather than once per device repository: a family owns
 its schema identity, its body composition and its non-claims, and
 consumes the evidence.
@@ -21,7 +21,7 @@ consumes the evidence.
 caller must say which.** A body with a curved surface is faceted by
 inscribed chords, so its faceted volume falls below the analytic one by a
 deficit bounded by ``2 d / r`` at the body's smallest circular radius,
-and its tier-G1 twin is an inscribed polygon prism bounded by the exact
+and its analytic mesh twin is an inscribed polygon prism bounded by the exact
 polygon-deficit ratio. A body with **no** curved surface has neither
 bound and needs neither: the mesher returns the body itself, so the only
 deviation is round-off, it can fall on either side of the analytic value,
@@ -269,12 +269,12 @@ def _require_within(
 
 @dataclass(frozen=True, slots=True)
 class BodyEvidence:
-    """One B-rep body checked against its analytic form and its G1 mesh.
+    """One B-rep body checked against its analytic form and its analytic mesh.
 
     Parameters
     ----------
     name, role, material_identifier
-        Body identity, identical to the tier-G1 body of the same name.
+        Body identity, identical to the analytic mesh body of the same name.
     analytic_volume_m3, brep_volume_m3
         Closed-form volume and the B-rep kernel's measure.
     volume_relative_error
@@ -298,7 +298,7 @@ class BodyEvidence:
         linear deflection ``d``; for a body with no curved surface it is
         :data:`~scpn_reactor_kernels.cad.facet.PLANAR_FACETING_TOLERANCE`.
     reference_mesh_volume_m3
-        Signed volume of the tier-G1 mesh at the reference segment count.
+        Signed volume of the analytic mesh at the reference segment count.
     mesh_volume_relative_difference
         ``|V_faceted - V_reference| / V_analytic``.
     mesh_volume_difference_bound
@@ -517,7 +517,7 @@ def _require_matching_identity(
     faceted
         The faceted mesh said to be of that body.
     reference_mesh
-        The tier-G1 mesh said to be of that body.
+        The analytic mesh said to be of that body.
 
     Raises
     ------
@@ -572,7 +572,7 @@ def body_evidence(
     faceted
         The faceted closed mesh of the body.
     reference_mesh
-        The tier-G1 mesh of the same body at the reference segment count.
+        The analytic mesh of the same body at the reference segment count.
     linear_deflection_m
         The mesher's linear deflection. Ignored when the body has no
         curved surface, because its faceting does not depend on it.
@@ -639,7 +639,7 @@ def assembly_evidence(
     faceted
         The faceted meshes of the bodies, in the same order.
     reference_meshes
-        The tier-G1 meshes of the same bodies, in the same order.
+        The analytic meshes of the same bodies, in the same order.
     linear_deflection_m
         The mesher's linear deflection.
     segments

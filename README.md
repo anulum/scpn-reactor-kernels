@@ -148,9 +148,9 @@ CadQuery, keep them in an ordered assembly with a canonical manifest,
 export a deterministic STEP file in metres (fixed header time stamp, renumbered
 assembly identifiers, provenance in the description), facet the solids
 back into the closed-mesh contract, place a body off the axis or once per
-centre of a ring (ADR 0008, the tier-G2 counterpart of the tessellating
+centre of a ring (ADR 0008, the CAD counterpart of the tessellating
 placement, on the same circle points), revolve a body whose radius varies
-along the axis from the same profile the tessellating tier uses (ADR 0011),
+along the axis from the same profile the analytic mesh implementation uses (ADR 0011),
 check each body fail-closed against
 its analytic forms, its chord-deficit bound and its tessellated twin (ADR
 0009), and mesh a STEP assembly into tetrahedra with gmsh. Their measures are checked against the analytic

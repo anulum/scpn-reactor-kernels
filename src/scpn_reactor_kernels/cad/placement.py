@@ -6,14 +6,14 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SCPN Reactor Kernels — placement of B-rep bodies off the axis
 
-"""Placement of B-rep solids away from the device axis (tier G2).
+"""Placement of B-rep solids away from the device axis.
 
 The B-rep constructors in :mod:`scpn_reactor_kernels.cad.solids` build
 every solid centred on ``z``, exactly as their tessellating twins do.
 Assemblies that carry bodies off the axis — the rods of a squirrel-cage
 cathode, a ring of feed conductors, a set of ports — need the same
-placement in tier G2 as :mod:`scpn_reactor_kernels.geometry.placement`
-gives tier G1, and for the same reason: a device repository must never
+placement in CAD as :mod:`scpn_reactor_kernels.geometry.placement`
+gives analytic meshes, and for the same reason: a device repository must never
 re-implement geometry.
 
 The operation is a rigid translation, so the analytic closed forms of the
@@ -31,10 +31,10 @@ What this kernel declares is therefore the honest pair: the analytic
 measures are carried over exactly, the placed solid's measured volume and
 area stay within the declared tolerance of them, and the bounding box
 shifts by exactly the offset. The centres of a ring of identical bodies
-come from the tier-G1
+come from the analytic mesh
 :func:`~scpn_reactor_kernels.geometry.placement.ring_offsets`, which is
 the deterministic circle of the geometry group — one set of centres
-serves both tiers. Nothing here describes a device.
+serves both representations. Nothing here describes a device.
 """
 
 from __future__ import annotations
@@ -178,8 +178,8 @@ def place_brep(
         The rotation, normally from
         :func:`~scpn_reactor_kernels.geometry.placement.aim_rotation` or
         :func:`~scpn_reactor_kernels.geometry.placement.inward_aim`. The
-        **same** rotation the tier-G1 kernel uses, so the two tiers place
-        one body in one frame.
+        **same** rotation the analytic mesh kernel uses, so both representations
+        place one body in one frame.
     centre
         Where the body's origin lands, in metres.
     name
@@ -205,7 +205,7 @@ def place_brep(
     are those of the rotation, which is how the B-rep back-end takes a
     rigid motion. It re-orthogonalises that frame; measured over thirty
     bodies placed on the latitudes of a sphere, the frame it builds
-    departs from the tier-G1 rotation by at most ``1.11e-16`` in any
+    departs from the analytic mesh rotation by at most ``1.11e-16`` in any
     component.
 
     OpenCASCADE stays a pinned third-party kernel and is not the

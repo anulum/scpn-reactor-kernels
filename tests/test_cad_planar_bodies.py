@@ -36,7 +36,7 @@ MEASURED_WORST_DEVIATION = 2.581e-16
 
 
 def reference_prism() -> TriangleMesh:
-    """Return the tier-G1 mesh of the fixture prism."""
+    """Return the analytic mesh of the fixture prism."""
     vertices, faces = rectangular_prism(*PRISM_SIDES_M, *PRISM_EXTENT_M)
     return TriangleMesh(
         name="slab",

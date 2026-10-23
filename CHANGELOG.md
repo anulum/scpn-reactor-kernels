@@ -14,6 +14,13 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Changed
 
+- Documentation validation recognises angle-enclosed Markdown destinations,
+  including paths with spaces and parentheses, and still refuses missing files.
+- Geometry and CAD documentation, native API descriptions, source metadata
+  and regression names consistently describe analytic meshes and B-rep CAD.
+  Numerical kernels, public symbols and machine contracts are unchanged;
+  the generated inventory records the updated source descriptions.
+
 - The CAD benchmark uses one catalogue for all eleven measured and
   unavailable operation/backend rows. A missing optional backend during
   measurement leaves its row unavailable while other operations continue.
@@ -65,11 +72,11 @@ SCPN Reactor Kernels — CHANGELOG
   The roll about the aimed axis is a convention, not a consequence, and
   the record says so: a direction fixes two of three degrees of freedom.
 
-  Tier G2 is handed the same rotation, not a second one. The frame the
+  CAD is handed the same rotation, not a second one. The frame the
   B-rep back-end builds from it departs by at most
   `1.1102230246251565e-16` in any component, and its measures of the
   thirty placed solids depart from the analytic forms by at most
-  `4.0e-16` relative. In tier G1 the corresponding drift over the same
+  `4.0e-16` relative. For analytic meshes the corresponding drift over the same
   thirty placements is `5.1e-14` in volume and `1.0e-15` in area.
 
 - Sine and cosine of an angle a source prints (`geometry_unit_circle`,
@@ -415,7 +422,7 @@ SCPN Reactor Kernels — CHANGELOG
   closed forms are exposed — these bodies are inscribed polyhedra, and the
   library already gives the exact volume of the body actually built.
 - B-rep spherical bodies `cad_spheres`
-  (`src/scpn_reactor_kernels/cad/spheres.py`, ADR 0014): the tier-G2 twins.
+  (`src/scpn_reactor_kernels/cad/spheres.py`, ADR 0014): the CAD twins.
   The shell's generating polyline touches the axis along two segments, where
   the cavity's poles sit inside the outer body, and there is no way to bound
   the region without them; the back-end was measured to revolve it exactly,
@@ -437,13 +444,13 @@ SCPN Reactor Kernels — CHANGELOG
 
 
 - CAD axial profile kernel `cad_profiles`
-  (`src/scpn_reactor_kernels/cad/profiles.py`, ADR 0011): the tier-G2 twin of
+  (`src/scpn_reactor_kernels/cad/profiles.py`, ADR 0011): the CAD twin of
   `geometry_profiles`, revolving the closed polyline through the profile's
   samples about the axis. The profile contract is not restated but imported:
   the same validators, the same rules, the same messages, surfacing under the
-  CAD error type, so a caller who moves a profile between tiers meets one
+  CAD error type, so a caller who moves a profile between representations meets one
   contract rather than two that could drift. The analytic references are the
-  tier-G1 frustum-stack closed forms plus the end discs or annuli, exact for a
+  analytic mesh frustum-stack closed forms plus the end discs or annuli, exact for a
   linear profile, and the back-end agrees with them to `1e-16` on the solid
   and `2e-15` on the tube against a `1e-9` tolerance. A test proves the two
   tiers describe one body: faceting the revolved solid agrees in volume with
@@ -456,7 +463,7 @@ SCPN Reactor Kernels — CHANGELOG
   (`src/scpn_reactor_kernels/geometry/profiles.py`, ADR 0010): surfaces of
   revolution through a sampled `(z, radius)` profile — a closed solid, a
   closed tube between two aligned profiles, and the exact frustum-stack
-  closed forms of the resulting body. Every tier-G1 primitive so far built a
+  closed forms of the resulting body. Every analytic mesh primitive so far built a
   body of constant radius; a magnetic mirror confines a flux tube, whose
   radius is a function of the field along the axis, and the filed source for
   that family prints a plasma radius and a magnet bore that a body of
@@ -485,7 +492,7 @@ SCPN Reactor Kernels — CHANGELOG
   from the geometry alone, without the triangulation and without the shape
   tolerance, so it is the exact box and does not depend on whether an
   unrelated kernel has run over the body (regression test in
-  `tests/test_cad_solids.py`). Found while building the second tier-G2
+  `tests/test_cad_solids.py`). Found while building the second CAD
   device model, whose placement identities are read from these boxes.
   Consumers that pin a manifest or model digest containing bounding boxes
   re-pin it when they re-pin the library: this is a governed data change.
@@ -505,7 +512,7 @@ SCPN Reactor Kernels — CHANGELOG
 - CAD body evidence kernel `cad_evidence`
   (`src/scpn_reactor_kernels/cad/evidence.py`, ADR 0009): the fail-closed
   record of one B-rep body against its analytic closed forms, the
-  chord-deficit bound of its faceting and the tier-G1 mesh of the same body,
+  chord-deficit bound of its faceting and the analytic mesh of the same body,
   plus the assembly form that keeps the body order. It refuses at
   construction — a violated bound raises with the body and the bound named —
   and refuses a ragged input rather than zipping four sequences of different
@@ -519,10 +526,10 @@ SCPN Reactor Kernels — CHANGELOG
   benchmark gains `assembly_body_evidence`.
 
 - CAD placement kernel `cad_placement`
-  (`src/scpn_reactor_kernels/cad/placement.py`, ADR 0008): the tier-G2
+  (`src/scpn_reactor_kernels/cad/placement.py`, ADR 0008): the CAD
   counterpart of `geometry_placement`. `translate_brep` places a B-rep body
   by a rigid translation and may rename it; `ring_brep_bodies` places one
-  body once per centre of a ring, on the tier-G1 `ring_offsets`, so both
+  body once per centre of a ring, on the analytic mesh `ring_offsets`, so both
   tiers of a family sit on the same circle by construction. The analytic
   closed forms are carried over exactly and the placed solid's own measures
   are checked against them within the group's `1e-9` tolerance; the record
@@ -531,7 +538,7 @@ SCPN Reactor Kernels — CHANGELOG
   bit-identical to its volume of the source solid, and on a ring of twelve
   identical rods the measured volumes differ in the last unit in the last
   place. Cross-tier evidence: faceting a placed solid agrees in volume with
-  the tier-G1 mesh of the same body translated by the same offset, within
+  the analytic mesh of the same body translated by the same offset, within
   the exact inscribed-polygon deficit bound. The CAD benchmark gains
   `place_ring_of_bodies` and the whole CAD table was re-measured on the
   landing tree. The kernel inventory gains the entry and its digest changes

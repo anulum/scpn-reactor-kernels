@@ -11,14 +11,14 @@ SCPN Reactor Kernels — ADR 0011
 # ADR 0011 — B-rep bodies whose radius varies along the axis
 
 Status: accepted (2026-09-03). Adds the kernel `cad_profiles` to the CAD
-group of ADR 0006 and is the tier-G2 counterpart of ADR 0010.
+group of ADR 0006 and is the CAD counterpart of ADR 0010.
 
 ## Context
 
-ADR 0010 gave the tessellating tier bodies whose radius is a function of the
+ADR 0010 gave the analytic mesh implementation bodies whose radius is a function of the
 axis, because a mirror confines a flux tube and the filed source's printed
-dimensions do not close for a body of constant radius. The solid tier was
-then in the position the tessellating tier had been in, and for the same
+dimensions do not close for a body of constant radius. The B-rep implementation was
+then in the position the analytic mesh implementation had been in, and for the same
 reason: its constructors extrude a circle, so every solid they build has one
 radius.
 
@@ -27,19 +27,19 @@ radius.
 1. A new kernel `cad_profiles` (`src/scpn_reactor_kernels/cad/profiles.py`)
    provides `profiled_solid_brep` and `profiled_tube_brep`, which revolve the
    closed polyline through the profile's samples about the axis.
-2. The profile contract is not restated. It is the tier-G1 contract, imported
+2. The profile contract is not restated. It is the analytic mesh contract, imported
    and reused: the same validators, the same rules, the same messages. A
    rejection surfaces under the CAD error type carrying the geometry group's
-   wording, so a caller who moves a profile between tiers meets one contract
+   wording, so a caller who moves a profile between representations meets one contract
    stated once rather than two that could drift.
-3. The analytic references are the tier-G1 closed forms — the frustum-stack
+3. The analytic references are the analytic mesh closed forms — the frustum-stack
    volume and lateral area, plus the end discs for the solid and the two end
    annuli for the tube. They are exact for a linear profile, so the evidence
    kernel checks the pinned third-party B-rep kernel against them at the same
    declared relative tolerance the cylinder and the tube use. Measured in the
    reference environment: `1e-16` on the solid and `2e-15` on the tube, against
    a tolerance of `1e-9`.
-4. The two tiers are proven to describe ONE body, not two similar ones: a test
+4. The two representations are proven to describe ONE body, not two similar ones: a test
    facets the revolved solid and compares its volume against the tessellated
    mesh of the same profile, within the exact polygon deficit of the reference
    count. If the revolve and the tessellation had disagreed about the shape,
@@ -48,8 +48,8 @@ radius.
    this tier honestly can: a two-sample constant profile carries the identical
    analytic references as `cylinder_solid_brep`, and a pair of them the
    identical references as `annular_tube_brep`, with both bodies measured
-   inside the tolerance. The tier-G1 claim — identical vertex streams — is a
-   stronger statement that only the tessellating tier can make, and it is made
+   inside the tolerance. The analytic mesh claim — identical vertex streams — is a
+   stronger statement that only the analytic mesh implementation can make, and it is made
    there, not here.
 6. No native parity: an adapter of a third-party C++ kernel, like every other
    member of the CAD group.
@@ -58,8 +58,8 @@ radius.
 
 ## Consequences
 
-A family whose tier-G1 model carries a body of varying radius can carry the
-same body in tier G2, from the same samples, with the same closed forms
+A family whose analytic mesh model carries a body of varying radius can carry the
+same body in CAD, from the same samples, with the same closed forms
 checking both. The mirror flux tube is the first consumer.
 
 The kernel inventory gains one entry and its digest changes, so a consumer

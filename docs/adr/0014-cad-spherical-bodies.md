@@ -10,7 +10,7 @@ SCPN Reactor Kernels — ADR 0014
 
 # ADR 0014 — B-rep spherical bodies
 
-Status: accepted (2026-09-04). The tier-G2 counterpart of ADR 0013, extending
+Status: accepted (2026-09-04). The CAD counterpart of ADR 0013, extending
 ADR 0011 (CAD axial profile primitive).
 
 ## Context
@@ -50,7 +50,7 @@ package's public surface.
 
 The tessellated `spherical_shell` validated its radii by their own names;
 the first draft of `spherical_shell_brep` did not, and let the profile
-builder report both of them as `radius_m`. The two tiers therefore
+builder report both of them as `radius_m`. The two representations therefore
 refused the same bad input with different messages. Caught by a test that
 asserted the field name, and fixed by validating in the B-rep builder
 too — the refusal has to name the field the caller passed, not the field
@@ -63,5 +63,5 @@ and was rerun; the shell costs about 14 ms against the sphere's 8, which
 is roughly what revolving two profiles instead of one should cost.
 
 100 % statement and branch coverage of the new module. The suite skips
-hermetically when the optional back-end is absent, as every tier-G2 suite
+hermetically when the optional back-end is absent, as every CAD suite
 in this library does.

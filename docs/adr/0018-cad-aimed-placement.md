@@ -8,23 +8,23 @@ Contact: www.anulum.li | protoscience@anulum.li
 SCPN Reactor Kernels — ADR 0018
 -->
 
-# ADR 0018 — Aimed B-rep placement (tier G2)
+# ADR 0018 — Aimed B-rep placement
 
-Status: accepted (2026-09-04). The tier-G2 twin of ADR 0017, extending the
+Status: accepted (2026-09-04). The CAD twin of ADR 0017, extending the
 kernel `cad_placement` of ADR 0008.
 
 ## Context
 
-ADR 0008 gave tier G2 the translation ADR 0007 gave tier G1, for the same
+ADR 0008 gave CAD the translation ADR 0007 gave analytic meshes, for the same
 reason: a device repository must never re-implement geometry. ADR 0017 adds
-aiming to tier G1, and a family whose exact model is a B-rep assembly needs
-the same operation there or the two tiers stop describing one machine.
+aiming to analytic meshes, and a family whose exact model is a B-rep assembly needs
+the same operation there or the two representations stop describing one machine.
 
 ## Decision
 
 1. `cad/placement.py` gains `place_brep(body, rotation, centre, name)` and
    `sphere_ring_brep_bodies(body, names, centres, rotations)`.
-2. **The rotation is the tier-G1 rotation, not a second one.** The
+2. **The rotation is the analytic mesh rotation, not a second one.** The
    placement is handed to the back-end as the frame whose first and third
    columns are those of that matrix, which is how it takes a rigid motion.
    The back-end re-orthogonalises the frame; measured over the thirty
@@ -37,7 +37,7 @@ the same operation there or the two tiers stop describing one machine.
    leaves the closed forms invariant, exactly as ADR 0008 established for
    translation.
 4. `require_rotation` of ADR 0017 is reused with the B-rep error class, so
-   a matrix that scales or reflects is refused in both tiers by one
+   a matrix that scales or reflects is refused in both representations by one
    implementation.
 5. **OpenCASCADE stays a pinned third-party kernel and is not the bit-exact
    floor of the group**, and this shows here as it did for translation: the
@@ -48,7 +48,7 @@ the same operation there or the two tiers stop describing one machine.
 
 ## Consequences
 
-A family whose bodies converge on a point can carry both tiers, and the
+A family whose bodies converge on a point can carry both representations, and the
 record can say that one rotation placed both. A consumer's evidence bound
 for a placed body is the measured one above rather than a bound reused by
 analogy from an unplaced one.

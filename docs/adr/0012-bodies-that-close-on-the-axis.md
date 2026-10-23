@@ -8,7 +8,7 @@ Contact: www.anulum.li | protoscience@anulum.li
 SCPN Reactor Kernels — ADR 0012
 -->
 
-# ADR 0012 — Bodies that close on the axis, at both tiers
+# ADR 0012 — Bodies that close on the axis in both representations
 
 Status: accepted (2026-09-04). Extends `geometry_profiles` and
 `cad_profiles`, and corrects `cad_faceting`. No new kernel, no kernel
@@ -16,7 +16,7 @@ whose output changes for an input it already accepted.
 
 ## Context
 
-ADR 0010 and ADR 0011 gave both tiers a body whose radius varies along the
+ADR 0010 and ADR 0011 gave both representations a body whose radius varies along the
 axis. Their contract demands a **strictly positive radius at every
 sample**, which was the right contract for what they were written for: a
 flux tube, a tapered liner, a horn, a bellows envelope. All of those keep
@@ -104,7 +104,7 @@ capability**.
 
 ## Addendum (2026-09-04) — a back-end limit the first consumer found
 
-Building an FRC separatrix at tier G2 surfaced a limit of the CAD
+Building an FRC separatrix in CAD surfaced a limit of the CAD
 revolution that no test in this repository had reached: **the revolved
 volume stops matching the exact frustum sum when two adjacent profile
 radii come close together.** Measured on one shape at 17 samples, the
@@ -120,7 +120,7 @@ lifted off the axis, so the limit has been there since that record and
 was simply never reached by a profile in this suite: the `WAIST` fixture
 has generous radius steps everywhere.
 
-It is **not** a property of the tier-G1 tessellation, which is exact for
+It is **not** a property of the analytic mesh tessellation, which is exact for
 every one of those profiles. That is what locates it in the back-end
 rather than in the profile contract or the closed forms.
 

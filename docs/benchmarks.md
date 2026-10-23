@@ -143,7 +143,7 @@ runs per operation. Parameters remain linear deflection 0.0001 m, angular
 deflection 0.1 rad and characteristic length 0.02 m. The two-body assembly
 contains a solid cylinder and annular tube; placement uses twelve ring rods
 and ten aimed latitude rods. The evidence row compares both bodies with
-analytic forms and 64-segment G1 meshes. Profiles use five and seven
+analytic forms and 64-segment analytic meshes. Profiles use five and seven
 samples; sphere and shell use sixteen polar rings.
 
 Actual independent prechecks exercised all eleven operations. Declared

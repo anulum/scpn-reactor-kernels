@@ -63,7 +63,7 @@ enters the device); the table carries five entries.
 
 ## Addendum (2026-09-04) — the sixth consumer, and what the digest column is
 
-SCPN-THETA-PINCH-CORE has consumed the geometry kernels since its tier-G1
+SCPN-THETA-PINCH-CORE has consumed the geometry kernels since its analytic mesh
 landing on 2026-09-03 and was never recorded here. It is entered now as
 the sixth consumer, with the inventory digest at the commit it first
 pinned, which is the same state the first three consumers pinned.

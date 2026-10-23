@@ -11,13 +11,13 @@ SCPN Reactor Kernels — ADR 0008
 # ADR 0008 — CAD placement: B-rep bodies off the device axis
 
 Status: accepted (2026-09-03). Adds the kernel `cad_placement` to the CAD
-group of ADR 0006 and is the tier-G2 counterpart of ADR 0007.
+group of ADR 0006 and is the CAD counterpart of ADR 0007.
 
 ## Context
 
-ADR 0007 gave tier G1 the placement it was missing, and the plasma-focus
-cathode became the cage of rods it is. Tier G2 was then in exactly the
-position tier G1 had been in: the CAD group of ADR 0006 offers only
+ADR 0007 gave analytic meshes the placement they were missing, and the plasma-focus
+cathode became the cage of rods it is. CAD was then in exactly the
+position the analytic mesh implementation had been in: the CAD group of ADR 0006 offers only
 axis-centred constructors, so the B-rep model of that same family could not
 be built without either drawing an axisymmetric substitute or reaching into
 the back-end from a device repository. Both are refused by the same rule that
@@ -35,8 +35,8 @@ library gains the capability.
    - `ring_brep_bodies(body, names, offsets)` — one placement of a body per
      centre, refusing an empty ring, a name count that does not match the
      centre count, and repeated names.
-2. The centres are NOT re-derived here. They are the tier-G1
-   `ring_offsets` of ADR 0007, so one set of centres serves both tiers and
+2. The centres are NOT re-derived here. They are the analytic mesh
+   `ring_offsets` of ADR 0007, so one set of centres serves both representations and
    the two models of a family are placed on the same circle by construction.
 3. The analytic closed forms carried by a `BrepBody` are invariant under a
    rigid motion, so they are carried over exactly. The back-end's own measure
@@ -50,7 +50,7 @@ library gains the capability.
    forms, and the bounding box shifts by exactly the offset. A test asserts
    the boundary explicitly so no later reader mistakes tolerance for identity.
 4. Cross-tier evidence: the faceting of a placed solid is compared against the
-   tier-G1 mesh of the same body translated by the same offset, and the two
+   analytic mesh of the same body translated by the same offset, and the two
    agree in volume within the exact inscribed-polygon deficit bound of the
    reference tessellation — the same bound the rest of the CAD group uses.
 5. No native parity. The kernel is an adapter of a third-party C++ kernel, so
@@ -60,8 +60,8 @@ library gains the capability.
 
 ## Consequences
 
-Every family whose tier-G1 model carries an off-axis part can now carry the
-same part in tier G2, with the two tiers placed on identical centres. The
+Every family whose analytic mesh model carries an off-axis part can now carry the
+same part in CAD, with the two representations placed on identical centres. The
 plasma-focus cathode is the first consumer.
 
 The kernel inventory gains one entry and its digest changes, so a consumer

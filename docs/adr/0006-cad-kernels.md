@@ -8,7 +8,7 @@ Contact: www.anulum.li | protoscience@anulum.li
 SCPN Reactor Kernels — ADR 0006
 -->
 
-# ADR 0006 — CAD kernels (tier G2): B-rep solids, STEP, faceting and volume mesh on a pinned third-party kernel
+# ADR 0006 — CAD kernels: B-rep solids, STEP, faceting and volume mesh on a pinned third-party kernel
 
 Status: accepted (2026-09-03). Adds the kernel group `cad` (kernels
 `cad_brep_solids`, `cad_step_export`, `cad_faceting`, `cad_volume_mesh`)
@@ -16,12 +16,12 @@ at `computational_prototype` behind the optional extra `cad`.
 
 ## Context
 
-The device repositories' tier-G1 models (ADR 0002 consumers) are analytic
+The device repositories' analytic mesh models (ADR 0002 consumers) are analytic
 triangle meshes: enough for viewing, volumes and simple neutronics of
 cylinders, not for engineering CAD or for finite-element and Monte-Carlo
 meshing. The programme needs, from the same validated design point, B-rep
 solids that any CAD or simulation tool consumes (STEP), a faceting that
-returns the G1 mesh contract, and a tetrahedral volume mesh. Writing a
+returns the analytic mesh contract, and a tetrahedral volume mesh. Writing a
 B-rep kernel is out of scope; OpenCASCADE (through CadQuery) and gmsh are
 the free, mature tools, so the library adapts them. That changes the
 evidence class of this group and the record states it.
@@ -35,7 +35,7 @@ evidence class of this group and the record states it.
    own CI installs the extra so the group's tests never skip there;
    consumers skip hermetically without the extra.
 2. `cad_brep_solids`: `cylinder_solid_brep` and `annular_tube_brep` take
-   the argument lists of their G1 twins plus the body identity and return
+   the argument lists of their analytic mesh twins plus the body identity and return
    a `BrepBody` carrying the analytic volume and area of the primitive;
    the kernel's measured volume, area and bounding box are checked against
    the analytic forms within `MEASURE_TOLERANCE = 1e-9` relative.
@@ -54,9 +54,9 @@ evidence class of this group and the record states it.
    by exact coordinate equality into one `TriangleMesh`, whose contract
    proves closure and outward orientation; the relative volume deficit of
    a circular body is bounded by `2 d / r` for linear deflection `d`, and
-   the exact inscribed-polygon ratio `(n / 2 pi) sin(2 pi / n)` of the G1
+   the exact inscribed-polygon ratio `(n / 2 pi) sin(2 pi / n)` of the analytic mesh
    tessellation is exposed (from the unit-circle kernel) so a consumer can
-   compare G1 and G2 bodies against the same analytic value.
+   compare analytic mesh and CAD bodies against the same analytic value.
 5. `cad_volume_mesh`: gmsh imports the STEP into its OpenCASCADE model,
    meshes in three dimensions with a fixed option set and a declared
    characteristic length, and writes MSH 4.1 ASCII; the kernel sums the
@@ -78,11 +78,11 @@ evidence class of this group and the record states it.
 
 Maturity stays `computational_prototype`; the claims inventory stays
 empty; the manifest gains the owned domain
-`shared_cad_and_meshing_adapters`. The tier-G2 lane of the research group
+`shared_cad_and_meshing_adapters`. The CAD lane of the research group
 (its plan of 2026-09-03) consumes this group: the pilot device repository builds
-the same named bodies as its G1 model, records the assembly manifest, the
+the same named bodies as its analytic mesh model, records the assembly manifest, the
 STEP digest and the back-end versions, and proves its bodies against the
-analytic forms and its faceting against the G1 volumes. Torus and sphere
+analytic forms and its faceting against the analytic mesh volumes. Torus and sphere
 primitives, DAGMC-ready faceting for OpenMC and per-body physical groups in
 the volume mesh are separate increments with their own sources.
 

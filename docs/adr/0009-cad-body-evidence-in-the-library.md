@@ -15,11 +15,11 @@ group of ADR 0006.
 
 ## Context
 
-The first tier-G2 device model was written in a device repository, and with
+The first CAD device model was written in a device repository, and with
 it the machinery that checks each body: the B-rep measures against the
 analytic closed forms within the group's tolerance, the faceted volume
 against the chord-deficit bound of the mesher's linear deflection, and the
-faceted volume against the tier-G1 mesh of the same body within the exact
+faceted volume against the analytic mesh of the same body within the exact
 inscribed-polygon deficit bound. That was the right place to discover the
 checks. It is the wrong place to keep them.
 
@@ -35,7 +35,7 @@ repositories at once, with nothing forcing them to stay equal.
 1. A new kernel `cad_evidence` (`src/scpn_reactor_kernels/cad/evidence.py`)
    owns the checked record of one body: `BodyEvidence` (frozen, refusing at
    construction), `body_evidence(...)` computing it from a body, its smallest
-   circular radius, its faceting and its tier-G1 reference mesh, and
+   circular radius, its faceting and its analytic reference mesh, and
    `assembly_evidence(...)` doing the same for an assembly in its fixed order.
 2. The evidence refuses rather than reports. A violated bound raises
    `CadError` naming the body and the bound, so a model cannot be assembled
@@ -53,7 +53,7 @@ repositories at once, with nothing forcing them to stay equal.
 
 ## Consequences
 
-A family gains a tier-G2 model by writing its composition and its record, not
+A family gains a CAD model by writing its composition and its record, not
 by copying a checking apparatus. A change to a bound is one change.
 
 The pilot family (SCPN-Z-PINCH-CORE) carries its own copy of this machinery,

@@ -8,8 +8,8 @@
 
 """Exact solids of the spherical bodies.
 
-The tier-G1 module explains why a sphere needs no tessellation kernel of
-its own and a shell does. The same split holds here: the solid sphere is
+The analytic mesh module explains why a sphere needs no tessellation
+kernel of its own and a shell does. The same split holds here: the solid sphere is
 its profile handed to
 :func:`~scpn_reactor_kernels.cad.profiles.closed_profiled_solid_brep`,
 and the shell is a revolve of a polyline this library did not have a

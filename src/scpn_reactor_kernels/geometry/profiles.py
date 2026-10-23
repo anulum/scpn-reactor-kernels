@@ -42,7 +42,7 @@ a linear profile makes the body a stack of conical frusta: the volume is
 ``sum (pi / 3) (r_i^2 + r_i r_{i+1} + r_{i+1}^2) (z_{i+1} - z_i)`` and the
 lateral area is ``sum pi (r_i + r_{i+1}) l_i`` with the slant
 ``l_i = sqrt((r_{i+1} - r_i)^2 + (z_{i+1} - z_i)^2)``. They are provided
-here so the tier-G2 evidence can check a B-rep of the same profile
+here so the CAD evidence can check a B-rep of the same profile
 against them exactly as it checks a cylinder or a tube.
 
 Nothing here describes a device: the kernel knows a list of radii and a

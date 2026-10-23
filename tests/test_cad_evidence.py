@@ -183,7 +183,7 @@ def measured_evidence(**overrides: Any) -> BodyEvidence:
 
 
 def reference_cylinder() -> TriangleMesh:
-    """Return the tier-G1 mesh of the fixture cylinder."""
+    """Return the analytic mesh of the fixture cylinder."""
     vertices, faces = cylinder_solid(CYLINDER_RADIUS_M, *CYLINDER_EXTENT_M, SEGMENTS)
     return TriangleMesh(
         name="inner",
@@ -195,7 +195,7 @@ def reference_cylinder() -> TriangleMesh:
 
 
 def reference_tube() -> TriangleMesh:
-    """Return the tier-G1 mesh of the fixture tube."""
+    """Return the analytic mesh of the fixture tube."""
     vertices, faces = annular_tube(*TUBE_RADII_M, *TUBE_EXTENT_M, SEGMENTS)
     return TriangleMesh(
         name="outer",
@@ -207,7 +207,7 @@ def reference_tube() -> TriangleMesh:
 
 
 def reference_prism() -> TriangleMesh:
-    """Return the tier-G1 mesh of the fixture prism."""
+    """Return the analytic mesh of the fixture prism."""
     vertices, faces = rectangular_prism(*PRISM_SIDES_M, *PRISM_EXTENT_M)
     return TriangleMesh(
         name="slab",

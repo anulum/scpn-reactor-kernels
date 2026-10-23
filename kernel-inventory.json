@@ -273,8 +273,8 @@
       "module": "src/scpn_reactor_kernels/cad/profiles.py",
       "native_parity": false,
       "sources": [
-        "Open CASCADE Technology 7.9 through CadQuery 2.8: revolution of a closed polyline about the axis (Workplane.polyline, Workplane.revolve); the profile contract and the closed forms are those of the tier-G1 geometry_profiles kernel",
-        "Revolution of a profile that closes on the axis: no axis return point is appended at an end already on it, and the analytic references are the tier-G1 closed forms, a pole contributing no disc (ADR 0012)"
+        "Open CASCADE Technology 7.9 through CadQuery 2.8: revolution of a closed polyline about the axis (Workplane.polyline, Workplane.revolve); the profile contract and the closed forms are those of the analytic mesh geometry_profiles kernel",
+        "Revolution of a profile that closes on the axis: no axis return point is appended at an end already on it, and the analytic references are the analytic mesh closed forms, a pole contributing no disc (ADR 0012)"
       ]
     },
     {
@@ -308,8 +308,8 @@
       "module": "src/scpn_reactor_kernels/cad/placement.py",
       "native_parity": false,
       "sources": [
-        "Open CASCADE Technology 7.9 through CadQuery 2.8: Shape.translate (gp_Trsf rigid translation); the ring centres are those of the tier-G1 geometry_placement kernel",
-        "Open CASCADE Technology 7.9 through CadQuery 2.8: Shape.moved with a Location built from the frame whose first and third columns are those of the tier-G1 aiming rotation, so one rotation places both tiers (ADR 0018)",
+        "Open CASCADE Technology 7.9 through CadQuery 2.8: Shape.translate (gp_Trsf rigid translation); the ring centres are those of the analytic mesh geometry_placement kernel",
+        "Open CASCADE Technology 7.9 through CadQuery 2.8: Shape.moved with a Location built from the frame whose first and third columns are those of the analytic mesh aiming rotation, so one rotation places both representations (ADR 0018)",
         "Invariance of volume and surface area under a rigid motion (elementary; no external source): the analytic closed forms are carried over, the kernel's own measure of the placed solid is checked against them within the declared tolerance and is not claimed bit-identical to the measure of the source solid"
       ]
     }
@@ -325,6 +325,6 @@
   "schema_version": "1.0.0",
   "source": {
     "manifest_path": "kernels-domain.json",
-    "manifest_sha256": "e0d1744a66de42f2afdbbe98869ce117061659481b12e5fdeba0731942cbdfbe"
+    "manifest_sha256": "aec416ea6c8cadecf54c2d0d19295bdca70aa05793c82e7d66be9baa2179e275"
   }
 }

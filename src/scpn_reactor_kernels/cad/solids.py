@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SCPN Reactor Kernels — B-rep solids of the analytic primitives
 
-"""B-rep solids (CadQuery/OCP) of the same primitives as the tier-G1 meshes.
+"""B-rep solids (CadQuery/OCP) of the same primitives as the analytic meshes.
 
 Every constructor takes the argument list of its tessellating twin in
 :mod:`scpn_reactor_kernels.geometry.primitives` (radius or radii, or side
@@ -411,7 +411,7 @@ def rectangular_prism_brep(
     ----------
     width_x_m, depth_y_m
         Full extents along ``x`` and ``y``; both strictly positive. The
-        body is centred on the axis in both, as its tier-G1 twin is.
+        body is centred on the axis in both, as its analytic mesh twin is.
     z_low_m, z_high_m
         Axial extent; ``z_high_m > z_low_m``.
     name, role, material_identifier

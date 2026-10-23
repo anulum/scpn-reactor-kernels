@@ -6,8 +6,8 @@
 // Contact: www.anulum.li | protoscience@anulum.li
 // SCPN Reactor Kernels — native geometry kernels
 
-//! Native tessellation and mesh-measure kernels of the tier-G1 device 3D
-//! model, operation-for-operation identical to
+//! Native tessellation and mesh-measure kernels for analytic device models,
+//! operation-for-operation identical to
 //! `scpn_reactor_kernels.geometry` so that every vertex coordinate, every
 //! face index and every measure agrees bit for bit with the Python floor.
 //! The unit circle comes from the vendored polynomial trigonometry in

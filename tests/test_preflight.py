@@ -87,6 +87,32 @@ def test_check_docs_reports_broken_relative_link(tmp_path: Path) -> None:
     assert "broken relative link" in findings[0]
 
 
+@pytest.mark.parametrize("absolute", [False, True])
+def test_docs_cli_checks_angle_enclosed_destinations(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], *, absolute: bool
+) -> None:
+    """Accept existing paths with spaces and parentheses, then refuse their loss."""
+    root = tmp_path / "repository"
+    root.mkdir()
+    reference = tmp_path / "reference notes (verified).md"
+    reference.write_text("# Reference\n", encoding="utf-8")
+    target = str(reference) if absolute else "../reference notes (verified).md"
+    (root / "README.md").write_text(
+        f"[reference](<{target}#reference>) "
+        "[external](<https://example.org/guide>) "
+        "[mail](<mailto:maintainer@example.org>) [anchor](<#top>)\n",
+        encoding="utf-8",
+    )
+    arguments = ["--root", str(root), "--only", "docs"]
+    assert main(arguments) == 0
+    assert "preflight: PASS gates=1" in capsys.readouterr().out
+    reference.unlink()
+    assert main(arguments) == 1
+    output = capsys.readouterr().out
+    assert "preflight: FAIL gates_failed=1" in output
+    assert f"broken relative link {target + '#reference'!r}" in output
+
+
 def test_check_docs_reports_unreadable_file(tmp_path: Path) -> None:
     """A Markdown file that is not UTF-8 is a finding."""
     (tmp_path / "README.md").write_bytes(b"\xff\xfe broken")

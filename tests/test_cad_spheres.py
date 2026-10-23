@@ -9,7 +9,7 @@
 """Every branch of the B-rep spherical bodies.
 
 Skipped hermetically when the optional CAD back-end is absent, which is
-how every other tier-G2 suite in this library behaves.
+how every other CAD suite in this library behaves.
 """
 
 from __future__ import annotations

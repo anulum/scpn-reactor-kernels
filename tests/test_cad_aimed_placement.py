@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SCPN Reactor Kernels — aimed B-rep placement tests
 
-"""Placing a B-rep body on a sphere, aimed by the tier-G1 rotation.
+"""Placing a B-rep body on a sphere, aimed by the analytic mesh rotation.
 
 The measurements here are what the record is allowed to claim: how far
 the back-end's own frame departs from the rotation it was handed, and how
@@ -55,7 +55,7 @@ SPHERE_RADIUS_M = 1.5
 PLACED_MEASURE_BOUND = 4.0e-16
 
 #: Measured worst departure of the frame the back-end builds from the
-#: tier-G1 rotation it was handed, in any component.
+#: analytic mesh rotation it was handed, in any component.
 FRAME_BOUND = 1.1102230246251565e-16
 
 ORIGIN = (0.0, 0.0, 0.0)

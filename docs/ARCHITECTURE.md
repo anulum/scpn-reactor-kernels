@@ -19,7 +19,7 @@ kernels (design records ADR 0002 and ADR 0007, evidence record
 `VALIDATION.md#geometry-kernels`; owned domain `shared_geometry_kernels`)
 and the numerics kernels (design record ADR 0003, evidence record
 `VALIDATION.md#numerics-kernels`; the numerical substrate of the owned
-domain `shared_physics_kernels`) and the optional CAD adapters on pinned
+domain `shared_physics_kernels`) and the optional B-rep CAD adapters on pinned
 third-party C++ kernels (ADR 0006, `VALIDATION.md#cad-kernels`, owned domain
 `shared_cad_and_meshing_adapters`).
 Every other section below describes boundaries and contracts. The claim
@@ -88,7 +88,7 @@ protection or any actuator; it computes numbers from declared inputs.
 | `kernel-inventory.json` | generated inventory of the implemented kernels (drift-checked) |
 | `src/scpn_reactor_kernels/geometry/` | deterministic circle points, mesh contract, primitives, axial profiles, off-axis placement, STL/GLB exports |
 | `src/scpn_reactor_kernels/numerics/` | deterministic natural logarithm, exponential, real power and the Bessel functions |
-| `src/scpn_reactor_kernels/cad/` | tier-G2 adapters on pinned third-party kernels (optional extra `cad`): B-rep solids, assembly manifest, deterministic STEP, faceting, axial profiles, placement off the axis, fail-closed body evidence, gmsh volume mesh |
+| `src/scpn_reactor_kernels/cad/` | B-rep CAD adapters on pinned third-party kernels (optional extra `cad`): B-rep solids, assembly manifest, deterministic STEP, faceting, axial profiles, placement off the axis, fail-closed body evidence, gmsh volume mesh |
 | `src/scpn_reactor_kernels/validation.py` | shared fail-closed input validation |
 | `rust/` | native kernels (`scpn-reactor-kernels-rs`), bit-exact with the Python floor |
 | `benchmarks/` | standard-conformant benchmarks and committed local artefacts |

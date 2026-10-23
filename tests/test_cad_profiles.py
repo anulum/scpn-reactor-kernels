@@ -6,7 +6,7 @@
 # Contact: www.anulum.li | protoscience@anulum.li
 # SCPN Reactor Kernels — B-rep axial profile tests
 
-"""Revolved profiles agree with the closed forms and with their G1 twin."""
+"""Revolved profiles agree with closed forms and their analytic mesh twin."""
 
 from __future__ import annotations
 
@@ -76,8 +76,8 @@ def test_the_revolved_tube_agrees_with_the_difference_of_the_forms() -> None:
 def test_a_constant_profile_reproduces_the_cylinder_measures() -> None:
     """A two-sample constant profile is the cylinder, to the last bit.
 
-    The tessellating tier proves this on the vertex streams. Here the
-    claim is what the B-rep tier can honestly make: the analytic
+    The analytic mesh implementation proves this on the vertex streams.
+    Here the claim is what the B-rep tier can honestly make: the analytic
     references are identical values, and the back-end measures both
     bodies inside the declared tolerance of them.
     """
@@ -116,7 +116,7 @@ def test_a_pair_of_constant_profiles_reproduces_the_tube_measures() -> None:
 
 
 def test_the_faceted_solid_tracks_its_tessellated_twin() -> None:
-    """Faceting the B-rep agrees in volume with the tier-G1 mesh.
+    """Faceting the B-rep agrees in volume with the analytic mesh.
 
     Both tiers describe one body, so the two volumes must agree within
     the polygon deficit of the reference tessellation; if the revolve and
@@ -225,7 +225,7 @@ def test_the_revolved_cone_keeps_the_disc_of_its_positive_end() -> None:
 
 
 def test_the_faceted_separatrix_tracks_its_tessellated_twin() -> None:
-    """The B-rep and the tier-G1 mesh of the same profile agree."""
+    """The B-rep and the analytic mesh of the same profile agree."""
     body = closed_profiled_solid_brep(SEPARATRIX, "separatrix", "plasma", "plasma")
     vertices, faces = closed_profiled_solid(SEPARATRIX, 64)
     reference = TriangleMesh(
@@ -286,7 +286,7 @@ def test_the_revolution_loses_the_closed_form_when_radii_crowd() -> None:
     This is NOT a property of the closed profile. The open primitive shows
     the same numbers for the same shape lifted off the axis, so it has
     been there since the axial profile landed; it surfaced when a consumer
-    first built a body flat enough to reach it. The tier-G1 tessellation
+    first built a body flat enough to reach it. The analytic mesh tessellation
     is exact for every one of these profiles, which locates the limit in
     the CAD back-end.
 
@@ -328,7 +328,7 @@ def test_the_revolution_loses_the_closed_form_when_radii_crowd() -> None:
     for profile in (generous, crowded):
         vertices, faces = closed_profiled_solid(profile, 64)
         tessellated = TriangleMesh(
-            name="tier_g1",
+            name="reference_mesh",
             role="plasma",
             material_identifier="plasma",
             vertices=vertices,

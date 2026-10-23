@@ -15,7 +15,7 @@ geometry group of ADR 0002.
 
 ## Context
 
-Every tier-G1 primitive so far builds a body of constant radius. That was
+Every analytic mesh primitive so far builds a body of constant radius. That was
 enough for five device families, and it is not enough for the sixth.
 
 A magnetic mirror confines a **flux tube**, and a flux tube in a mirror field
