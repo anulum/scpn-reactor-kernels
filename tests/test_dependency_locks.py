@@ -129,3 +129,10 @@ def test_workflows_install_only_from_locks(workflow: Path) -> None:
         command = line.strip().removeprefix("run: ")
         if "pip install" in command:
             assert ACCEPTED_INSTALL.search(command), command
+
+
+def test_dependabot_skips_the_derived_cad_lock() -> None:
+    """Dependabot never bumps a transitive pin of the derived CAD lock alone."""
+    config = (REPO / ".github" / "dependabot.yml").read_text(encoding="utf-8")
+    if (REPO / "requirements-cad.txt").exists():
+        assert '- "requirements-cad.txt"' in config

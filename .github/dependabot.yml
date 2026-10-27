@@ -14,6 +14,12 @@ version: 2
 updates:
   - package-ecosystem: "pip"
     directory: "/"
+    # The CAD lock is derived from requirements-dev.in and pyproject.toml by
+    # `make lock` and holds only resolved transitive pins; bumping one of
+    # them alone would break the resolution it records. Its distributions
+    # are audited by the blocking pip-audit gate instead.
+    exclude-paths:
+      - "requirements-cad.txt"
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 5
