@@ -14,6 +14,11 @@ SCPN Reactor Kernels — CHANGELOG
 
 ### Changed
 
+- Install every CI dependency from hash-locked requirement sets with
+  `--require-hashes`: the development toolchain, the CAD extra, the audit
+  and inventory tools. `make lock` regenerates the sets; the package itself
+  installs with `--no-deps`. Toolchain, action and interpreter pins move to
+  their newest releases.
 - Documentation validation recognises angle-enclosed Markdown destinations,
   including paths with spaces and parentheses, and still refuses missing files.
 - Geometry and CAD documentation, native API descriptions, source metadata

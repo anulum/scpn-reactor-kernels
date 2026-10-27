@@ -22,17 +22,17 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12.14"
-      - name: Install pinned toolchain
-        run: python -m pip install -r requirements-dev.txt
+          python-version: "3.12.16"
+      - name: Install the hash-locked toolchain and CAD extra
+        run: python -m pip install --require-hashes -r requirements-cad.txt
       - name: Install the system library the mesher links against
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends libglu1-mesa
-      - name: Install the optional CAD extra (pinned B-rep kernel and mesher)
-        run: python -m pip install -e ".[cad]"
+      - name: Install the package itself (dependencies come from the locks)
+        run: python -m pip install --no-deps -e .
       - name: Tests with complete coverage
         run: pytest -q --cov=src --cov=tools --cov-branch --cov-fail-under=100
       - name: CAD benchmark smoke (every operation must be measured)
@@ -47,9 +47,9 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
-          python-version: "3.12.14"
+          python-version: "3.12.16"
       - name: Pin the Rust toolchain
         run: |
           rustup toolchain install 1.98.0 --profile minimal --component rustfmt,clippy
@@ -63,8 +63,9 @@ jobs:
           cargo test
       - name: Build the native module and prove bit-exact parity
         run: |
-          python -m pip install -r requirements-dev.txt maturin==1.14.0
-          python -m pip install --no-deps --no-build-isolation ./rust
+          python -m pip install --require-hashes -r requirements-dev.txt
+          python -m pip wheel --no-deps --no-build-isolation --wheel-dir dist ./rust
+          python -m pip install --no-deps dist/*.whl
           pytest -q tests/test_geometry_native_parity.py tests/test_numerics_native_parity.py
       - name: Benchmark smoke (both backends must be measured)
         run: |

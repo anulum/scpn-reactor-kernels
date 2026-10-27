@@ -44,7 +44,7 @@ Contributions are coordinated directly with the owner
 ## Workflow
 
 ```bash
-python3 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
+make venv      # hash-locked toolchain
 make lint typecheck test validate rust   # or: make preflight
 ```
 
