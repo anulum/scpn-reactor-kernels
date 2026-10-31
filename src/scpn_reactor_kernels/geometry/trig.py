@@ -39,7 +39,8 @@ geometry.
 from __future__ import annotations
 
 import math
-from typing import Final
+import operator
+from typing import Any, Final
 
 from scpn_reactor_kernels.errors import GeometryError
 
@@ -120,6 +121,25 @@ def cosine_polynomial(angle_rad: float) -> float:
     return polynomial * square + 1.0
 
 
+def _integer_count(name: str, value: Any) -> int:
+    """Return ``value`` as an integer count, or refuse it by name.
+
+    ``operator.index`` is the test, as for mesh face indices: an integer
+    type from another library is accepted, and a float is refused rather
+    than truncated, because a fractional count names a tessellation that
+    does not exist. Booleans are refused by the callers before this.
+
+    Raises
+    ------
+    GeometryError
+        If ``value`` does not implement the integer protocol.
+    """
+    try:
+        return operator.index(value)
+    except TypeError as exc:
+        raise GeometryError(f"{name}: must be an integer count, got {value!r}") from exc
+
+
 def require_segments(segments: int) -> int:
     """Validate a tessellation segment count.
 
@@ -140,15 +160,20 @@ def require_segments(segments: int) -> int:
         :data:`SEGMENT_MULTIPLE` (the octant symmetry needs eight equal
         arcs).
     """
-    if isinstance(segments, bool) or segments < MIN_SEGMENTS:
+    if isinstance(segments, bool):
         raise GeometryError(
             f"segments: must be at least {MIN_SEGMENTS}, got {segments!r}"
         )
-    if segments % SEGMENT_MULTIPLE != 0:
+    count = _integer_count("segments", segments)
+    if count < MIN_SEGMENTS:
+        raise GeometryError(
+            f"segments: must be at least {MIN_SEGMENTS}, got {segments!r}"
+        )
+    if count % SEGMENT_MULTIPLE != 0:
         raise GeometryError(
             f"segments: must be a multiple of {SEGMENT_MULTIPLE}, got {segments!r}"
         )
-    return segments
+    return count
 
 
 def require_circle_points(count: int) -> int:
@@ -170,11 +195,16 @@ def require_circle_points(count: int) -> int:
         If ``count`` is below :data:`MIN_CIRCLE_POINTS`; three points are
         the smallest arrangement that encloses the axis.
     """
-    if isinstance(count, bool) or count < MIN_CIRCLE_POINTS:
+    if isinstance(count, bool):
         raise GeometryError(
             f"count: must be at least {MIN_CIRCLE_POINTS}, got {count!r}"
         )
-    return count
+    value = _integer_count("count", count)
+    if value < MIN_CIRCLE_POINTS:
+        raise GeometryError(
+            f"count: must be at least {MIN_CIRCLE_POINTS}, got {count!r}"
+        )
+    return value
 
 
 def circle_points(count: int) -> tuple[tuple[float, float], ...]:

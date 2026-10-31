@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import math
 from itertools import pairwise
+from typing import Any
 
 import pytest
 
@@ -51,6 +52,21 @@ def test_too_few_rings_are_refused(rings: int) -> None:
     """One polar step puts the poles adjacent, which is a segment not a body."""
     with pytest.raises(GeometryError, match="rings"):
         require_rings(rings)
+
+
+@pytest.mark.parametrize("value", [3.0, "3", None])
+def test_a_non_integer_ring_count_is_refused(value: Any) -> None:
+    """An integral float names no tessellation; it is refused, not truncated."""
+    with pytest.raises(GeometryError, match="rings: must be an integer count"):
+        require_rings(value)
+    with pytest.raises(GeometryError, match="rings: must be an integer count"):
+        sphere_profile(1.0, 0.0, value)
+
+
+def test_a_boolean_ring_count_is_refused() -> None:
+    """A boolean is not a ring count."""
+    with pytest.raises(GeometryError, match="at least"):
+        require_rings(rings=True)
 
 
 def test_the_minimum_ring_count_is_admitted() -> None:

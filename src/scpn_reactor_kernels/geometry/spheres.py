@@ -41,7 +41,7 @@ from typing import Final
 from scpn_reactor_kernels.errors import GeometryError
 from scpn_reactor_kernels.geometry.mesh import Face, Vertex
 from scpn_reactor_kernels.geometry.profiles import Profile, closed_profiled_solid
-from scpn_reactor_kernels.geometry.trig import circle_points
+from scpn_reactor_kernels.geometry.trig import _integer_count, circle_points
 from scpn_reactor_kernels.validation import require_finite, require_positive
 
 #: Fewest polar steps a sphere may carry. Two gives a profile of three
@@ -70,11 +70,16 @@ def require_rings(rings: int) -> int:
         would put the two poles adjacent with no ring of positive radius
         between them, which is a segment and not a body.
     """
-    if rings < MIN_SPHERE_RINGS:
+    if isinstance(rings, bool):
         raise GeometryError(
             f"rings: must be at least {MIN_SPHERE_RINGS}, got {rings!r}"
         )
-    return rings
+    count = _integer_count("rings", rings)
+    if count < MIN_SPHERE_RINGS:
+        raise GeometryError(
+            f"rings: must be at least {MIN_SPHERE_RINGS}, got {rings!r}"
+        )
+    return count
 
 
 def sphere_profile(radius_m: float, centre_z_m: float, rings: int) -> Profile:

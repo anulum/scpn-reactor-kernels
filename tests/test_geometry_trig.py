@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import math
+from typing import Any
 
 import pytest
 
@@ -104,6 +105,29 @@ def test_boolean_is_refused() -> None:
     """A boolean is not a segment count."""
     with pytest.raises(GeometryError, match="at least"):
         require_segments(True)
+
+
+@pytest.mark.parametrize("value", [8.0, 16.0, "8", None])
+def test_a_non_integer_segment_count_is_refused(value: Any) -> None:
+    """An integral float names no tessellation; it is refused, not truncated."""
+    with pytest.raises(GeometryError, match="must be an integer count"):
+        require_segments(value)
+    with pytest.raises(GeometryError, match="must be an integer count"):
+        unit_circle(value)
+
+
+def test_an_integer_type_from_another_library_is_accepted() -> None:
+    """Any type that implements the integer protocol is a count."""
+    numpy = pytest.importorskip("numpy")
+    assert require_segments(numpy.int64(16)) == 16
+    assert type(require_segments(numpy.int64(16))) is int
+
+
+@pytest.mark.parametrize("value", [8.0, "8"])
+def test_a_non_integer_circle_point_count_is_refused(value: Any) -> None:
+    """The circle-point guard refuses the same way."""
+    with pytest.raises(GeometryError, match="count: must be an integer count"):
+        require_circle_points(value)
 
 
 def test_constants_are_consistent() -> None:

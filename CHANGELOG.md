@@ -12,6 +12,15 @@ SCPN Reactor Kernels — CHANGELOG
 
 ## [Unreleased]
 
+### Fixed
+
+- `require_segments`, `require_circle_points` and `require_rings` refuse a
+  count that is not an integer with `GeometryError`. An integral float such
+  as `8.0` used to pass the guard and then fail inside `unit_circle`,
+  `circle_points` or `sphere_profile` with a bare `TypeError`, contrary to
+  their documented errors. Any type implementing the integer protocol is
+  still accepted and returned as `int`.
+
 ### Changed
 
 - Install every CI dependency from hash-locked requirement sets with
