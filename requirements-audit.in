@@ -9,5 +9,5 @@
 # Tools the security-audit and SBOM workflows run; locked with hashes by
 # `make lock` into requirements-audit.txt.
 pip-audit==2.10.1
-cyclonedx-bom==7.5.0
+cyclonedx-bom==7.6.0
 reuse==6.2.0
