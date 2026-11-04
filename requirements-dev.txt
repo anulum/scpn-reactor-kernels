@@ -82,7 +82,7 @@ click==8.5.0 \
     --hash=sha256:255bc9599cf7748b4b1a446ccc735421bd08a2ae529a8b88597d3de5664ee360 \
     --hash=sha256:ba0d2089de75ea0310e2dde03160e6ca10009947fb95a182f9b54021bb272e34
     # via reuse
-coverage==7.17.0 \
+coverage[toml]==7.17.0 \
     --hash=sha256:032d4c2db4c677eb71d43f2f8b80bf64e9346f7a3f7b6ebb13f1782f3cc6c274 \
     --hash=sha256:03baf0688e14a5a44ffd1eefa8928dfc92b14565e521174e072b31b971aa1657 \
     --hash=sha256:045c1eeb19fb4eae949850a761102fffb3a5f638b97f977912f95843e54f6669 \
@@ -728,9 +728,9 @@ pyyaml==6.0.3 \
     # via
     #   -r requirements-dev.in
     #   pre-commit
-reuse==6.2.0 \
-    --hash=sha256:12b68549bb9d5f4957f06d726a83a9780628810008fb732bb0d0f21607f8c6d6 \
-    --hash=sha256:4feae057a2334c9a513e6933cdb9be819d8b822f3b5b435a36138bd218897d23
+reuse==6.3.0 \
+    --hash=sha256:5a6ca437057c07ca22a67256520e2783ab03b5524d3a4535603c3d49e3d4b001 \
+    --hash=sha256:be6b598aa6d5cdf44af0da265572a72f0adcd30033857af874fd8607188259c1
     # via -r requirements-dev.in
 ruff==0.17.3 \
     --hash=sha256:029c37cbd3de48ca37aa12117bead2d065f15da17d66bf84e0d4274013705db2 \
