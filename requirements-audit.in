@@ -10,4 +10,4 @@
 # `make lock` into requirements-audit.txt.
 pip-audit==2.10.1
 cyclonedx-bom==7.5.0
-reuse==6.2.0
+reuse==6.3.0
