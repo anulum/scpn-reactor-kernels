@@ -2345,9 +2345,9 @@ trame-vuetify==3.3.0 \
     --hash=sha256:3a68a8457a439c1f2d456bfa1004091116a4c9988503f594fd44e980222773f2 \
     --hash=sha256:cdef8316d7e7100a6a35aa6d76dd03263956041b534578ba9218f316ffc7d9f9
     # via cadquery
-types-pyyaml==6.0.12.20261030 \
-    --hash=sha256:508cc80546918201026a955356222111224e1f4f7deab0b91f2a95933f764e67 \
-    --hash=sha256:9123d707aa31a3883eeb2cb290537c75246dfcb1c00abed7a70f5419d3bd31ae
+types-pyyaml==6.0.12.20261113 \
+    --hash=sha256:0828be2580fd94151182364f4d0158e4de62fdbeeb8d4296f7f7d2b6c22bb640 \
+    --hash=sha256:3600749e613748afdc4327f0b17c3296cf880cdbc7335f320007abd9dd815f67
     # via
     #   -c requirements-dev.txt
     #   -r requirements-dev.in
