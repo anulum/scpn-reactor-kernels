@@ -11,7 +11,7 @@
 # them with --require-hashes. Runtime and optional CAD dependencies stay
 # declared in pyproject.toml.
 pre-commit==4.7.0
-ruff==0.17.3
+ruff==0.17.6
 mypy==2.4.1
 pytest==9.1.1
 pytest-cov==7.1.0
